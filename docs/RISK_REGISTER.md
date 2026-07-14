@@ -7,3 +7,4 @@
 | SDK/API rejects reasoning setting/schema | Live demo failure | Pin SDK, default `high`, gate `xhigh` | GPT evaluation report |
 | Model/key unavailable during judging | Incomplete experience | Seeded-first public mode and validated fixtures | Keyless E2E and deployed demo |
 | Scope pressure reduces product quality | Lower score and broken demo | Six-pathway lock, July 18 freeze, one primary story | Fidelity ledger and final scorecard |
+| Next.js bundles PostCSS below 8.5.10 | Moderate build/stringification XSS advisory | Confirmed Next 16.2.10 is the current stable release on 2026-07-13; do not apply `npm audit fix --force` because it proposes an unsafe downgrade to Next 9. Monitor for a patched stable release and re-audit before freeze | `npm audit --omit=dev`: 2 moderate transitive findings, no safe non-breaking fix currently offered |

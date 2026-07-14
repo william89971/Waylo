@@ -14,8 +14,8 @@ Submission requirements follow the current Overview, Resources, and official upd
 
 ## Waylo deliverables
 
-- Education category and working public Vercel application with seeded judge path.
-- Public MIT-licensed GitHub repository and complete README.
+- Education category and Vercel application with seeded judge path: remote build ready at [waylo-phi.vercel.app](https://waylo-phi.vercel.app); final logged-out verification pending.
+- MIT-licensed GitHub repository and complete README: implementation is local; the connected repository is currently private and branch publication is pending renewed GitHub CLI authentication.
 - Public video under three minutes covering Codex and GPT-5.6.
 - Project description, repository URL, and main Codex `/feedback` session ID supplied by the user.
 

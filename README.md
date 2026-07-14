@@ -2,32 +2,100 @@
 
 > Find your way through college.
 
-Waylo is an evidence-grounded academic navigation system for community-college students. It helps students compare transfer and major pathways, build semester-by-semester routes, test plan changes, identify blockers, and prepare a plan to review with a counselor.
+Waylo helps California community-college students find a clear path through college. Students can compare transfer and major pathways, build semester-by-semester routes, test a change before committing to it, understand blockers, and print a plan to review with a counselor.
 
-This repository is the OpenAI Build Week implementation. The initial demonstration deeply supports six College of the Canyons pathways across UC Berkeley, UCLA, and UC San Diego for Cognitive Science and Data Science-related programs.
+This OpenAI Build Week project deeply supports six College of the Canyons university-program pathways across three destinations:
 
-## Current status
+- UC Berkeley: Cognitive Science B.A. and Data Science B.A.
+- UCLA: Cognitive Science B.S. and Statistics and Data Science B.S.
+- UC San Diego: Cognitive Science B.S. and Data Science B.S.
 
-Waylo is under active Build Week development. The product-complete target is **July 18, 2026 at 5:00 PM PT**. The submission deadline is **July 21, 2026 at 5:00 PM PT**.
+[Open the deployed Waylo demo](https://waylo-phi.vercel.app)
 
-See [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md) for the implementation sequence and [`docs/HACKATHON_REQUIREMENTS.md`](docs/HACKATHON_REQUIREMENTS.md) for the submission-source register.
+Waylo is a planning aid, not an official degree audit, admissions decision, or promise of transfer. Requirements, articulations, and course offerings change. Review the evidence and confirm the plan with a counselor before enrollment decisions.
 
-## Safety and academic-use note
+## What the demo includes
 
-Waylo is a planning aid, not an official degree audit or admissions decision. Academic requirements and articulation agreements change. Students should verify plans with official sources and a counselor before changing enrollment or transfer decisions.
+- Three meaningfully different route strategies: fastest valid route, greatest verified overlap, and balanced workload.
+- Deterministic prerequisite, duplicate-credit, known-offering, unit-limit, completion-grade, and route-coverage checks.
+- A side-by-side what-if simulation derived from the prerequisite graph.
+- Evidence status, academic year, retrieval date, assumptions, and counselor-review items at the point of use.
+- Transcript review, streamed planning-session events, and an advisor-ready printable summary.
+- Login-free IndexedDB persistence using a strict, versioned `WayloWorkspaceV1` record.
+- A fully functional seeded journey without an API key, plus optional server-side GPT-5.6 Sol workflows.
 
-## Environment
+## Local setup
 
-The application is designed to work in seeded mode without credentials. Live OpenAI features use a server-side `OPENAI_API_KEY` supplied by the user.
+Requirements: Node.js 22 or later and npm. The lockfile is committed for reproducible installs.
+
+Windows PowerShell:
 
 ```powershell
+git clone https://github.com/william89971/Waylo.git
+Set-Location Waylo
+npm.cmd ci
 Copy-Item .env.example .env.local
-npm.cmd install
 npm.cmd run dev
 ```
 
-Never commit `.env.local` or expose the key in browser code, logs, screenshots, or documentation.
+macOS or Linux:
+
+```bash
+git clone https://github.com/william89971/Waylo.git
+cd Waylo
+npm ci
+cp .env.example .env.local
+npm run dev
+```
+
+Open `http://localhost:3000`. No credential is required for seeded mode.
+
+## Live and seeded modes
+
+Seeded mode is always available and is the default public judge path. Its examples are labeled and deterministic; they never masquerade as live model output.
+
+To enable live extraction, planning explanations, and advisor summaries, the user must add a server-side key to the ignored `.env.local` file:
+
+```dotenv
+OPENAI_API_KEY=your_key_here
+```
+
+The implementation uses the official OpenAI JavaScript SDK, Responses API, strict Zod outputs and tools, and the explicit model ID `gpt-5.6-sol`. It uses `medium` reasoning for summaries and `high` for complex extraction. Although the pinned SDK schema accepts `xhigh`, it stays disabled until a user-supplied key confirms a live request accepts it. Waylo never creates or retrieves the key, and the key must not be logged, displayed, or committed.
+
+## Commands
+
+```powershell
+npm.cmd run typecheck
+npm.cmd run lint
+npm.cmd test
+npm.cmd run test:e2e
+npm.cmd run build
+npm.cmd start
+```
+
+The browser suite covers desktop and mobile flows, persistence, what-if comparison, evidence, print output, API health, and axe accessibility checks.
+
+## API surface
+
+- `GET /api/health` reports status, configured/not-configured state, model ID, seeded availability, and `xhigh` verification state—never configuration values.
+- `POST /api/transcripts/extract` accepts seeded or live transcript text, PDF, PNG, JPEG, or WebP input. Uploads are processed only for that request.
+- `POST /api/planning-sessions` streams newline-delimited typed planning events.
+- `POST /api/advisor-summary` returns a structured printable summary from validated workspace state.
+
+## Privacy and persistence
+
+Only normalized profile, plan, simulation, safe planning-event, and mode data are stored locally. Raw transcript bytes or text, prompts, model responses, API responses, and secrets are excluded from `WayloWorkspaceV1`. Server logs are limited to safe operational categories; they must not contain transcript/profile contents or model payloads.
+
+## Academic-data limitations
+
+V1 covers only the six pathways above. Program requirements and College of the Canyons course facts are connected to official source records. Exact institution-to-institution course articulations remain explicitly marked for ASSIST/counselor review where the curated dataset does not contain a verified agreement. Waylo does not extrapolate to unsupported schools or majors, predict admission, or guess unknown course offerings.
+
+See [data coverage](docs/DATA_COVERAGE.md), [architecture](docs/ARCHITECTURE.md), [evaluation](docs/EVALUATION_REPORT.md), and the [Build Week requirements register](docs/HACKATHON_REQUIREMENTS.md).
+
+## Deployment
+
+Deploy with Vercel using the repository defaults. Leave `OPENAI_API_KEY` unset for a seeded-only deployment, or add it as an encrypted server-side Vercel environment variable to enable live mode. Do not prefix it with `NEXT_PUBLIC_`.
 
 ## License
 
-MIT
+[MIT](LICENSE)

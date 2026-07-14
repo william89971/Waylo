@@ -78,6 +78,11 @@ web_modules/
 .next
 out
 
+# Browser-test artifacts
+playwright-report/
+test-results/
+blob-report/
+
 # Nuxt.js build / generate output
 .nuxt
 dist
@@ -141,3 +146,4 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+.vercel
