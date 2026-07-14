@@ -1,5 +1,17 @@
 # Build Week Changelog
 
+## 2026-07-13 — Guided planning and visual refinement
+
+- Added the natural-language Waylo command lifecycle: bounded interpretation, structured preview, deterministic simulation, before/after result, target-miss acknowledgment, and confirmation-only persistence.
+- Added the `gpt-5.6-sol` structured command parser plus a clearly labeled deterministic seeded parser when no key is configured.
+- Added actionable uncertainty cards with exact-source drawers, editable counselor inquiry drafts, verified-data alternate-route checks, and separately labeled counselor confirmation.
+- Added NDJSON transcript extraction progress and the seven-stage Evidence-to-Plan experience for PDF, PNG, JPEG, and WebP uploads up to 8 MB.
+- Added sanitized operational trace events, pathway requirement-set comparison, shared/unique route branching, and clearer strategy workload/milestone differences.
+- Migrated persistence to `WayloWorkspaceV2` while preserving V1 normalized state and excluding raw commands, uploads, drafts, prompts, model output, and secrets.
+- Added purposeful `motion` transitions with reduced-motion support and refined the light Waylo dashboard without template-library effects.
+- Expanded the automated suite to 32 unit/contract tests and a complete desktop/mobile Playwright pass across every public/workspace route.
+- Fixed rendered QA findings for primary-action contrast, progress labeling, keyboard-accessible roadmap scrolling, trace contrast, and mobile trace overflow.
+
 ## 2026-07-13 — Foundation and complete seeded product
 
 - Renamed and standardized the product as Waylo — “Find your way through college.”

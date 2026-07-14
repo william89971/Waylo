@@ -176,9 +176,73 @@ export const SimulationDeltaSchema = z.object({
   affectedRequirements: z.array(z.string()),
   newBlockers: z.array(ValidationIssueSchema),
   resolvedBlockers: z.array(ValidationIssueSchema),
+  courseMoves: z.array(z.object({
+    courseId: z.string(),
+    code: z.string(),
+    title: z.string(),
+    fromTerm: z.string().nullable(),
+    toTerm: z.string().nullable(),
+  })).default([]),
+  targetTerm: z.string().optional(),
+  targetSatisfied: z.boolean().optional(),
+  valid: z.boolean().default(true),
+  acknowledgmentRequired: z.boolean().default(false),
   explanation: z.string(),
 });
 export type SimulationDelta = z.infer<typeof SimulationDeltaSchema>;
+
+export const PlanChangeSchema = z.discriminatedUnion("type", [
+  z.object({
+    id: z.string(),
+    type: z.literal("defer_course"),
+    courseId: z.string(),
+    courseCode: z.string(),
+    courseTitle: z.string(),
+  }),
+  z.object({ id: z.string(), type: z.literal("set_summer_enrollment"), enabled: z.boolean() }),
+  z.object({ id: z.string(), type: z.literal("set_transfer_target"), term: z.string().regex(/^(Fall|Spring|Summer) \d{4}$/) }),
+]);
+export type PlanChange = z.infer<typeof PlanChangeSchema>;
+
+export const PlanCommandInterpretationSchema = z.object({
+  summary: z.string(),
+  changes: z.array(PlanChangeSchema),
+  confidence: z.number().min(0).max(1),
+  clarificationItems: z.array(z.string()),
+  source: z.enum(["seeded", "live"]),
+});
+export type PlanCommandInterpretation = z.infer<typeof PlanCommandInterpretationSchema>;
+
+export const EvidenceReviewResolutionSchema = z.object({
+  id: z.string(),
+  issueId: z.string(),
+  courseId: z.string(),
+  status: z.literal("counselor-confirmed"),
+  confirmedAt: z.string(),
+  evidenceIds: z.array(z.string()),
+  source: z.literal("student-reported-counselor"),
+});
+export type EvidenceReviewResolution = z.infer<typeof EvidenceReviewResolutionSchema>;
+
+export const CounselorInquirySchema = z.object({
+  id: z.string(),
+  subject: z.string(),
+  body: z.string(),
+  evidenceIds: z.array(z.string()),
+  createdAt: z.string(),
+});
+export type CounselorInquiry = z.infer<typeof CounselorInquirySchema>;
+
+export const OperationalTraceEventSchema = z.object({
+  id: z.string(),
+  stage: z.enum(["source", "extraction", "matching", "review", "planning", "validation", "repair", "route"]),
+  label: z.string(),
+  detail: z.string(),
+  status: z.enum(["active", "complete", "review", "rejected"]),
+  evidenceIds: z.array(z.string()).default([]),
+  count: z.number().int().nonnegative().optional(),
+});
+export type OperationalTraceEvent = z.infer<typeof OperationalTraceEventSchema>;
 
 export const PlanningEventSchema = z.discriminatedUnion("type", [
   z.object({ id: z.string(), type: z.literal("source"), label: z.string(), detail: z.string(), status: z.literal("complete") }),
@@ -201,6 +265,19 @@ export const WayloWorkspaceV1Schema = z.object({
 }).strict();
 export type WayloWorkspaceV1 = z.infer<typeof WayloWorkspaceV1Schema>;
 
+export const WayloWorkspaceV2Schema = z.object({
+  version: z.literal(2),
+  profile: StudentProfileSchema,
+  activeRouteId: z.string().optional(),
+  plan: PlanResultSchema.optional(),
+  simulation: SimulationDeltaSchema.optional(),
+  planningEvents: z.array(PlanningEventSchema),
+  reviewResolutions: z.array(EvidenceReviewResolutionSchema),
+  operationalTrace: z.array(OperationalTraceEventSchema),
+  mode: z.enum(["seeded", "live"]),
+}).strict();
+export type WayloWorkspaceV2 = z.infer<typeof WayloWorkspaceV2Schema>;
+
 export const TranscriptCourseSchema = z.object({
   sourceCode: z.string(),
   sourceTitle: z.string(),
@@ -222,6 +299,31 @@ export const TranscriptExtractionSchema = z.object({
 });
 export type TranscriptExtraction = z.infer<typeof TranscriptExtractionSchema>;
 
+export const TranscriptProgressStageSchema = z.enum([
+  "reading_document",
+  "extracting_courses",
+  "flagging_uncertain_text",
+  "matching_known_courses",
+  "reviewing_with_student",
+  "generating_routes",
+  "validating_prerequisites",
+]);
+export type TranscriptProgressStage = z.infer<typeof TranscriptProgressStageSchema>;
+
+export const TranscriptIngestionEventSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("progress"),
+    stage: TranscriptProgressStageSchema,
+    status: z.enum(["active", "complete", "review"]),
+    label: z.string(),
+    detail: z.string(),
+    mode: z.enum(["seeded", "live"]),
+  }),
+  z.object({ type: z.literal("result"), mode: z.enum(["seeded", "live"]), extraction: TranscriptExtractionSchema }),
+  z.object({ type: z.literal("error"), code: z.string(), message: z.string(), seededModeAvailable: z.boolean() }),
+]);
+export type TranscriptIngestionEvent = z.infer<typeof TranscriptIngestionEventSchema>;
+
 export const AdvisorSummarySchema = z.object({
   currentPosition: z.string(),
   destination: z.string(),
@@ -229,6 +331,7 @@ export const AdvisorSummarySchema = z.object({
   estimatedTransferTerm: z.string(),
   milestones: z.array(z.string()),
   verifiedFacts: z.array(z.string()),
+  counselorConfirmedFacts: z.array(z.string()).default([]),
   reviewItems: z.array(z.string()),
   questionsForCounselor: z.array(z.string()),
   disclaimer: z.string(),

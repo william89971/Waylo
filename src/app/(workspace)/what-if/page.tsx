@@ -1,16 +1,27 @@
 "use client";
 
-import { AlertTriangle, ArrowRight, GitCompareArrows, RotateCcw, ShieldCheck } from "lucide-react";
+import { ArrowRight, GitCompareArrows, ShieldCheck } from "lucide-react";
 import { PageHeader, Status } from "@/components/ui";
 import { RoadmapView } from "@/components/roadmap-view";
-import { courseById, programById } from "@/lib/academic-data";
+import { WayloCommandBar } from "@/components/waylo-command-bar";
+import { UncertaintyActionCard } from "@/components/uncertainty-action-card";
 import { useWorkspaceStore } from "@/lib/workspace-store";
 
 export default function WhatIfPage() {
-  const { workspace, simulationResult, simulateRemoval, clearSimulation, applySimulation } = useWorkspaceStore((state) => state);
-  const baseline = simulationResult?.baseline.routes[0] ?? workspace.plan?.routes[0];
-  const simulated = simulationResult?.simulated.routes[0];
-  const program = programById.get(workspace.profile.selectedPathwayId);
-  const selectableCourses = baseline?.terms.flatMap((term) => term.courses) ?? [];
-  return <div className="page"><PageHeader title="See what changes before you change your plan." subtitle="Waylo recalculates the prerequisite graph and explains the resulting timeline change from the current dataset." /><div className="whatif-layout"><aside className="panel scenario-panel"><h2 className="section-title">Scenario</h2><label className="control-label" htmlFor="remove-course">Remove or defer a course</label><select id="remove-course" className="field" value={simulationResult ? "coc-math-211" : ""} onChange={(event) => event.target.value && simulateRemoval(event.target.value)}><option value="">Choose a course</option>{selectableCourses.map((course) => <option value={course.courseId} key={course.courseId}>{course.code}</option>)}</select><button className="button primary" type="button" style={{ width: "100%", marginTop: 14 }} onClick={() => simulateRemoval("coc-math-211")}><GitCompareArrows size={16} />Remove Calculus I</button><button className="button" type="button" style={{ width: "100%", marginTop: 8 }} onClick={clearSimulation}><RotateCcw size={15} />Reset scenario</button><p className="section-copy" style={{ marginTop: 15 }}>Nothing changes until you apply the recalculated route.</p></aside><section className="panel comparison-lane"><h2 className="lane-title">Current route</h2><p className="section-copy">{program?.universityName} {program?.name} · {baseline?.estimatedTransferTerm}</p>{baseline ? <RoadmapView route={baseline} compact /> : null}<div className="comparison-divider" /><h2 className="lane-title simulated">Recalculated route</h2>{simulated ? <><p className="section-copy">{simulationResult?.delta.explanation}</p><RoadmapView route={simulated} compact /></> : <div className="empty-state" style={{ minHeight: 220 }}><div><GitCompareArrows size={30} /><h2>Choose a change</h2><p>Try removing Calculus I to see dependent Data Science preparation move to later eligible terms.</p></div></div>}</section><aside className="stack"><section className="callout info"><div className="callout-title"><ShieldCheck size={20} />Impact summary</div>{simulationResult ? <div className="stack" style={{ marginTop: 14 }}><div className="summary-metric"><ArrowRight size={18} color="var(--purple)" /><div><strong>{simulationResult.delta.baselineTransferTerm} → {simulationResult.delta.simulatedTransferTerm}</strong><span>{simulationResult.delta.termDifference} later term{simulationResult.delta.termDifference === 1 ? "" : "s"} in this dataset</span></div></div><div className="summary-metric"><AlertTriangle size={18} color="var(--amber)" /><div><strong>{simulationResult.delta.affectedRequirements.length} affected milestones</strong><span>{simulationResult.delta.affectedRequirements.join(", ") || "Prerequisite chain"}</span></div></div></div> : <p>Waylo will show timeline, milestone, and blocker differences here.</p>}</section>{simulationResult ? <section className="callout warning"><div className="callout-title"><AlertTriangle size={20} />Why it changed</div><p>{courseById.get("coc-math-211")?.title} unlocks Calculus II and later math preparation. The schedule is recalculated from those dependencies—not from a scripted result.</p><Status tone="warning" label="Review before applying" /><button className="button primary" type="button" style={{ width: "100%", marginTop: 14 }} onClick={applySimulation}>Apply recalculated route</button></section> : null}</aside></div></div>;
+  const workspace = useWorkspaceStore((state) => state.workspace);
+  const simulation = useWorkspaceStore((state) => state.simulationResult);
+  const baseline = simulation?.baselineRoute ?? workspace.plan?.routes.find((route) => route.id === workspace.activeRouteId) ?? workspace.plan?.routes[0];
+  const simulated = simulation?.simulatedRoute;
+  return (
+    <div className="page">
+      <PageHeader title="See what changes before you change your plan." subtitle="Describe a detour or use the same bounded visual controls. Nothing is saved until you confirm the engine result." />
+      <WayloCommandBar />
+      <div className="whatif-comparison">
+        <section className="panel roadmap-panel"><div className="comparison-heading"><div><span className="eyebrow">Before</span><h2>Current route</h2></div>{baseline ? <Status tone="confirmed" label={baseline.estimatedTransferTerm} /> : null}</div>{baseline ? <RoadmapView route={baseline} compact /> : null}</section>
+        <span className="comparison-arrow" aria-hidden="true"><ArrowRight /></span>
+        <section className={`panel roadmap-panel ${simulated ? "recalculated" : "pending"}`}><div className="comparison-heading"><div><span className="eyebrow">After</span><h2>Recalculated route</h2></div>{simulated ? <Status tone={simulated.valid ? "confirmed" : "blocker"} label={simulated.estimatedTransferTerm} /> : null}</div>{simulated ? <RoadmapView route={simulated} compact /> : <div className="empty-state"><div><GitCompareArrows size={30} /><h2>Preview a route change</h2><p>The resulting course moves, target status, and blockers appear here after simulation.</p></div></div>}</section>
+      </div>
+      <div className="whatif-footer-grid"><section className="callout info"><div className="callout-title"><ShieldCheck size={20} />Deterministic boundary</div><p>Prerequisites, unit limits, offerings, duplicate credit, and target satisfaction are recalculated from the dataset—not accepted from model output.</p></section><UncertaintyActionCard courseId="coc-math-211" compact /></div>
+    </div>
+  );
 }

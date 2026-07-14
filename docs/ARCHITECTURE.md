@@ -10,7 +10,7 @@
 
 ## Runtime structure
 
-Waylo uses Next.js App Router with server route handlers and a client-side workspace. The client stores only normalized `WayloWorkspaceV1` state in IndexedDB. Raw uploads and model payloads are not written to IndexedDB or production logs.
+Waylo uses Next.js App Router with server route handlers and a client-side workspace. The client stores only normalized `WayloWorkspaceV2` state in IndexedDB. V1 records migrate without losing normalized profile/plan state. Raw commands, unconfirmed previews, uploads, drafts, and model payloads are not written to IndexedDB or production logs.
 
 ```text
 UI routes
@@ -24,21 +24,34 @@ UI routes
        -> deterministic tools and validator
 ```
 
+The command lifecycle is deliberately review-gated:
+
+```text
+natural-language command
+  -> PlanCommandInterpretation (live structured output or labeled seeded parser)
+  -> bounded PlanChange preview
+  -> deterministic SimulationEngine
+  -> RouteValidator
+  -> before/after review
+  -> explicit confirmation
+  -> normalized WayloWorkspaceV2 commit
+```
+
 ## Core boundaries
 
 - `AcademicDataRepository`: validated institutions, programs, courses, requirements, known offerings, articulations, and evidence.
 - `PlanningEngine`: completed coverage, remaining groups, prerequisite graph, bounded candidate creation, scheduling, and strategy ranking.
 - `RouteValidator`: duplicate credit, missing prerequisites, invalid ordering, units, known offerings, and unsupported-pathway checks. Completed-credit matching separately enforces grade and verification status.
-- `SimulationEngine`: pure baseline-to-scenario transformations and structured deltas.
+- `SimulationEngine`: pure baseline-to-scenario transformations, target evaluation, course moves, and structured before/after deltas.
 - `EvidenceRepository`: source lookup and pathway coverage reporting.
 - `AcademicAIProvider`: structured extraction, explanation, and bounded repair proposal.
-- `WorkspaceRepository`: `WayloWorkspaceV1` persistence, migration, reset, and seeded initialization.
+- `WorkspaceRepository`: `WayloWorkspaceV2` persistence, V1 migration, reset, and seeded initialization.
 
 ## Planning algorithm
 
 1. Validate the student profile and select one of the six covered pathways.
-2. Count only verified completed courses that meet the requirement's minimum grade.
-3. Surface uncertain transcript matches as review items without awarding completed coverage.
+2. Count verified completed courses that meet the requirement's minimum grade. A separately recorded counselor-confirmed resolution may satisfy planning coverage, but it never changes the evidence status to verified.
+3. Surface unresolved transcript matches as review items without silently awarding completed coverage.
 4. Expand each pathway's explicit requirement-course list and recursively include prerequisites.
 5. Schedule eligible courses across the bounded seven-term horizon under unit, summer, prerequisite, and known-offering constraints.
 6. Build fastest, overlap, and balanced candidates using deterministic priority rules.
@@ -50,8 +63,9 @@ The bounded search does not claim mathematical optimality.
 ## API contracts
 
 - `GET /api/health` -> `{ status, application, aiConfigured, model, seededMode, xhigh }`; never returns configuration values.
-- `POST /api/transcripts/extract` -> normalized course candidates, confidence, source-page references, and review flags. Supported inputs are constrained by MIME type and size and are discarded after the request.
-- `POST /api/planning-sessions` -> newline-delimited `PlanningEvent` records derived from the validated `PlanResult` supplied in the request.
+- `POST /api/plan-commands/parse` -> a Zod-validated `PlanCommandInterpretation` containing bounded changes, confidence, and clarification items.
+- `POST /api/transcripts/extract` -> normalized course candidates, confidence, and review flags. NDJSON mode emits application-owned progress boundaries and ends with the structured result. Supported inputs are constrained by MIME type and size and are discarded after the request.
+- `POST /api/planning-sessions` -> newline-delimited `OperationalTraceEvent` records derived from the validated `PlanResult` supplied in the request.
 - `POST /api/advisor-summary` -> structured printable summary derived from validated workspace data.
 
 ## GPT-5.6 Sol

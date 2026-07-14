@@ -82,6 +82,7 @@ out
 playwright-report/
 test-results/
 blob-report/
+artifacts/qa/
 
 # Nuxt.js build / generate output
 .nuxt

@@ -1,4 +1,4 @@
-import type { StudentCourse } from "@/lib/domain";
+import type { EvidenceReviewResolution, StudentCourse } from "@/lib/domain";
 
 const gradeRank: Record<string, number> = {
   "A+": 13, A: 12, "A-": 11,
@@ -15,4 +15,15 @@ export function meetsMinimumGrade(grade: string | undefined, minimumGrade = "C-"
 
 export function isVerifiedCompleted(course: StudentCourse, minimumGrade = "C-"): boolean {
   return course.status === "completed" && course.matchStatus === "verified" && meetsMinimumGrade(course.grade, minimumGrade);
+}
+
+export function isCompletedWithReviewResolution(
+  course: StudentCourse,
+  resolutions: EvidenceReviewResolution[] = [],
+  minimumGrade = "C-",
+): boolean {
+  if (isVerifiedCompleted(course, minimumGrade)) return true;
+  return course.status === "completed"
+    && meetsMinimumGrade(course.grade, minimumGrade)
+    && resolutions.some((resolution) => resolution.courseId === course.courseId && resolution.status === "counselor-confirmed");
 }

@@ -1,4 +1,4 @@
-import { WayloWorkspaceV1Schema, type WayloWorkspaceV1 } from "@/lib/domain";
+import { WayloWorkspaceV1Schema, WayloWorkspaceV2Schema, type WayloWorkspaceV2 } from "@/lib/domain";
 
 const DB_NAME = "waylo-workspace";
 const STORE_NAME = "workspace";
@@ -16,17 +16,34 @@ function openDatabase(): Promise<IDBDatabase> {
 }
 
 export interface WorkspaceRepository {
-  load(): Promise<WayloWorkspaceV1 | undefined>;
-  save(workspace: WayloWorkspaceV1): Promise<void>;
+  load(): Promise<WayloWorkspaceV2 | undefined>;
+  save(workspace: WayloWorkspaceV2): Promise<void>;
   reset(): Promise<void>;
 }
 
-export function migrateWorkspace(input: unknown): WayloWorkspaceV1 | undefined {
+export function migrateWorkspace(input: unknown): WayloWorkspaceV2 | undefined {
   if (!input || typeof input !== "object") return undefined;
   const version = Reflect.get(input, "version");
+  if (version === 2) {
+    const parsed = WayloWorkspaceV2Schema.safeParse(input);
+    return parsed.success ? parsed.data : undefined;
+  }
   if (version !== 1) return undefined;
   const parsed = WayloWorkspaceV1Schema.safeParse(input);
-  return parsed.success ? parsed.data : undefined;
+  if (!parsed.success) return undefined;
+  return WayloWorkspaceV2Schema.parse({
+    ...parsed.data,
+    version: 2,
+    reviewResolutions: [],
+    operationalTrace: parsed.data.planningEvents.map((event) => ({
+      id: event.id,
+      stage: event.type === "warning" ? "review" : event.type,
+      label: event.label,
+      detail: event.detail,
+      status: event.status,
+      evidenceIds: [],
+    })),
+  });
 }
 
 export const workspaceRepository: WorkspaceRepository = {

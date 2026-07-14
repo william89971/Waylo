@@ -20,6 +20,7 @@ export const seededAdvisorSummary: AdvisorSummary = {
   estimatedTransferTerm: "Fall 2028",
   milestones: ["Confirm current ASSIST articulations", "Complete the calculus sequence in prerequisite order", "Finish programming and statistics preparation"],
   verifiedFacts: ["The displayed course order passes Waylo's deterministic prerequisite checks.", "The selected route stays within the configured unit limit."],
+  counselorConfirmedFacts: [],
   reviewItems: ["Exact course-to-course articulation must be rechecked in ASSIST for the applicable academic year.", "Future term offerings are known only where the College of the Canyons dataset provides them."],
   questionsForCounselor: ["Do the current ASSIST agreements confirm each displayed equivalency?", "Does this workload fit the student's other commitments?", "Are any destination-specific breadth requirements missing from the current V1 coverage?"],
   disclaimer: "Waylo is a planning aid, not an admission guarantee. Review this plan with a counselor before enrollment decisions.",

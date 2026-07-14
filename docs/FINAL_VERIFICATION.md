@@ -7,44 +7,48 @@ Last updated: 2026-07-13
 | Check | Result |
 | --- | --- |
 | Strict TypeScript | Pass |
-| ESLint | Pass |
-| Vitest unit, contract, and API tests | 23/23 pass |
-| Next.js production build | Pass; 18 routes compiled |
-| Playwright | 6 pass, 2 intentional cross-project skips |
-| axe serious/critical issues | 0 in tested desktop/mobile overview and advisor summary |
+| ESLint | Pass with zero warnings |
+| Vitest unit, contract, and API tests | 32/32 pass |
+| Next.js production build | Pass; 19 application/API routes compiled |
+| Playwright | 10 pass, 6 intentional cross-project skips |
+| Viewports | 1440×900 desktop and 390×844 mobile |
+| Route coverage | Landing, demo, onboarding, all workspace routes, and evidence detail |
+| axe serious/critical issues | 0 across every public/workspace route in desktop and mobile projects |
+| Reduced motion | Pass |
+| Print output | Pass |
+| Raw upload/command persistence check | Pass; only normalized confirmed workspace data persists |
 | Live GPT request | Pending user-supplied key |
-| Isolated clean-source install | Pass: `npm ci`, typecheck, lint, 23 tests, and build |
-| Exact public Git clone | Pending branch publication |
-| Vercel remote build | Pass; deployment ready at `https://waylo-phi.vercel.app` |
-| Logged-out/incognito deployment journey | Pending release pass |
+| Exact public Git clone | Deferred while the repository remains private at the user’s request |
+| Deployment of this revision | Pending push and Vercel redeploy |
 
 ## Actual User Demo Test
 
-Tested flow: landing → seeded demo → overview → transcript profile → pathway switch → route compare → roadmap → Calculus I what-if → streamed planning session → evidence detail → printable advisor summary → reload persistence. The flow was exercised in desktop Chromium and a Chromium mobile device profile.
+Tested flow: roadmap command → structured preview → deterministic simulation → target-miss acknowledgment → confirmed persistence → exact evidence drawer → editable counselor inquiry → alternate-route check → counselor-confirmed resolution → transcript upload → seven visible stages → student confirmation → normalized workspace commit → operational trace → pathway overlap → route strategies → advisor print.
 
 What worked:
 
-- Seeded mode completed end to end without credentials.
-- Selecting a pathway persisted across navigation and reload.
-- All three route strategies rendered with distinct term layouts and tradeoffs.
-- The what-if timeline changed from the deterministic prerequisite graph.
-- Evidence details exposed source, year, status, and review notes.
-- Print media produced the advisor-summary layout without navigation chrome.
-- Mobile navigation and course-evidence access remained usable.
-- Tested pages produced no serious or critical axe findings and no unexpected console errors.
+- The supplied Linear Algebra command resolves to the bounded course ID, summer preference, and Fall 2028 target.
+- No workspace route changes before confirmation.
+- The valid Spring 2029 result cannot be saved until the student acknowledges missing the Fall 2028 target.
+- Evidence actions cite College of the Canyons, destination-program, and ASSIST records without declaring the equivalency settled.
+- Counselor confirmation stays distinct from verified source evidence and persists through `WayloWorkspaceV2`.
+- PDF/image onboarding visibly covers all seven stages and excludes the filename/upload from stored state.
+- The operational trace exposes source IDs, counts, rejection, repair, and validated routes without hidden reasoning.
+- All public/workspace pages remain usable without horizontal overflow at both required viewports.
+- All tested pages have zero serious or critical axe findings.
 
 What failed and was fixed:
 
-- Early route selectors were ambiguous; accessible labels and exact selectors were added.
-- Navigation assertions raced client transitions; the flow now waits for visible page outcomes.
-- Warning and teal text did not meet the contrast target; semantic foreground tokens were darkened.
-- The top-bar identity block could compress into adjacent labels; layout constraints were corrected.
-- The in-app browser could not reach the local Windows host in this environment; QA was completed with the approved Playwright fallback and screenshots.
+- Primary shadcn button text inherited navy on Waylo blue; the semantic foreground cascade was corrected.
+- The extraction progress bar lacked an accessible name; it now has a stable label.
+- Scrollable roadmap regions were not keyboard-focusable; they now expose a labeled focusable region.
+- The refined trace grid retained desktop columns on mobile; the mobile grid now collapses to one column.
+- Trace labels briefly failed contrast checks during entry animation; initial trace rows now render at stable contrast while streamed layout movement remains restrained.
 
 Remaining verification:
 
-- Run live GPT extraction/planning after the user adds the key.
-- Verify `xhigh` with one live request or keep it disabled on `high`.
-- Verify the final public URL, exact Git clone, incognito journey, public video, and Devpost fields.
+- After the user adds `OPENAI_API_KEY`, run live transcript and command smoke tests without exposing the key.
+- Keep `xhigh` disabled unless the live request accepts it; otherwise remain on `high`.
+- Push this revision, deploy it, verify the private preview, and perform the public clone/incognito checks only after the user makes the repository public.
 
-Current readiness: the local seeded product is demo-ready and the Vercel remote build is ready. Live AI, clean-clone, GitHub publication, and logged-out deployment claims remain pending until directly verified.
+Current readiness: the seeded product is implementation-complete and demo-ready locally. Live GPT and deployment/publication checks remain intentionally pending.

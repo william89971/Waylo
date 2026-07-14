@@ -19,9 +19,12 @@ Waylo is a planning aid, not an official degree audit, admissions decision, or p
 - Three meaningfully different route strategies: fastest valid route, greatest verified overlap, and balanced workload.
 - Deterministic prerequisite, duplicate-credit, known-offering, unit-limit, completion-grade, and route-coverage checks.
 - A side-by-side what-if simulation derived from the prerequisite graph.
+- A natural-language plan command that previews bounded changes, runs the deterministic simulator, and requires confirmation before saving.
+- Actionable uncertainty cards for exact-source review, editable counselor inquiries, supported alternate-route exploration, and separately labeled counselor confirmation.
+- A visible seven-stage Evidence-to-Plan workflow for transcript screenshots and PDFs, plus a sanitized operational trace.
 - Evidence status, academic year, retrieval date, assumptions, and counselor-review items at the point of use.
 - Transcript review, streamed planning-session events, and an advisor-ready printable summary.
-- Login-free IndexedDB persistence using a strict, versioned `WayloWorkspaceV1` record.
+- Login-free IndexedDB persistence using a strict, migrated `WayloWorkspaceV2` record.
 - A fully functional seeded journey without an API key, plus optional server-side GPT-5.6 Sol workflows.
 
 ## Local setup
@@ -78,13 +81,14 @@ The browser suite covers desktop and mobile flows, persistence, what-if comparis
 ## API surface
 
 - `GET /api/health` reports status, configured/not-configured state, model ID, seeded availability, and `xhigh` verification state—never configuration values.
-- `POST /api/transcripts/extract` accepts seeded or live transcript text, PDF, PNG, JPEG, or WebP input. Uploads are processed only for that request.
-- `POST /api/planning-sessions` streams newline-delimited typed planning events.
+- `POST /api/plan-commands/parse` converts a bounded natural-language request into validated `PlanChange` records. The client cannot invent course IDs.
+- `POST /api/transcripts/extract` accepts seeded or live transcript text, PDF, PNG, JPEG, or WebP input. It preserves the JSON contract and can stream NDJSON progress events.
+- `POST /api/planning-sessions` streams sanitized newline-delimited operational trace events.
 - `POST /api/advisor-summary` returns a structured printable summary from validated workspace state.
 
 ## Privacy and persistence
 
-Only normalized profile, plan, simulation, safe planning-event, and mode data are stored locally. Raw transcript bytes or text, prompts, model responses, API responses, and secrets are excluded from `WayloWorkspaceV1`. Server logs are limited to safe operational categories; they must not contain transcript/profile contents or model payloads.
+Only normalized confirmed profile, plan, simulation, evidence-resolution, trace, and mode data are stored locally. Raw commands, unconfirmed previews, uploads, transcript text, counselor drafts, prompts, model responses, API responses, and secrets are excluded from `WayloWorkspaceV2`. Server logs are limited to safe operational categories; they must not contain transcript/profile contents or model payloads.
 
 ## Academic-data limitations
 

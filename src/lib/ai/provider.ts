@@ -2,8 +2,10 @@ import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import type { ParsedResponse, ParsedResponseFunctionToolCall, ResponseInput, ResponseInputContent } from "openai/resources/responses/responses";
 import type { ReasoningEffort } from "openai/resources/shared";
-import { AdvisorSummarySchema, TranscriptExtractionSchema, type AdvisorSummary, type PlanResult, type StudentProfile, type TranscriptExtraction } from "@/lib/domain";
+import { AdvisorSummarySchema, PlanCommandInterpretationSchema, TranscriptExtractionSchema, type AdvisorSummary, type PlanCommandInterpretation, type PlanResult, type RouteCandidate, type StudentProfile, type TranscriptExtraction } from "@/lib/domain";
 import { createPlanningTools } from "@/lib/ai/planning-tools";
+import { courses } from "@/lib/academic-data";
+import { validateBoundedInterpretation } from "@/lib/plan-command";
 
 export const WAYLO_MODEL = "gpt-5.6-sol" as const;
 export const SDK_REASONING_EFFORT = "high" as const;
@@ -19,7 +21,7 @@ export class AIWorkflowError extends Error {
   constructor(public readonly category: "timeout" | "rate_limit" | "invalid_output" | "upstream", message: string) { super(message); this.name = "AIWorkflowError"; }
 }
 
-type TranscriptInput = { kind: "text"; text: string } | { kind: "file"; filename: string; mimeType: string; dataBase64: string };
+export type TranscriptInput = { kind: "text"; text: string } | { kind: "file"; filename: string; mimeType: string; dataBase64: string };
 type ModelInput = string | ResponseInput;
 
 function client() {
@@ -46,6 +48,7 @@ function transcriptContent(input: TranscriptInput): ModelInput {
 
 export interface AcademicAIProvider {
   isConfigured(): boolean;
+  parsePlanCommand(command: string, selectedPathwayId: string, activeRoute?: RouteCandidate): Promise<PlanCommandInterpretation>;
   extractTranscript(input: TranscriptInput): Promise<TranscriptExtraction>;
   createAdvisorSummary(profile: StudentProfile, plan: PlanResult): Promise<AdvisorSummary>;
   explainPlanningSession(profile: StudentProfile, plan: PlanResult): Promise<AdvisorSummary>;
@@ -79,6 +82,20 @@ async function parseAdvisor(profile: StudentProfile, plan: PlanResult, useTools:
 
 export const academicAIProvider: AcademicAIProvider = {
   isConfigured: () => Boolean(process.env.OPENAI_API_KEY),
+  async parsePlanCommand(command, selectedPathwayId, activeRoute) {
+    try {
+      const catalog = courses.map((course) => ({ id: course.id, code: course.code, title: course.title }));
+      const response = await client().responses.parse({
+        model: WAYLO_MODEL,
+        instructions: "Normalize a planning request into only the allowed changes. Never invent a course ID or edit a plan. 'Remove' means defer the named course outside its current route position; the deterministic engine decides whether it must be rescheduled. Add clarification items for ambiguity.",
+        input: JSON.stringify({ command, selectedPathwayId, activeRoute: activeRoute ? { id: activeRoute.id, terms: activeRoute.terms.map((term) => ({ label: term.label, courseIds: term.courses.map((course) => course.courseId) })) } : null, boundedCourseCatalog: catalog, allowedChanges: ["defer_course", "set_summer_enrollment", "set_transfer_target"] }),
+        reasoning: { effort: SDK_REASONING_EFFORT },
+        text: { format: zodTextFormat(PlanCommandInterpretationSchema, "waylo_plan_command") },
+      });
+      if (!response.output_parsed) throw new AIWorkflowError("invalid_output", "The live command response did not match the required schema.");
+      return validateBoundedInterpretation(PlanCommandInterpretationSchema.parse({ ...response.output_parsed, source: "live" }));
+    } catch (error) { if (error instanceof AIConfigurationError) throw error; throw classify(error); }
+  },
   async extractTranscript(input) {
     try {
       const response = await client().responses.parse({

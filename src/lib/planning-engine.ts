@@ -1,8 +1,8 @@
 import { courseById, programById } from "@/lib/academic-data";
-import { isVerifiedCompleted } from "@/lib/grades";
-import type { PlanResult, PlannedCourse, RouteCandidate, RouteStrategy, StudentProfile, TermPlan, ValidationIssue } from "@/lib/domain";
+import { isCompletedWithReviewResolution, isVerifiedCompleted } from "@/lib/grades";
+import type { EvidenceReviewResolution, PlanResult, PlannedCourse, RouteCandidate, RouteStrategy, StudentProfile, TermPlan, ValidationIssue } from "@/lib/domain";
 
-const TERM_SEQUENCE = [
+export const TERM_SEQUENCE = [
   { id: "fall-2026", label: "Fall 2026", season: "fall" as const, year: 2026 },
   { id: "spring-2027", label: "Spring 2027", season: "spring" as const, year: 2027 },
   { id: "summer-2027", label: "Summer 2027", season: "summer" as const, year: 2027 },
@@ -15,10 +15,11 @@ const TERM_SEQUENCE = [
 export interface PlanningOptions {
   deferredCourseIds?: Record<string, number>;
   includeSummer?: boolean;
+  reviewResolutions?: EvidenceReviewResolution[];
 }
 
 export interface RouteValidator {
-  validate(route: RouteCandidate, profile: StudentProfile): ValidationIssue[];
+  validate(route: RouteCandidate, profile: StudentProfile, reviewResolutions?: EvidenceReviewResolution[]): ValidationIssue[];
 }
 
 export interface PlanningEngine {
@@ -101,7 +102,7 @@ function requiredCourseIds(pathwayId: string, profile?: StudentProfile, strategy
 }
 
 function schedule(profile: StudentProfile, pathwayId: string, strategy: RouteStrategy, options: PlanningOptions): TermPlan[] {
-  const completed = new Set(profile.courses.filter((course) => isVerifiedCompleted(course)).map((course) => course.courseId));
+  const completed = new Set(profile.courses.filter((course) => isCompletedWithReviewResolution(course, options.reviewResolutions)).map((course) => course.courseId));
   const required = requiredCourseIds(pathwayId, profile, strategy).filter((courseId) => !completed.has(courseId));
   const unscheduled = new Set(required);
   const terms: TermPlan[] = [];
@@ -142,9 +143,9 @@ function schedule(profile: StudentProfile, pathwayId: string, strategy: RouteStr
 }
 
 export const routeValidator: RouteValidator = {
-  validate(route, profile) {
+  validate(route, profile, reviewResolutions = []) {
     const issues: ValidationIssue[] = [];
-    const completed = new Set(profile.courses.filter((course) => isVerifiedCompleted(course)).map((course) => course.courseId));
+    const completed = new Set(profile.courses.filter((course) => isCompletedWithReviewResolution(course, reviewResolutions)).map((course) => course.courseId));
     const seen = new Set(completed);
     for (const term of route.terms) {
       if (term.totalUnits > profile.maxUnits) {
@@ -177,7 +178,7 @@ function buildCandidate(profile: StudentProfile, pathwayId: string, strategy: Ro
   }
   const terms = schedule(profile, pathwayId, strategy, options);
   const placed = new Set(terms.flatMap((term) => term.courses.map((course) => course.courseId)));
-  const completed = new Set(profile.courses.filter((course) => isVerifiedCompleted(course)).map((course) => course.courseId));
+  const completed = new Set(profile.courses.filter((course) => isCompletedWithReviewResolution(course, options.reviewResolutions)).map((course) => course.courseId));
   const satisfied = program.requirements.filter((requirement) => requirement.courseIds.some((id) => completed.has(id) || placed.has(id))).length;
   const totalPlannedUnits = terms.reduce((total, term) => total + term.totalUnits, 0);
   const evidenceIds = unique([...program.evidenceIds, ...program.requirements.flatMap((requirement) => requirement.evidenceIds)]);
@@ -193,10 +194,14 @@ function buildCandidate(profile: StudentProfile, pathwayId: string, strategy: Ro
     overlapScore: strategy === "overlap" ? 0.92 : strategy === "balanced" ? 0.78 : 0.84,
     issues: [],
     evidenceIds,
-    assumptions: ["Known course offerings are planning assumptions, not registration guarantees.", "ASSIST equivalencies marked for review must be confirmed with a counselor."],
+    assumptions: [
+      "Known course offerings are planning assumptions, not registration guarantees.",
+      "ASSIST equivalencies marked for review must be confirmed with a counselor.",
+      ...(options.reviewResolutions?.length ? [`${options.reviewResolutions.length} course match is counselor-confirmed and remains separate from verified source evidence.`] : []),
+    ],
     valid: true,
   };
-  candidate.issues = routeValidator.validate(candidate, profile);
+  candidate.issues = routeValidator.validate(candidate, profile, options.reviewResolutions);
   const missing = requiredCourseIds(pathwayId, profile, strategy).filter((id) => !completed.has(id) && !placed.has(id));
   if (missing.length > 0) {
     candidate.issues.push({ id: `missing-${strategy}`, severity: "blocker", code: "unresolved_requirement", message: `${missing.length} prerequisite course${missing.length === 1 ? " is" : "s are"} not scheduled.`, affectedIds: missing, evidenceIds, nextAction: "Adjust the course deferral or unit limit." });
@@ -219,8 +224,9 @@ export const planningEngine: PlanningEngine = {
   buildPlan(profile, pathwayId = profile.selectedPathwayId, options = {}) {
     const routes = (["fastest", "overlap", "balanced"] as RouteStrategy[]).map((strategy) => buildCandidate(profile, pathwayId, strategy, options));
     const program = programById.get(pathwayId);
-    const completedRequirements = program?.requirements.filter((requirement) => requirement.courseIds.some((id) => profile.courses.some((course) => course.courseId === id && isVerifiedCompleted(course, requirement.minimumGrade)))).length ?? 0;
-    const reviewItems: ValidationIssue[] = profile.courses.filter((course) => course.matchStatus === "uncertain").map((course) => ({ id: `review-${course.courseId}`, severity: "review", code: "uncertain_equivalency", message: `${course.code} ${course.title} needs equivalency review.`, affectedIds: [course.courseId], evidenceIds: ["assist-review"], nextAction: "Confirm the articulation in ASSIST and review it with a counselor." }));
+    const completedRequirements = program?.requirements.filter((requirement) => requirement.courseIds.some((id) => profile.courses.some((course) => course.courseId === id && isCompletedWithReviewResolution(course, options.reviewResolutions, requirement.minimumGrade)))).length ?? 0;
+    const confirmedCourseIds = new Set(options.reviewResolutions?.map((resolution) => resolution.courseId) ?? []);
+    const reviewItems: ValidationIssue[] = profile.courses.filter((course) => course.matchStatus === "uncertain" && !confirmedCourseIds.has(course.courseId)).map((course) => ({ id: `review-${course.courseId}`, severity: "review", code: "uncertain_equivalency", message: `${course.code} ${course.title} needs equivalency review.`, affectedIds: [course.courseId], evidenceIds: ["assist-review"], nextAction: "Confirm the articulation in ASSIST and review it with a counselor." }));
     return {
       pathwayId,
       generatedAt: "2026-07-13T18:00:00.000Z",

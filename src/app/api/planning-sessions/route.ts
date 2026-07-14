@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { academicAIProvider } from "@/lib/ai/provider";
-import { PlanResultSchema, PlanningEventSchema, StudentProfileSchema, type PlanningEvent } from "@/lib/domain";
-import { createPlanningEvents } from "@/lib/planning-events";
+import { OperationalTraceEventSchema, PlanResultSchema, StudentProfileSchema, type OperationalTraceEvent } from "@/lib/domain";
+import { createOperationalTrace } from "@/lib/planning-events";
 
 export const runtime = "nodejs";
 
@@ -13,22 +13,22 @@ export async function POST(request: Request) {
   try { body = RequestSchema.parse(await request.json()); }
   catch { return Response.json({ error: "invalid_request", message: "A validated profile and plan are required." }, { status: 400 }); }
 
-  const events = createPlanningEvents(body.plan);
+  const events = createOperationalTrace(body.plan);
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const send = (event: PlanningEvent) => controller.enqueue(encoder.encode(`${JSON.stringify(PlanningEventSchema.parse(event))}\n`));
+      const send = (event: OperationalTraceEvent) => controller.enqueue(encoder.encode(`${JSON.stringify(OperationalTraceEventSchema.parse(event))}\n`));
       try {
         for (const event of events) send(event);
         if (body.mode === "live") {
           if (!academicAIProvider.isConfigured()) {
-            send({ id: "event-live-missing", type: "warning", label: "Live explanation unavailable", detail: "OPENAI_API_KEY is not configured. The validated seeded route remains available.", status: "review" });
+            send({ id: "event-live-missing", stage: "review", label: "Live explanation unavailable", detail: "OPENAI_API_KEY is not configured. The validated seeded route remains available.", status: "review", evidenceIds: [] });
           } else {
             await academicAIProvider.explainPlanningSession(body.profile, body.plan);
-            send({ id: "event-live-complete", type: "route", label: "Live GPT-5.6 explanation complete", detail: "The model used read-only planning tools; the displayed route still comes from deterministic validation.", status: "complete" });
+            send({ id: "event-live-complete", stage: "route", label: "Live GPT-5.6 explanation complete", detail: "The model used read-only planning tools; the displayed route still comes from deterministic validation.", status: "complete", evidenceIds: [] });
           }
         }
       } catch {
-        send({ id: "event-live-failed", type: "warning", label: "Live explanation could not finish", detail: "Waylo kept the deterministic route and returned to seeded explanation mode.", status: "review" });
+        send({ id: "event-live-failed", stage: "review", label: "Live explanation could not finish", detail: "Waylo kept the deterministic route and returned to seeded explanation mode.", status: "review", evidenceIds: [] });
       } finally { controller.close(); }
     },
   });

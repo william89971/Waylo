@@ -3,6 +3,7 @@ import { GET as health } from "@/app/api/health/route";
 import { POST as extract } from "@/app/api/transcripts/extract/route";
 import { POST as advisor } from "@/app/api/advisor-summary/route";
 import { POST as planning } from "@/app/api/planning-sessions/route";
+import { POST as parseCommand } from "@/app/api/plan-commands/parse/route";
 import { seedProfile } from "@/lib/academic-data";
 import { planningEngine } from "@/lib/planning-engine";
 
@@ -23,6 +24,23 @@ describe("API contracts", () => {
     const request = new Request("http://localhost/api/transcripts/extract", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "seeded", text: "sample" }) });
     const response = await extract(request); const body = await response.json();
     expect(response.status).toBe(200); expect(body.mode).toBe("seeded"); expect(body.extraction.reviewFlags.length).toBeGreaterThan(0);
+  });
+
+  it("streams transcript progress and ends with a structured result", async () => {
+    const request = new Request("http://localhost/api/transcripts/extract", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/x-ndjson" }, body: JSON.stringify({ mode: "seeded", text: "sample" }) });
+    const response = await extract(request); const events = (await response.text()).trim().split("\n").map((line) => JSON.parse(line));
+    expect(events.map((event) => event.stage).filter(Boolean)).toEqual(expect.arrayContaining(["reading_document", "extracting_courses", "flagging_uncertain_text", "matching_known_courses", "reviewing_with_student"]));
+    expect(events.at(-1).type).toBe("result");
+  });
+
+  it("parses bounded seeded commands and safely rejects missing-key live parsing", async () => {
+    const seededRequest = new Request("http://localhost/api/plan-commands/parse", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "seeded", command: "Remove Linear Algebra and use summer classes", selectedPathwayId: "ucla-data" }) });
+    const seededResponse = await parseCommand(seededRequest); const seededBody = await seededResponse.json();
+    expect(seededBody.changes.some((change: { courseId?: string }) => change.courseId === "coc-math-214")).toBe(true);
+    delete process.env.OPENAI_API_KEY;
+    const liveRequest = new Request("http://localhost/api/plan-commands/parse", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "live", command: "Remove Linear Algebra", selectedPathwayId: "ucla-data" }) });
+    const liveResponse = await parseCommand(liveRequest); const liveBody = await liveResponse.json();
+    expect(liveResponse.status).toBe(503); expect(liveBody.seededModeAvailable).toBe(true);
   });
 
   it("returns a safe missing-key response for live extraction", async () => {

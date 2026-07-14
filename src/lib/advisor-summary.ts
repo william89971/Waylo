@@ -1,7 +1,7 @@
 import { programById } from "@/lib/academic-data";
-import type { AdvisorSummary, PlanResult, StudentProfile } from "@/lib/domain";
+import type { AdvisorSummary, EvidenceReviewResolution, PlanResult, StudentProfile } from "@/lib/domain";
 
-export function buildAdvisorSummary(profile: StudentProfile, plan: PlanResult): AdvisorSummary {
+export function buildAdvisorSummary(profile: StudentProfile, plan: PlanResult, resolutions: EvidenceReviewResolution[] = []): AdvisorSummary {
   const program = programById.get(plan.pathwayId);
   const route = plan.routes[0];
   const reviewItems = [...plan.reviewItems.map((item) => item.message), ...route.issues.filter((issue) => issue.severity !== "blocker").map((issue) => issue.message)];
@@ -16,6 +16,7 @@ export function buildAdvisorSummary(profile: StudentProfile, plan: PlanResult): 
       `${plan.coverageSummary.completed} of ${plan.coverageSummary.total} pathway requirement groups are covered by verified completed courses.`,
       `The selected route schedules ${route.totalPlannedUnits} planned units within the configured ${profile.maxUnits}-unit term limit.`,
     ],
+    counselorConfirmedFacts: resolutions.map((resolution) => `${profile.courses.find((course) => course.courseId === resolution.courseId)?.code ?? resolution.courseId} was reported as counselor-confirmed on ${resolution.confirmedAt.slice(0, 10)}. Its underlying source status remains unchanged.`),
     reviewItems: reviewItems.length > 0 ? reviewItems : ["Recheck current articulation and course offerings before enrollment."],
     questionsForCounselor: [
       "Do the current ASSIST agreements confirm each displayed equivalency?",

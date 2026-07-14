@@ -19,7 +19,8 @@ Provenance is `official`, `assist`, `human_curated_demo`, or `ai_extracted`. Ver
 
 - `StudentCourse`: normalized course, grade, term, completion state, extraction confidence, review state.
 - `StudentProfile`: origin institution, completed/planned courses, targets, maximum units, summer preference.
-- `WayloWorkspaceV1`: schema version, profile, selected pathway, baseline route, simulations, safe planning events, UI preferences.
+- `EvidenceReviewResolution`: a student-reported counselor confirmation that may satisfy planning coverage while preserving the underlying evidence status.
+- `WayloWorkspaceV2`: schema version, profile, selected pathway, confirmed simulation, review resolutions, sanitized operational trace, and mode. V1 workspaces migrate to V2.
 
 Raw transcript bytes/text, prompts, API responses, and secrets are deliberately excluded.
 
@@ -29,7 +30,10 @@ Raw transcript bytes/text, prompts, API responses, and secrets are deliberately 
 - `TermPlan`: term identifier, course placements, units, milestone, validation state.
 - `ValidationIssue`: severity, code, message, affected courses/requirements, evidence, suggested next action.
 - `PlanResult`: valid routes, rejected candidates, unresolved requirements, review items, coverage summary.
-- `SimulationDelta`: baseline/simulated IDs, term difference, changed requirements, new/resolved blockers, explanation facts.
-- `PlanningEvent`: discriminated event union for source, extraction, tool, validation, repair, route, warning, and completion states.
+- `PlanChange`: bounded defer-course, summer-enrollment, or transfer-target instruction.
+- `PlanCommandInterpretation`: normalized changes, confidence, clarification items, and live/seeded provenance.
+- `SimulationDelta`: baseline/simulated IDs, term difference, course moves, target satisfaction, validity, acknowledgment gate, changed requirements, and blocker differences.
+- `OperationalTraceEvent`: sanitized source, extraction, matching, review, planning, validation, repair, or route event with evidence IDs and safe counts.
+- `TranscriptIngestionEvent`: NDJSON progress, structured result, or safe error event for the Evidence-to-Plan flow.
 
 All schemas are Zod-validated. Future persistence migrations must be pure, tested, and preserve normalized state or reset safely with an explanation.
