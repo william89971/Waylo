@@ -10,6 +10,7 @@ Codex served as the implementation partner for Waylo during OpenAI Build Week.
 - Generated the visual concept set, then translated the approved direction into the responsive product UI.
 - Built typed unit, contract, API, browser, mobile, print, persistence, and accessibility checks.
 - Ran the seeded journey as a user, fixed discovered interaction and contrast issues, and re-ran the checks.
+- Implemented and verified the Academic Twin dependency canvas, deterministic candidate outcomes, advisory workload model, Time Machine, Judge Mode, and controlled requirement-impact fixture.
 - Produced the reproducibility, academic-coverage, evaluation, demo, submission, and verification documentation.
 
 ## Human responsibilities

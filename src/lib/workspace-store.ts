@@ -1,27 +1,37 @@
 "use client";
 
 import { create } from "zustand";
-import { courseById, seedProfile } from "@/lib/academic-data";
+import { constraintsFromProfile } from "@/lib/academic-twin";
+import { courseById, programById, seedProfile } from "@/lib/academic-data";
 import { planningEngine } from "@/lib/planning-engine";
 import { simulationEngine, type SimulationResult } from "@/lib/simulation-engine";
 import { createOperationalTrace, createPlanningEvents } from "@/lib/planning-events";
 import { workspaceRepository } from "@/lib/workspace-repository";
-import type { PlanChange, TranscriptExtraction, WayloWorkspaceV2 } from "@/lib/domain";
+import type { PlanChange, TranscriptExtraction, WayloWorkspaceV3 } from "@/lib/domain";
 
-const seedPlan = planningEngine.buildPlan(seedProfile);
-const seedWorkspace: WayloWorkspaceV2 = {
-  version: 2,
+const seedConstraints = constraintsFromProfile(seedProfile);
+const seedPlan = planningEngine.buildPlan(seedProfile, seedProfile.selectedPathwayId, {
+  includeSummer: seedConstraints.summerEnrollment,
+  summerCourseLimit: seedConstraints.summerCourseLimit,
+  maxUnits: seedConstraints.maxUnits,
+  weeklyWorkHours: seedConstraints.weeklyWorkHours,
+});
+const seedWorkspace: WayloWorkspaceV3 = {
+  version: 3,
   profile: seedProfile,
+  constraints: seedConstraints,
+  selectedDestinationIds: ["berkeley", "ucla", "ucsd"],
   activeRouteId: seedPlan.routes[0]?.id,
   plan: seedPlan,
   planningEvents: createPlanningEvents(seedPlan),
   reviewResolutions: [],
   operationalTrace: createOperationalTrace(seedPlan),
+  requirementStaleness: [],
   mode: "seeded",
 };
 
 interface WorkspaceState {
-  workspace: WayloWorkspaceV2;
+  workspace: WayloWorkspaceV3;
   simulationResult?: SimulationResult;
   hydrated: boolean;
   hydrate(): Promise<void>;
@@ -36,12 +46,24 @@ interface WorkspaceState {
   reset(): Promise<void>;
 }
 
-function save(workspace: WayloWorkspaceV2) {
+function save(workspace: WayloWorkspaceV3) {
   void workspaceRepository.save(workspace).catch(() => undefined);
 }
 
-function rebuild(workspace: WayloWorkspaceV2, profile = workspace.profile): WayloWorkspaceV2 {
-  const plan = planningEngine.buildPlan(profile, profile.selectedPathwayId, { reviewResolutions: workspace.reviewResolutions });
+function buildPlan(workspace: WayloWorkspaceV3, profile = workspace.profile) {
+  return planningEngine.buildPlan(profile, profile.selectedPathwayId, {
+    includeSummer: workspace.constraints.summerEnrollment,
+    summerCourseLimit: workspace.constraints.summerCourseLimit,
+    maxUnits: workspace.constraints.maxUnits,
+    weeklyWorkHours: workspace.constraints.weeklyWorkHours,
+    transferTarget: workspace.constraints.transferTarget?.term,
+    targetPolicy: workspace.constraints.transferTarget?.policy,
+    reviewResolutions: workspace.reviewResolutions,
+  });
+}
+
+function rebuild(workspace: WayloWorkspaceV3, profile = workspace.profile): WayloWorkspaceV3 {
+  const plan = buildPlan(workspace, profile);
   return {
     ...workspace,
     profile,
@@ -66,7 +88,16 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   selectPathway(pathwayId) {
     const current = get().workspace;
-    const workspace = rebuild({ ...current, profile: { ...current.profile, selectedPathwayId: pathwayId }, simulation: undefined });
+    const program = programById.get(pathwayId);
+    const selectedDestinationIds = program && !new Set<string>(current.selectedDestinationIds).has(program.universityId)
+      ? [...current.selectedDestinationIds, program.universityId as "berkeley" | "ucla" | "ucsd"]
+      : current.selectedDestinationIds;
+    const workspace = rebuild({
+      ...current,
+      selectedDestinationIds,
+      profile: { ...current.profile, selectedPathwayId: pathwayId },
+      simulation: undefined,
+    });
     set({ workspace, simulationResult: undefined });
     save(workspace);
   },
@@ -77,13 +108,12 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   confirmCourse(courseId) {
     const current = get().workspace;
-    const issueId = `review-${courseId}`;
     if (current.reviewResolutions.some((resolution) => resolution.courseId === courseId)) return;
     const workspace = rebuild({
       ...current,
       reviewResolutions: [...current.reviewResolutions, {
         id: `resolution-${courseId}`,
-        issueId,
+        issueId: `review-${courseId}`,
         courseId,
         status: "counselor-confirmed",
         confirmedAt: new Date().toISOString(),
@@ -96,12 +126,19 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   simulateRemoval(courseId) {
     const course = courseById.get(courseId);
-    const result = get().simulateChanges([{ id: `defer-${courseId}`, type: "defer_course", courseId, courseCode: course?.code ?? courseId, courseTitle: course?.title ?? courseId }]);
-    set({ simulationResult: result });
+    get().simulateChanges([{ id: `defer-${courseId}`, type: "defer_course", courseId, courseCode: course?.code ?? courseId, courseTitle: course?.title ?? courseId }]);
   },
   simulateChanges(changes) {
     const current = get().workspace;
-    const result = simulationEngine.applyChanges(current.profile, changes, current.profile.selectedPathwayId, current.activeRouteId, current.reviewResolutions);
+    const result = simulationEngine.applyChanges(
+      current.profile,
+      changes,
+      current.profile.selectedPathwayId,
+      current.activeRouteId,
+      current.reviewResolutions,
+      current.constraints,
+      current.selectedDestinationIds,
+    );
     set({ simulationResult: result });
     return result;
   },
@@ -112,9 +149,11 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     const result = get().simulationResult;
     if (!result || !result.delta.valid || (result.delta.acknowledgmentRequired && !acknowledgeTargetMiss)) return false;
     const current = get().workspace;
-    const workspace: WayloWorkspaceV2 = {
+    const workspace: WayloWorkspaceV3 = {
       ...current,
       profile: result.simulatedProfile,
+      constraints: result.simulatedConstraints,
+      selectedDestinationIds: result.selectedDestinationIds as WayloWorkspaceV3["selectedDestinationIds"],
       plan: result.simulated,
       activeRouteId: result.simulatedRoute.id,
       simulation: result.delta,

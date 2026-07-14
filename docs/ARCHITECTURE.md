@@ -10,7 +10,7 @@
 
 ## Runtime structure
 
-Waylo uses Next.js App Router with server route handlers and a client-side workspace. The client stores only normalized `WayloWorkspaceV2` state in IndexedDB. V1 records migrate without losing normalized profile/plan state. Raw commands, unconfirmed previews, uploads, drafts, and model payloads are not written to IndexedDB or production logs.
+Waylo uses Next.js App Router with server route handlers and a client-side workspace. The client stores only normalized `WayloWorkspaceV3` state in IndexedDB. V1 and V2 records migrate without losing normalized profile/plan state. Raw commands, unconfirmed previews, uploads, drafts, and model payloads are not written to IndexedDB or production logs.
 
 ```text
 UI routes
@@ -34,7 +34,7 @@ natural-language command
   -> RouteValidator
   -> before/after review
   -> explicit confirmation
-  -> normalized WayloWorkspaceV2 commit
+  -> normalized WayloWorkspaceV3 commit
 ```
 
 ## Core boundaries
@@ -45,7 +45,10 @@ natural-language command
 - `SimulationEngine`: pure baseline-to-scenario transformations, target evaluation, course moves, and structured before/after deltas.
 - `EvidenceRepository`: source lookup and pathway coverage reporting.
 - `AcademicAIProvider`: structured extraction, explanation, and bounded repair proposal.
-- `WorkspaceRepository`: `WayloWorkspaceV2` persistence, V1 migration, reset, and seeded initialization.
+- `WorkspaceRepository`: `WayloWorkspaceV3` persistence, V1/V2 migration, reset, and seeded initialization.
+- `AcademicTwin`: a normalized, validated view of the current route, constraints, candidate outcomes, and advisory weekly workload.
+- `RouteCanvas`: dependency-node projections for the interactive desktop map and the equivalent mobile narrative.
+- `RequirementChangeDetector`: compares explicit controlled versions and proposes affected segments for review; it does not scrape or claim a real source update.
 
 ## Planning algorithm
 
@@ -53,10 +56,10 @@ natural-language command
 2. Count verified completed courses that meet the requirement's minimum grade. A separately recorded counselor-confirmed resolution may satisfy planning coverage, but it never changes the evidence status to verified.
 3. Surface unresolved transcript matches as review items without silently awarding completed coverage.
 4. Expand each pathway's explicit requirement-course list and recursively include prerequisites.
-5. Schedule eligible courses across the bounded seven-term horizon under unit, summer, prerequisite, and known-offering constraints.
-6. Build fastest, overlap, and balanced candidates using deterministic priority rules.
-7. Validate each candidate and retain a deliberately invalid fixture to demonstrate visible rejection.
-8. Return route tradeoffs, evidence, assumptions, review items, and structured failures.
+5. Search a bounded set of up to 24 internal schedule candidates across the seven-term horizon under unit, summer, prerequisite, and known-offering constraints.
+6. Validate every candidate, retain informative rejected outcomes, and apply at most one allowlisted deterministic repair that is revalidated from scratch.
+7. Rank valid candidates deterministically by validity, requested-target fit, strategy fit, evidence, workload variance, and stable ID into fastest, overlap, and balanced routes.
+8. Retain the baseline route when a proposal fails, and return route tradeoffs, evidence, assumptions, review items, structured failures, and Time Machine states.
 
 The bounded search does not claim mathematical optimality.
 
@@ -67,6 +70,8 @@ The bounded search does not claim mathematical optimality.
 - `POST /api/transcripts/extract` -> normalized course candidates, confidence, and review flags. NDJSON mode emits application-owned progress boundaries and ends with the structured result. Supported inputs are constrained by MIME type and size and are discarded after the request.
 - `POST /api/planning-sessions` -> newline-delimited `OperationalTraceEvent` records derived from the validated `PlanResult` supplied in the request.
 - `POST /api/advisor-summary` -> structured printable summary derived from validated workspace data.
+- `GET /api/judge-snapshot` -> sanitized coverage, evidence, outcome, architecture, latency, and build-manifest freshness data. Missing/stale verification is explicitly reported as not verified.
+- `POST /api/requirement-changes/compare` -> a Zod-validated comparison of controlled requirement versions and proposed affected route segments.
 
 ## GPT-5.6 Sol
 
@@ -82,3 +87,4 @@ The SDK retries transient requests twice. Invalid structured output or upstream 
 - Upload type and size are validated before processing.
 - UI copy never claims FERPA compliance.
 - Reset deletes the local workspace.
+- Judge Mode is session-only and never adds raw student data to its snapshot.

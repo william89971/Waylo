@@ -1,6 +1,6 @@
 # GPT and Deterministic-System Evaluation
 
-Evaluation date: 2026-07-13
+Evaluation date: 2026-07-14
 
 ## Current configuration
 
@@ -20,24 +20,27 @@ Evaluation date: 2026-07-13
 
 ## Offline contract evaluation
 
-- Transcript and advisor-summary structured-output schemas parse the supported fixtures and reject malformed contracts.
+- Transcript, command, advisor packet, Judge snapshot, and requirement-change schemas accept supported fixtures and reject malformed contracts.
 - Tool inputs are strict and read only normalized pathway, validation, evidence, and simulation state.
 - The missing-key route returns a safe categorized response and leaves seeded mode available.
 - The health endpoint reports configured/not-configured state and never exposes configuration values.
-- Recorded transcript fixtures are labeled `seeded`; generated route fixtures are produced by the current deterministic engine.
+- Recorded transcript and command results are explicitly labeled. Generated routes are revalidated by the current deterministic engine.
+- Requirement-change detection uses an explicitly controlled fixture and never claims a real catalog, ASSIST, or university update.
 
 ## Deterministic evaluation
 
-The suite covers requirement matching, minimum-grade handling, uncertain-completion exclusion, prerequisite ordering, duplicate credit, unit limits, course scheduling, three distinct route layouts across all six pathways, Calculus I what-if deltas, workspace migration, GPT contracts, and API contracts.
+The planner searches a bounded set of up to 24 internal candidates, validates each candidate, retains informative rejected outcomes, applies at most one allowlisted repair, and revalidates that repair from scratch. Ranking is stable and deterministic across validity, requested-target fit, route strategy, evidence, workload variance, and stable candidate ID. Weekly work hours inform advisory workload only; maximum units, prerequisites, offerings, duplicate credit, completion grade, and requirement coverage remain hard validation rules.
+
+The suite covers requirement matching, minimum-grade handling, uncertain-completion exclusion, prerequisite ordering, duplicate credit, unit limits, course scheduling, three distinct route layouts across all six pathways, command aliasing and ambiguity, advisory workload, target acknowledgments, Time Machine outcomes, Calculus I what-if deltas, V1/V2-to-V3 migration, counselor-confirmed coverage, controlled requirement comparison, GPT contracts, and API contracts.
 
 Current verified run:
 
 - TypeScript: pass
 - ESLint: pass
-- Vitest: 23/23 pass
-- Production build: pass; 18 application/API routes compiled
-- Playwright: 6 pass, 2 intentional cross-project skips
-- axe: no serious or critical violations in the tested overview and advisor-summary pages on desktop and mobile
+- Vitest: 40/40 pass
+- Production build: pass; 22 pages/routes generated or compiled
+- Playwright: 11 executed tests passed, 7 intentional cross-project skips
+- axe: no serious or critical violations across every public/workspace route in desktop and mobile projects
 
 ## Live verification protocol
 

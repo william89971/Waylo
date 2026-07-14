@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import type { ParsedResponse, ParsedResponseFunctionToolCall, ResponseInput, ResponseInputContent } from "openai/resources/responses/responses";
 import type { ReasoningEffort } from "openai/resources/shared";
-import { AdvisorSummarySchema, PlanCommandInterpretationSchema, TranscriptExtractionSchema, type AdvisorSummary, type PlanCommandInterpretation, type PlanResult, type RouteCandidate, type StudentProfile, type TranscriptExtraction } from "@/lib/domain";
+import { AdvisorSummarySchema, PlanCommandInterpretationSchema, TranscriptExtractionSchema, type AcademicConstraint, type AdvisorSummary, type PlanCommandInterpretation, type PlanResult, type RouteCandidate, type StudentProfile, type TranscriptExtraction } from "@/lib/domain";
 import { createPlanningTools } from "@/lib/ai/planning-tools";
 import { courses } from "@/lib/academic-data";
 import { validateBoundedInterpretation } from "@/lib/plan-command";
@@ -48,7 +48,7 @@ function transcriptContent(input: TranscriptInput): ModelInput {
 
 export interface AcademicAIProvider {
   isConfigured(): boolean;
-  parsePlanCommand(command: string, selectedPathwayId: string, activeRoute?: RouteCandidate): Promise<PlanCommandInterpretation>;
+  parsePlanCommand(command: string, selectedPathwayId: string, activeRoute?: RouteCandidate, context?: { constraints?: AcademicConstraint; selectedDestinationIds?: string[] }): Promise<PlanCommandInterpretation>;
   extractTranscript(input: TranscriptInput): Promise<TranscriptExtraction>;
   createAdvisorSummary(profile: StudentProfile, plan: PlanResult): Promise<AdvisorSummary>;
   explainPlanningSession(profile: StudentProfile, plan: PlanResult): Promise<AdvisorSummary>;
@@ -82,13 +82,13 @@ async function parseAdvisor(profile: StudentProfile, plan: PlanResult, useTools:
 
 export const academicAIProvider: AcademicAIProvider = {
   isConfigured: () => Boolean(process.env.OPENAI_API_KEY),
-  async parsePlanCommand(command, selectedPathwayId, activeRoute) {
+  async parsePlanCommand(command, selectedPathwayId, activeRoute, context) {
     try {
       const catalog = courses.map((course) => ({ id: course.id, code: course.code, title: course.title }));
       const response = await client().responses.parse({
         model: WAYLO_MODEL,
-        instructions: "Normalize a planning request into only the allowed changes. Never invent a course ID or edit a plan. 'Remove' means defer the named course outside its current route position; the deterministic engine decides whether it must be rescheduled. Add clarification items for ambiguity.",
-        input: JSON.stringify({ command, selectedPathwayId, activeRoute: activeRoute ? { id: activeRoute.id, terms: activeRoute.terms.map((term) => ({ label: term.label, courseIds: term.courses.map((course) => course.courseId) })) } : null, boundedCourseCatalog: catalog, allowedChanges: ["defer_course", "set_summer_enrollment", "set_transfer_target"] }),
+        instructions: "Normalize a planning request into only the allowed bounded changes. Never invent a course, pathway, destination, or requirement ID and never edit a plan. A named course term must match the supplied active route or produce a clarification. Weekly work hours are advisory; max units are hard. 'Remove' means defer the named course outside its current route position. The deterministic engine decides all scheduling and validation.",
+        input: JSON.stringify({ command, selectedPathwayId, activeRoute: activeRoute ? { id: activeRoute.id, terms: activeRoute.terms.map((term) => ({ label: term.label, courseIds: term.courses.map((course) => course.courseId) })) } : null, constraints: context?.constraints, selectedDestinationIds: context?.selectedDestinationIds, boundedCourseCatalog: catalog, boundedPathways: ["berkeley-cogsci", "berkeley-data", "ucla-cogsci", "ucla-data", "ucsd-cogsci", "ucsd-data"], boundedDestinations: ["berkeley", "ucla", "ucsd"], allowedChanges: ["defer_course", "restore_course", "replace_course", "set_summer_enrollment", "set_summer_limit", "set_max_units", "set_transfer_target", "set_pathway", "add_destination", "remove_destination", "set_weekly_work_hours"] }),
         reasoning: { effort: SDK_REASONING_EFFORT },
         text: { format: zodTextFormat(PlanCommandInterpretationSchema, "waylo_plan_command") },
       });

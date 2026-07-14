@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Bell, CalendarDays, CircleHelp, Home, Library, Menu, Route, Scale, SlidersHorizontal, UserRound, X, FileText, Waypoints } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/workspace-store";
+import { JudgeMode } from "@/components/judge-mode";
 
 const navItems = [
   { href: "/overview", label: "Overview", icon: Home },
@@ -60,6 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="app-main">
         <div className="app-topbar">
           <span className="mode-label"><span className="mode-dot" />{mode === "seeded" ? "Seeded example" : "Live session"}</span>
+          <JudgeMode />
           <Bell size={19} color="#52647a" aria-label="No new notifications" />
           <div className="user-summary">
             <span className="avatar"><UserRound size={18} /></span>

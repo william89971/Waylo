@@ -1,5 +1,18 @@
 # Build Week Changelog
 
+## 2026-07-14 - Academic Twin first-place experience upgrade
+
+- Reframed the canonical roadmap as an Academic Twin with a focusable dependency canvas on desktop and an equivalent vertical route narrative on mobile.
+- Added baseline, proposed, and repaired Time Machine states while protecting the confirmed route until acknowledgment and confirmation gates pass.
+- Expanded the command grammar to bounded course removal/moves, one-course summer constraints, preferred transfer targets, weekly work hours, and maximum units; the locked demo command resolves to exactly four changes.
+- Replaced the illustrative invalid fixture with a bounded deterministic search of up to 24 internal candidates, informative rejected outcomes, one allowlisted revalidated repair, and stable multi-factor ranking.
+- Added an advisory workload model that accounts for 25 weekly work hours without weakening hard unit, prerequisite, offering, grade, or evidence rules.
+- Migrated persistence to `WayloWorkspaceV3` while preserving V1/V2 normalized state and excluding raw commands, uploads, drafts, prompts, model output, and secrets.
+- Added a decision-oriented advisor packet, session-only Judge Mode, and honest missing/stale build-verification states.
+- Added a controlled requirement-change detector that identifies a proposed affected segment without presenting fixture data as a real external update.
+- Refined the application with deep-ink structural chrome, warm-ivory work surfaces, locally bundled Geist typography, purposeful motion, and corrected desktop/mobile accessibility behavior.
+- Expanded deterministic, contract, migration, API, and browser coverage for the Academic Twin features.
+
 ## 2026-07-13 — Guided planning and visual refinement
 
 - Added the natural-language Waylo command lifecycle: bounded interpretation, structured preview, deterministic simulation, before/after result, target-miss acknowledgment, and confirmation-only persistence.

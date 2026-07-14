@@ -20,11 +20,14 @@ Waylo is a planning aid, not an official degree audit, admissions decision, or p
 - Deterministic prerequisite, duplicate-credit, known-offering, unit-limit, completion-grade, and route-coverage checks.
 - A side-by-side what-if simulation derived from the prerequisite graph.
 - A natural-language plan command that previews bounded changes, runs the deterministic simulator, and requires confirmation before saving.
+- An Academic Twin workspace with a dependency canvas, semantic route focus, baseline/proposed/repaired Time Machine states, and an advisory workload model.
 - Actionable uncertainty cards for exact-source review, editable counselor inquiries, supported alternate-route exploration, and separately labeled counselor confirmation.
 - A visible seven-stage Evidence-to-Plan workflow for transcript screenshots and PDFs, plus a sanitized operational trace.
+- A session-only Judge Mode that summarizes architecture, bounded academic coverage, validation outcomes, evidence status, and build-verification freshness without exposing private data.
+- A controlled requirement-change fixture that demonstrates impact detection without claiming a real catalog, ASSIST, or university update.
 - Evidence status, academic year, retrieval date, assumptions, and counselor-review items at the point of use.
 - Transcript review, streamed planning-session events, and an advisor-ready printable summary.
-- Login-free IndexedDB persistence using a strict, migrated `WayloWorkspaceV2` record.
+- Login-free IndexedDB persistence using a strict, migrated `WayloWorkspaceV3` record.
 - A fully functional seeded journey without an API key, plus optional server-side GPT-5.6 Sol workflows.
 
 ## Local setup
@@ -85,10 +88,12 @@ The browser suite covers desktop and mobile flows, persistence, what-if comparis
 - `POST /api/transcripts/extract` accepts seeded or live transcript text, PDF, PNG, JPEG, or WebP input. It preserves the JSON contract and can stream NDJSON progress events.
 - `POST /api/planning-sessions` streams sanitized newline-delimited operational trace events.
 - `POST /api/advisor-summary` returns a structured printable summary from validated workspace state.
+- `GET /api/judge-snapshot` returns a sanitized, bounded product snapshot and marks absent or stale build verification as unverified.
+- `POST /api/requirement-changes/compare` compares an explicitly controlled requirement-version fixture and returns proposed affected route segments for review.
 
 ## Privacy and persistence
 
-Only normalized confirmed profile, plan, simulation, evidence-resolution, trace, and mode data are stored locally. Raw commands, unconfirmed previews, uploads, transcript text, counselor drafts, prompts, model responses, API responses, and secrets are excluded from `WayloWorkspaceV2`. Server logs are limited to safe operational categories; they must not contain transcript/profile contents or model payloads.
+Only normalized confirmed profile, plan, simulation, evidence-resolution, Academic Twin, trace, and mode data are stored locally. Raw commands, unconfirmed previews, uploads, transcript text, counselor drafts, prompts, model responses, API responses, and secrets are excluded from `WayloWorkspaceV3`. V1 and V2 records migrate without retaining raw payloads. Server logs are limited to safe operational categories; they must not contain transcript/profile contents or model payloads.
 
 ## Academic-data limitations
 
@@ -98,7 +103,7 @@ See [data coverage](docs/DATA_COVERAGE.md), [architecture](docs/ARCHITECTURE.md)
 
 ## Deployment
 
-Deploy with Vercel using the repository defaults. Leave `OPENAI_API_KEY` unset for a seeded-only deployment, or add it as an encrypted server-side Vercel environment variable to enable live mode. Do not prefix it with `NEXT_PUBLIC_`.
+Deploy with Vercel using the repository defaults. Leave `OPENAI_API_KEY` unset for a seeded-only deployment, or add it as an encrypted server-side Vercel environment variable to enable live mode. Do not prefix it with `NEXT_PUBLIC_`. The repository remains private until the user elects to publish it; exact public-clone verification is therefore a release step, not a current claim.
 
 ## License
 

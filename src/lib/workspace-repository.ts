@@ -1,4 +1,5 @@
-import { WayloWorkspaceV1Schema, WayloWorkspaceV2Schema, type WayloWorkspaceV2 } from "@/lib/domain";
+import { constraintsFromProfile } from "@/lib/academic-twin";
+import { WayloWorkspaceV1Schema, WayloWorkspaceV2Schema, WayloWorkspaceV3Schema, type WayloWorkspaceV2, type WayloWorkspaceV3 } from "@/lib/domain";
 
 const DB_NAME = "waylo-workspace";
 const STORE_NAME = "workspace";
@@ -16,22 +17,36 @@ function openDatabase(): Promise<IDBDatabase> {
 }
 
 export interface WorkspaceRepository {
-  load(): Promise<WayloWorkspaceV2 | undefined>;
-  save(workspace: WayloWorkspaceV2): Promise<void>;
+  load(): Promise<WayloWorkspaceV3 | undefined>;
+  save(workspace: WayloWorkspaceV3): Promise<void>;
   reset(): Promise<void>;
 }
 
-export function migrateWorkspace(input: unknown): WayloWorkspaceV2 | undefined {
+function fromV2(workspace: WayloWorkspaceV2): WayloWorkspaceV3 {
+  return WayloWorkspaceV3Schema.parse({
+    ...workspace,
+    version: 3,
+    constraints: constraintsFromProfile(workspace.profile),
+    selectedDestinationIds: ["berkeley", "ucla", "ucsd"],
+    requirementStaleness: [],
+  });
+}
+
+export function migrateWorkspace(input: unknown): WayloWorkspaceV3 | undefined {
   if (!input || typeof input !== "object") return undefined;
   const version = Reflect.get(input, "version");
+  if (version === 3) {
+    const parsed = WayloWorkspaceV3Schema.safeParse(input);
+    return parsed.success ? parsed.data : undefined;
+  }
   if (version === 2) {
     const parsed = WayloWorkspaceV2Schema.safeParse(input);
-    return parsed.success ? parsed.data : undefined;
+    return parsed.success ? fromV2(parsed.data) : undefined;
   }
   if (version !== 1) return undefined;
   const parsed = WayloWorkspaceV1Schema.safeParse(input);
   if (!parsed.success) return undefined;
-  return WayloWorkspaceV2Schema.parse({
+  const v2 = WayloWorkspaceV2Schema.parse({
     ...parsed.data,
     version: 2,
     reviewResolutions: [],
@@ -44,6 +59,7 @@ export function migrateWorkspace(input: unknown): WayloWorkspaceV2 | undefined {
       evidenceIds: [],
     })),
   });
+  return fromV2(v2);
 }
 
 export const workspaceRepository: WorkspaceRepository = {
@@ -53,9 +69,7 @@ export const workspaceRepository: WorkspaceRepository = {
     return new Promise((resolve, reject) => {
       const transaction = database.transaction(STORE_NAME, "readonly");
       const request = transaction.objectStore(STORE_NAME).get(KEY);
-      request.onsuccess = () => {
-        resolve(migrateWorkspace(request.result));
-      };
+      request.onsuccess = () => resolve(migrateWorkspace(request.result));
       request.onerror = () => reject(request.error);
       transaction.oncomplete = () => database.close();
     });

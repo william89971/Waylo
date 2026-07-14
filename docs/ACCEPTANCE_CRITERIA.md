@@ -6,12 +6,16 @@
 - All navigation destinations contain meaningful functionality on desktop and mobile.
 - Profile review includes an uncertain Calculus I match that does not silently earn credit.
 - Six College of the Canyons university-program pathways display official names and evidence metadata.
-- A selected pathway yields three distinct valid route strategies with assumptions and tradeoffs.
-- An intentionally invalid candidate is rejected for prerequisite order and shown in the planning trace.
+- A selected pathway yields three distinct valid route strategies with assumptions and tradeoffs from a bounded deterministic candidate search.
+- Informative invalid candidates are rejected by the current validator, shown in the Time Machine/trace, and never replace the baseline route.
+- The locked work-hours/Linear-Algebra/summer/target command resolves to exactly four bounded changes and cannot save before confirmation.
+- Weekly work hours affect advisory workload only; hard maximum-unit and prerequisite constraints remain unchanged.
 - Removing Calculus I deterministically breaks or delays the applicable Data Science sequence; the timeline comes from data and engine behavior, not scripted UI copy.
 - Switching to Cognitive Science recalculates overlap, requirements, warnings, and completion.
 - Evidence is reachable from requirements, courses, warnings, and advisor summary.
 - Advisor summary prints cleanly and separates verified facts from review questions.
+- Judge Mode is session-only, sanitized, and reports missing or stale build verification honestly.
+- Requirement-change detection is explicitly fixture-controlled, proposes review state only, and never claims a real external update.
 
 ## GPT and fallback
 

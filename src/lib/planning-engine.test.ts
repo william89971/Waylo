@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { courseById, evidence, programs, seedProfile } from "@/lib/academic-data";
-import { planningEngine, routeValidator } from "@/lib/planning-engine";
+import { MAX_INTERNAL_CANDIDATES, planningEngine, routeValidator } from "@/lib/planning-engine";
 import { simulationEngine } from "@/lib/simulation-engine";
 import type { RouteCandidate } from "@/lib/domain";
 import { meetsMinimumGrade } from "@/lib/grades";
@@ -51,6 +51,23 @@ describe("PlanningEngine", () => {
     expect(duplicate).toBeDefined();
     route.terms[0].courses.push({ courseId: duplicate!.courseId, code: duplicate!.code, title: duplicate!.title, units: duplicate!.units, category: "programming", evidenceIds: [], status: "planned" });
     expect(routeValidator.validate(route, seedProfile).some((issue) => issue.code === "duplicate_credit")).toBe(true);
+  });
+
+  it("retains bounded real outcomes and revalidates at most one allowlisted repair", () => {
+    const plan = planningEngine.buildPlan(seedProfile);
+    expect(plan.candidateOutcomes.length).toBeLessThanOrEqual(MAX_INTERNAL_CANDIDATES);
+    expect(plan.candidateOutcomes.filter((outcome) => outcome.status === "rejected").length).toBeGreaterThan(0);
+    expect(plan.rejectedCandidates.every((route) => route.issues.some((issue) => issue.severity === "blocker"))).toBe(true);
+    expect(plan.repairAttempt).toBeDefined();
+    expect(plan.candidateOutcomes.filter((outcome) => outcome.status === "repaired")).toHaveLength(1);
+    expect(plan.candidateOutcomes.find((outcome) => outcome.status === "repaired")?.route.valid).toBe(true);
+  });
+
+  it("uses work hours as advisory ranking context without invalidating a route", () => {
+    const plan = planningEngine.buildPlan(seedProfile, seedProfile.selectedPathwayId, { weeklyWorkHours: 25, maxUnits: 15 });
+    expect(plan.routes).toHaveLength(3);
+    expect(plan.routes.every((route) => route.valid)).toBe(true);
+    expect(plan.routes.some((route) => route.assumptions.some((assumption) => assumption.includes("25 weekly work hours")))).toBe(true);
   });
 
   it("flags a course scheduled in an unsupported known offering term", () => {

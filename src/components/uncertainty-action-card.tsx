@@ -11,8 +11,9 @@ import { alternateRoutesWithoutCourse, buildCounselorInquiry, evidenceForIssue }
 import { courseById } from "@/lib/academic-data";
 import { useWorkspaceStore } from "@/lib/workspace-store";
 import { Status } from "@/components/ui";
+import type { RouteCandidate } from "@/lib/domain";
 
-export function UncertaintyActionCard({ courseId, compact = false }: { courseId: string; compact?: boolean }) {
+export function UncertaintyActionCard({ courseId, compact = false, route }: { courseId: string; compact?: boolean; route?: RouteCandidate }) {
   const workspace = useWorkspaceStore((state) => state.workspace);
   const confirmCourse = useWorkspaceStore((state) => state.confirmCourse);
   const [panel, setPanel] = useState<"evidence" | "inquiry" | "alternate" | "confirm" | null>(null);
@@ -22,6 +23,9 @@ export function UncertaintyActionCard({ courseId, compact = false }: { courseId:
   const alternatives = alternateRoutesWithoutCourse(workspace.profile, courseId);
   const course = courseById.get(courseId);
   const confirmed = workspace.reviewResolutions.some((resolution) => resolution.courseId === courseId);
+  const affectedRoute = route ?? workspace.plan?.routes.find((candidate) => candidate.id === workspace.activeRouteId) ?? workspace.plan?.routes[0];
+  const affectedTerm = affectedRoute?.terms.find((term) => term.courses.some((candidate) => candidate.courseId === courseId));
+  const dependentCount = affectedRoute?.terms.flatMap((term) => term.courses).filter((candidate) => courseById.get(candidate.courseId)?.prerequisites.includes(courseId)).length ?? 0;
 
   return (
     <section className={`uncertainty-card ${compact ? "compact" : ""}`} aria-label={`${course?.title ?? courseId} evidence actions`}>
@@ -29,7 +33,7 @@ export function UncertaintyActionCard({ courseId, compact = false }: { courseId:
         <span className="uncertainty-icon"><FileQuestion size={19} /></span>
         <div>
           <h2>{course?.title ?? courseId} equivalency needs verification</h2>
-          <p>The route can show the dependency, but current articulation evidence remains unsettled.</p>
+          <p>{affectedTerm ? `${affectedRoute?.label} uses this match in ${affectedTerm.label}` : "The active route may rely on this match"}{dependentCount ? ` before ${dependentCount} dependent milestone${dependentCount === 1 ? "" : "s"}` : ""}. If it is not confirmed, Waylo must recalculate the timeline. Current articulation evidence remains unsettled.</p>
         </div>
         {confirmed ? <Status tone="planned" label="Counselor-confirmed" /> : null}
       </div>

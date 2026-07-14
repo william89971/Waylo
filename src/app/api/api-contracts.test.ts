@@ -4,6 +4,8 @@ import { POST as extract } from "@/app/api/transcripts/extract/route";
 import { POST as advisor } from "@/app/api/advisor-summary/route";
 import { POST as planning } from "@/app/api/planning-sessions/route";
 import { POST as parseCommand } from "@/app/api/plan-commands/parse/route";
+import { GET as judgeSnapshot } from "@/app/api/judge-snapshot/route";
+import { POST as compareRequirements } from "@/app/api/requirement-changes/compare/route";
 import { seedProfile } from "@/lib/academic-data";
 import { planningEngine } from "@/lib/planning-engine";
 
@@ -53,7 +55,24 @@ describe("API contracts", () => {
   it("builds advisor summary only from validated normalized state", async () => {
     const request = new Request("http://localhost/api/advisor-summary", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "seeded", profile: seedProfile, plan }) });
     const response = await advisor(request); const body = await response.json();
-    expect(response.status).toBe(200); expect(body.summary.disclaimer).toContain("not an admission or transfer guarantee");
+    expect(response.status).toBe(200); expect(body.packet.disclaimer).toContain("not an admission or transfer guarantee");
+  });
+
+  it("returns a sanitized judge snapshot with explicit build attestation", async () => {
+    delete process.env.OPENAI_API_KEY;
+    const response = await judgeSnapshot(); const body = await response.json();
+    expect(body.execution.label).toBe("Recorded GPT-5.6 demo result.");
+    expect(body.build.label).toBe("Not verified for this build.");
+    expect(JSON.stringify(body)).not.toContain("OPENAI_API_KEY");
+  });
+
+  it("returns only a clearly labeled controlled requirement comparison", async () => {
+    const request = new Request("http://localhost/api/requirement-changes/compare", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pathwayId: seedProfile.selectedPathwayId, activeRoute: plan.routes[0] }) });
+    const response = await compareRequirements(request); const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.mode).toBe("controlled-fixture");
+    expect(body.changes[0].status).toBe("proposed");
+    expect(body.disclaimer).toContain("not a real catalog");
   });
 
   it("streams discriminated planning events and a safe live fallback", async () => {

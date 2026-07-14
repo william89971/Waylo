@@ -3,6 +3,8 @@ import { academicAIProvider, AIConfigurationError, AIWorkflowError } from "@/lib
 import { planningEngine } from "@/lib/planning-engine";
 import { seedProfile } from "@/lib/academic-data";
 import { parseSeededPlanCommand } from "@/lib/plan-command";
+import { AcademicConstraintSchema, RouteCandidateSchema } from "@/lib/domain";
+import { courses, programs } from "@/lib/academic-data";
 
 export const runtime = "nodejs";
 
@@ -11,15 +13,21 @@ const RequestSchema = z.object({
   command: z.string().trim().min(1).max(500),
   selectedPathwayId: z.string(),
   activeRouteId: z.string().optional(),
+  activeRoute: RouteCandidateSchema.optional(),
+  constraints: AcademicConstraintSchema.optional(),
+  selectedDestinationIds: z.array(z.enum(["berkeley", "ucla", "ucsd"])).default(["berkeley", "ucla", "ucsd"]),
 });
 
 export async function POST(request: Request) {
   try {
     const body = RequestSchema.parse(await request.json());
-    if (body.mode === "seeded") return Response.json(parseSeededPlanCommand(body.command));
+    if (!programs.some((program) => program.id === body.selectedPathwayId)) throw new Error("unsupported_pathway");
+    const allowedCourseIds = new Set(courses.map((course) => course.id));
+    const suppliedRoute = body.activeRoute?.terms.every((term) => term.courses.every((course) => allowedCourseIds.has(course.courseId))) ? body.activeRoute : undefined;
+    if (body.mode === "seeded") return Response.json(parseSeededPlanCommand(body.command, { activeRoute: suppliedRoute, selectedPathwayId: body.selectedPathwayId, selectedDestinationIds: body.selectedDestinationIds }));
     const plan = planningEngine.buildPlan({ ...seedProfile, selectedPathwayId: body.selectedPathwayId }, body.selectedPathwayId);
-    const activeRoute = plan.routes.find((route) => route.id === body.activeRouteId) ?? plan.routes[0];
-    return Response.json(await academicAIProvider.parsePlanCommand(body.command, body.selectedPathwayId, activeRoute));
+    const activeRoute = suppliedRoute ?? plan.routes.find((route) => route.id === body.activeRouteId) ?? plan.routes[0];
+    return Response.json(await academicAIProvider.parsePlanCommand(body.command, body.selectedPathwayId, activeRoute, { constraints: body.constraints, selectedDestinationIds: body.selectedDestinationIds }));
   } catch (error) {
     if (error instanceof AIConfigurationError) return Response.json({ error: "missing_key", message: error.message, seededModeAvailable: true }, { status: 503 });
     if (error instanceof AIWorkflowError) return Response.json({ error: error.category, message: error.message, seededModeAvailable: true }, { status: error.category === "rate_limit" ? 429 : 502 });

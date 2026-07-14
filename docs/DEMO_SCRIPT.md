@@ -1,36 +1,43 @@
 # Waylo Demo Script
 
-Target length: 2:35–2:50. Keep the entire video under three minutes.
+Target length: 2:35-2:50. Keep the entire video under three minutes.
 
-## 0:00–0:20 — Problem and promise
+## 0:00-0:18 - Problem and promise
 
-“Waylo helps community-college students find a clear path through college. I’m starting at College of the Canyons and comparing verified preparation across six Cognitive Science and Data Science pathways.”
+“Waylo helps community-college students find a clear path through college. I’m starting at College of the Canyons, and this Academic Twin turns verified requirements, prerequisites, and my real-life constraints into routes I can review with a counselor.”
 
-Show the landing page, enter the demo, and name the counselor-review guardrail.
+Enter the demo and open the roadmap. Keep the planning-aid guardrail visible.
 
-## 0:20–0:55 — Current position and destinations
+## 0:18-0:58 - Ask for a detour
 
-Show the overview and transcript-review table. Point out that the uncertain Calculus I match is visible and does not silently count as verified completed credit. Open pathways and switch between Cognitive Science and Data Science to show coverage and blockers recalculate.
+Use the command: “I work 25 hours each week. Remove Linear Algebra from Spring 2028, allow one summer course, and keep me as close as possible to Fall 2028.”
 
-## 0:55–1:30 — Three routes and evidence
+Show the four-change structured preview. Explain that GPT-5.6 Sol may interpret the request, but it cannot edit the plan. The deterministic engine searches and validates candidates.
 
-Open the roadmap and compare views. Show fastest valid, greatest overlap, and balanced workload. Explain that these are strategies, not an “optimal” claim. Open one evidence detail and identify its source, year, status, and unresolved ASSIST review.
+## 0:58-1:28 - Time Machine and validation
 
-## 1:30–1:55 — What-if
+Run the preview. Move between Baseline, Proposed, and Repaired. Point out the rejected proposal, the one allowlisted repair, prerequisite validation, and the Spring 2029 result. Acknowledge the missed Fall 2028 preference, then confirm. Emphasize that nothing is saved before confirmation.
 
-Remove Calculus I in the what-if view. Show the prerequisite-driven timeline change and the exact affected sequence. Emphasize that the result comes from the course graph and validated dataset, not scripted interface copy.
+## 1:28-1:52 - Evidence to Plan
 
-## 1:55–2:20 — Live GPT-5.6 Sol
+Upload a transcript screenshot or PDF. Let the seven visible stages advance, edit one extracted row, review a duplicate/uncertain match, and confirm normalized courses. Say that the raw document, raw text, prompts, and model response are not stored.
 
-Run one verified live transcript extraction or planning explanation. Say: “GPT-5.6 Sol handles structured extraction and explanation through read-only tools. The deterministic engine still validates every displayed route.” Keep the live badge visible. If API availability prevents this, use the recorded fixture and explicitly label it “recorded run,” never live.
+## 1:52-2:13 - Evidence and requirement impact
 
-## 2:20–2:45 — Counselor handoff and Codex
+Open an uncertainty action. Show exact evidence and the counselor inquiry language. On Evidence, run the controlled version comparison and point out that it is a fixture that proposes an affected MATH 214 segment; it does not claim a real catalog or ASSIST change.
 
-Open the printable advisor summary. Show verified facts separately from review items and questions for a counselor. Close with: “Codex helped build and test the product, while Waylo keeps evidence and deterministic validation in control. Find your way through college.”
+## 2:13-2:34 - Judge Mode and live GPT
+
+Open Judge Mode with `?judge=1`. Show the explicit model ID, recorded/live label, bounded six-pathway coverage, candidate outcomes, validation rules, sources, architecture stages, latency, and honest build-verification status. Include one verified live `gpt-5.6-sol` execution if a key and API availability permit it. Otherwise keep the exact label “Recorded GPT-5.6 demo result.” visible and say it is recorded.
+
+## 2:34-2:48 - Counselor handoff
+
+Open the printable advisor decision packet. Show verified, counselor-confirmed, and unresolved facts separately. Close with: “Waylo keeps evidence and deterministic validation in control, so students can see what changes before they change their plan. Find your way through college.”
 
 ## Recording checklist
 
-- Use the public deployment in an incognito browser.
-- Keep seeded mode ready in another tab as the reliability fallback.
-- Do not show the terminal, environment settings, network request bodies, or any key.
+- Use the deployed revision in an incognito browser after link verification.
+- Keep seeded mode ready as the reliability fallback.
+- Do not show the terminal, environment settings, network request bodies, hidden reasoning, transcript contents, or any key.
+- Do not call the controlled requirement fixture a real source update.
 - Verify narration says “planning aid,” not guaranteed transfer/admission or counselor replacement.
