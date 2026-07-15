@@ -70,7 +70,7 @@ export function parseSeededPlanCommand(command: string, context: SeededPlanComma
         changes.push({ id: `restore-${course.id}`, type: "restore_course", courseId: course.id, courseCode: course.code, courseTitle: course.title });
       } else {
         const namedTermMatch = /\b(?:from|in)\s+(fall|spring|summer)\s+(20\d{2})\b/i.exec(input);
-        const namedTerm = namedTermMatch ? formatTerm(namedTermMatch[1], namedTermMatch[2]) : undefined;
+        const namedTerm = namedTermMatch ? formatTerm(namedTermMatch[1], namedTermMatch[2]) : null;
         const actualTerm = coursePlacement(context.activeRoute, course.id);
         if (namedTerm && actualTerm && namedTerm !== actualTerm) {
           clarificationItems.push(`${course.title} is currently in ${actualTerm}, not ${namedTerm}. Choose the displayed term before Waylo moves it.`);

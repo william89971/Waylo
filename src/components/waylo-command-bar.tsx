@@ -70,14 +70,16 @@ export function WayloCommandBar({ showFallback = true }: { showFallback?: boolea
           command,
           selectedPathwayId: workspace.profile.selectedPathwayId,
           activeRouteId: activeRoute?.id,
-          activeRoute,
-          constraints: workspace.constraints,
-          selectedDestinationIds: workspace.selectedDestinationIds,
         }),
       });
       const payload = await response.json();
       if (!response.ok) {
-        if (payload.seededModeAvailable) setMessage(`${payload.message} Use the recorded deterministic parser to continue.`);
+        if (payload.seededModeAvailable && selectedMode === "live") {
+          setMode("seeded");
+          setMessage(`${payload.message} Waylo continued with the recorded deterministic parser.`);
+          await interpret("seeded");
+          return;
+        }
         throw new Error(payload.message ?? "Waylo could not interpret that request.");
       }
       setInterpretation(PlanCommandInterpretationSchema.parse(payload));
@@ -100,7 +102,7 @@ export function WayloCommandBar({ showFallback = true }: { showFallback?: boolea
     const course = courseById.get(fallbackCourse);
     const placement = activeRoute?.terms.find((term) => term.courses.some((item) => item.courseId === fallbackCourse))?.label;
     const changes: PlanChange[] = [
-      { id: `defer-${fallbackCourse}`, type: "defer_course", courseId: fallbackCourse, courseCode: course?.code ?? fallbackCourse, courseTitle: course?.title ?? fallbackCourse, namedTerm: placement },
+      { id: `defer-${fallbackCourse}`, type: "defer_course", courseId: fallbackCourse, courseCode: course?.code ?? fallbackCourse, courseTitle: course?.title ?? fallbackCourse, namedTerm: placement ?? null },
       { id: fallbackSummer ? "summer-on" : "summer-off", type: "set_summer_enrollment", enabled: fallbackSummer, courseLimit: fallbackSummer ? 1 : 0 },
       { id: "weekly-work-hours", type: "set_weekly_work_hours", hours: fallbackWorkHours },
       { id: "transfer-target", type: "set_transfer_target", term: fallbackTarget, policy: "preferred" },
@@ -125,7 +127,7 @@ export function WayloCommandBar({ showFallback = true }: { showFallback?: boolea
         <span className={`mode-pill ${mode}`}>{mode === "live" ? "Live GPT-5.6" : "Recorded GPT-5.6 demo result."}</span>
       </div>
       <div className="command-input-row">
-        <Textarea aria-label="Describe a plan change" value={command} onChange={(event) => { setCommand(event.target.value); if (status !== "idle") reset(); }} className="command-input" />
+        <Textarea aria-label="Describe a plan change" maxLength={300} value={command} onChange={(event) => { setCommand(event.target.value); if (status !== "idle") reset(); }} className="command-input" />
         <Button className="command-submit" disabled={!command.trim() || status === "parsing"} onClick={() => void interpret()}>{status === "parsing" ? <LoaderCircle className="spin" data-icon="inline-start" /> : <Route data-icon="inline-start" />}Preview changes</Button>
       </div>
       <div className="command-meta"><span>GPT can normalize the request. It cannot edit or validate the route.</span><label>Interpreter<select className="compact-select" aria-label="Command interpreter" value={mode} onChange={(event) => setMode(event.target.value as "seeded" | "live")}><option value="seeded">Recorded demo</option><option value="live">Live GPT-5.6</option></select></label></div>

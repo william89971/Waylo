@@ -204,7 +204,7 @@ export const simulationEngine: SimulationEngine = {
   removeCourse(profile, courseId, pathwayId = profile.selectedPathwayId) {
     const course = profile.courses.find((candidate) => candidate.courseId === courseId) ?? courseById.get(courseId);
     const planned = planningEngine.buildPlan(profile, pathwayId).routes[0]?.terms.flatMap((term) => term.courses).find((candidate) => candidate.courseId === courseId);
-    return this.applyChanges(profile, [{ id: `defer-${courseId}`, type: "defer_course", courseId, courseCode: course?.code ?? planned?.code ?? courseId, courseTitle: course?.title ?? planned?.title ?? courseId }], pathwayId);
+    return this.applyChanges(profile, [{ id: `defer-${courseId}`, type: "defer_course", courseId, courseCode: course?.code ?? planned?.code ?? courseId, courseTitle: course?.title ?? planned?.title ?? courseId, namedTerm: null }], pathwayId);
   },
   switchPathway(profile, pathwayId) {
     return planningEngine.buildPlan({ ...profile, selectedPathwayId: pathwayId }, pathwayId);

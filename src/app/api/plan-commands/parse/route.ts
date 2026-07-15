@@ -1,36 +1,76 @@
 import { z } from "zod";
 import { academicAIProvider, AIConfigurationError, AIWorkflowError } from "@/lib/ai/provider";
-import { planningEngine } from "@/lib/planning-engine";
-import { seedProfile } from "@/lib/academic-data";
+import { beginLiveRequest, LiveDemoError, type LiveRequestLease } from "@/lib/ai/live-demo";
+import { constraintsFromProfile } from "@/lib/academic-twin";
+import { programs, seedProfile } from "@/lib/academic-data";
 import { parseSeededPlanCommand } from "@/lib/plan-command";
-import { AcademicConstraintSchema, RouteCandidateSchema } from "@/lib/domain";
-import { courses, programs } from "@/lib/academic-data";
+import { planningEngine } from "@/lib/planning-engine";
+import { createRequestId, jsonWithRequestId, logSanitizedRequest, readLimitedJson, RequestSafetyError } from "@/lib/server/request-safety";
 
 export const runtime = "nodejs";
 
+export const PLAN_COMMAND_MAX_CHARACTERS = 300;
+
 const RequestSchema = z.object({
   mode: z.enum(["seeded", "live"]).default("seeded"),
-  command: z.string().trim().min(1).max(500),
+  command: z.string().trim().min(1).max(PLAN_COMMAND_MAX_CHARACTERS),
   selectedPathwayId: z.string(),
   activeRouteId: z.string().optional(),
-  activeRoute: RouteCandidateSchema.optional(),
-  constraints: AcademicConstraintSchema.optional(),
-  selectedDestinationIds: z.array(z.enum(["berkeley", "ucla", "ucsd"])).default(["berkeley", "ucla", "ucsd"]),
-});
+}).strict();
 
 export async function POST(request: Request) {
+  const requestId = createRequestId();
+  const startedAt = Date.now();
+  let lease: LiveRequestLease | undefined;
+  let mode: "seeded" | "live" = "seeded";
   try {
-    const body = RequestSchema.parse(await request.json());
+    const body = await readLimitedJson(request, RequestSchema);
+    mode = body.mode;
     if (!programs.some((program) => program.id === body.selectedPathwayId)) throw new Error("unsupported_pathway");
-    const allowedCourseIds = new Set(courses.map((course) => course.id));
-    const suppliedRoute = body.activeRoute?.terms.every((term) => term.courses.every((course) => allowedCourseIds.has(course.courseId))) ? body.activeRoute : undefined;
-    if (body.mode === "seeded") return Response.json(parseSeededPlanCommand(body.command, { activeRoute: suppliedRoute, selectedPathwayId: body.selectedPathwayId, selectedDestinationIds: body.selectedDestinationIds }));
-    const plan = planningEngine.buildPlan({ ...seedProfile, selectedPathwayId: body.selectedPathwayId }, body.selectedPathwayId);
-    const activeRoute = suppliedRoute ?? plan.routes.find((route) => route.id === body.activeRouteId) ?? plan.routes[0];
-    return Response.json(await academicAIProvider.parsePlanCommand(body.command, body.selectedPathwayId, activeRoute, { constraints: body.constraints, selectedDestinationIds: body.selectedDestinationIds }));
+
+    const trustedProfile = { ...seedProfile, selectedPathwayId: body.selectedPathwayId };
+    const constraints = constraintsFromProfile(trustedProfile);
+    const plan = planningEngine.buildPlan(trustedProfile, body.selectedPathwayId, {
+      includeSummer: constraints.summerEnrollment,
+      summerCourseLimit: constraints.summerCourseLimit,
+      maxUnits: constraints.maxUnits,
+      weeklyWorkHours: constraints.weeklyWorkHours,
+    });
+    const activeRoute = plan.routes.find((route) => route.id === body.activeRouteId) ?? plan.routes[0];
+    if (!activeRoute) throw new Error("route_unavailable");
+    const trustedContext = { activeRoute, selectedPathwayId: body.selectedPathwayId, selectedDestinationIds: ["berkeley", "ucla", "ucsd"] };
+
+    if (body.mode === "seeded") {
+      const interpretation = parseSeededPlanCommand(body.command, trustedContext);
+      logSanitizedRequest({ requestId, endpoint: "command", mode, outcome: "complete", durationMs: Date.now() - startedAt });
+      return jsonWithRequestId(interpretation, requestId);
+    }
+
+    lease = beginLiveRequest(request, "command", requestId);
+    try {
+      const interpretation = await academicAIProvider.parsePlanCommand(
+        body.command,
+        body.selectedPathwayId,
+        activeRoute,
+        { constraints, selectedDestinationIds: trustedContext.selectedDestinationIds },
+        lease.context,
+      );
+      logSanitizedRequest({ requestId, endpoint: "command", mode, outcome: "complete", durationMs: Date.now() - startedAt });
+      return jsonWithRequestId(interpretation, requestId);
+    } catch (error) {
+      if (!(error instanceof AIConfigurationError) && !(error instanceof AIWorkflowError)) throw error;
+      const fallback = parseSeededPlanCommand(body.command, trustedContext);
+      const category = error instanceof AIWorkflowError ? error.category : "unavailable";
+      logSanitizedRequest({ requestId, endpoint: "command", mode, outcome: "fallback", category, durationMs: Date.now() - startedAt });
+      return jsonWithRequestId(fallback, requestId, { headers: { "X-Waylo-Fallback": category } });
+    }
   } catch (error) {
-    if (error instanceof AIConfigurationError) return Response.json({ error: "missing_key", message: error.message, seededModeAvailable: true }, { status: 503 });
-    if (error instanceof AIWorkflowError) return Response.json({ error: error.category, message: error.message, seededModeAvailable: true }, { status: error.category === "rate_limit" ? 429 : 502 });
-    return Response.json({ error: "invalid_request", message: "The planning request could not be normalized." }, { status: 400 });
+    const known = error instanceof LiveDemoError || error instanceof RequestSafetyError;
+    const status = known ? error.status : 400;
+    const code = known ? error.code : "invalid_request";
+    logSanitizedRequest({ requestId, endpoint: "command", mode, outcome: "rejected", category: code, durationMs: Date.now() - startedAt });
+    return jsonWithRequestId({ error: code, message: known ? error.message : "The planning request could not be normalized.", seededModeAvailable: true }, requestId, { status });
+  } finally {
+    lease?.release();
   }
 }

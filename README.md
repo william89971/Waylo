@@ -58,15 +58,20 @@ Open `http://localhost:3000`. No credential is required for seeded mode.
 
 ## Live and seeded modes
 
-Seeded mode is always available and is the default public judge path. Its examples are labeled and deterministic; they never masquerade as live model output.
+Seeded mode is always available and is the authoritative default public judge path. Its examples are labeled and deterministic; they never instantiate the OpenAI client or masquerade as live model output.
 
-To enable live extraction, planning explanations, and advisor summaries, the user must add a server-side key to the ignored `.env.local` file:
+Live extraction, command parsing, and planning explanations are additionally protected by an explicit server mode, a signed 15-minute demo session, an approved-workflow allowlist, concurrency controls, and per-session response budgets. Adding a key alone does not enable live requests. The public deployment must keep `WAYLO_DEMO_MODE=seeded`.
+
+For a future controlled live rehearsal, the user supplies all four server-side values in ignored `.env.local` or the deployment secret store:
 
 ```dotenv
 OPENAI_API_KEY=your_key_here
+WAYLO_DEMO_MODE=live
+WAYLO_LIVE_DEMO_SIGNING_SECRET=an_independent_high_entropy_value
+WAYLO_LIVE_DEMO_ACCESS_CODE=an_independent_demo_access_value
 ```
 
-The implementation uses the official OpenAI JavaScript SDK, Responses API, strict Zod outputs and tools, and the explicit model ID `gpt-5.6-sol`. It uses `medium` reasoning for summaries and `high` for complex extraction. Although the pinned SDK schema accepts `xhigh`, it stays disabled until a user-supplied key confirms a live request accepts it. Waylo never creates or retrieves the key, and the key must not be logged, displayed, or committed.
+The protected session is issued only through `POST /api/demo-sessions` after the approved workflow and access code are validated; the signed token is returned as an HttpOnly, Secure, SameSite cookie. The implementation uses the official OpenAI JavaScript SDK, Responses API, strict Zod outputs and tools, and the explicit model ID `gpt-5.6-sol`. It uses `medium` reasoning for summaries and `high` for complex extraction. Although the pinned SDK schema accepts `xhigh`, it stays disabled until a user-supplied key confirms a live request accepts it. Waylo never creates or retrieves the key, and credentials must not be logged, displayed, or committed.
 
 ## Commands
 
@@ -84,10 +89,11 @@ The browser suite covers desktop and mobile flows, persistence, what-if comparis
 ## API surface
 
 - `GET /api/health` reports status, configured/not-configured state, model ID, seeded availability, and `xhigh` verification state—never configuration values.
+- `POST /api/demo-sessions` creates a short-lived signed session only for the allowlisted live demo workflow; it is unavailable while the deployment is seeded-only.
 - `POST /api/plan-commands/parse` converts a bounded natural-language request into validated `PlanChange` records. The client cannot invent course IDs.
 - `POST /api/transcripts/extract` accepts seeded or live transcript text, PDF, PNG, JPEG, or WebP input. It preserves the JSON contract and can stream NDJSON progress events.
 - `POST /api/planning-sessions` streams sanitized newline-delimited operational trace events.
-- `POST /api/advisor-summary` returns a structured printable summary from validated workspace state.
+- `POST /api/advisor-summary` returns a deterministic printable packet from server-reconstructed demo state. Public live advisor generation is disabled.
 - `GET /api/judge-snapshot` returns a sanitized, bounded product snapshot and marks absent or stale build verification as unverified.
 - `POST /api/requirement-changes/compare` compares an explicitly controlled requirement-version fixture and returns proposed affected route segments for review.
 
@@ -103,7 +109,7 @@ See [data coverage](docs/DATA_COVERAGE.md), [architecture](docs/ARCHITECTURE.md)
 
 ## Deployment
 
-Deploy with Vercel using the repository defaults. Leave `OPENAI_API_KEY` unset for a seeded-only deployment, or add it as an encrypted server-side Vercel environment variable to enable live mode. Do not prefix it with `NEXT_PUBLIC_`. The repository remains private until the user elects to publish it; exact public-clone verification is therefore a release step, not a current claim.
+Deploy with Vercel using the repository defaults and keep `WAYLO_DEMO_MODE=seeded`. A key by itself never enables live mode. Before any future multi-instance live deployment, replace the current process-local atomic session budget with a durable atomic store; until then, protected live mode is suitable only for a controlled single-instance rehearsal. Do not prefix any server value with `NEXT_PUBLIC_`. The repository remains private until the user elects to publish it; exact public-clone verification is therefore a release step, not a current claim.
 
 ## License
 

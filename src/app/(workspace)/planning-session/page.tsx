@@ -24,8 +24,12 @@ export default function PlanningSessionPage() {
     if (!workspace.plan) return;
     setRunning(true); setEvents([]);
     try {
-      const response = await fetch("/api/planning-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode, profile: workspace.profile, plan: workspace.plan }) });
-      if (!response.ok || !response.body) throw new Error("Planning session unavailable");
+      const response = await fetch("/api/planning-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode, pathwayId: workspace.profile.selectedPathwayId, activeRouteId: workspace.activeRouteId }) });
+      if (!response.ok || !response.body) {
+        const payload = await response.json().catch(() => ({}));
+        if (mode === "live" && payload.seededModeAvailable) { await run("seeded"); return; }
+        throw new Error("Planning session unavailable");
+      }
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
       while (true) { const { done, value } = await reader.read(); buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done }); const lines = buffer.split("\n"); buffer = lines.pop() ?? ""; for (const line of lines) if (line.trim()) { const event = OperationalTraceEventSchema.parse(JSON.parse(line)); setEvents((current) => [...current, event]); if (mode === "seeded" && !reduceMotion) await new Promise((resolve) => setTimeout(resolve, 120)); } if (done) break; }
     } catch { setEvents([{ id: "local-failure", stage: "review", label: "Planning session unavailable", detail: "The validated workspace is still safe. Try seeded mode again.", status: "review", evidenceIds: [] }]); }

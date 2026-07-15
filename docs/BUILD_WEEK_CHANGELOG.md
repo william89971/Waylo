@@ -1,5 +1,16 @@
 # Build Week Changelog
 
+## 2026-07-14 - Seeded-first live-mode hardening
+
+- Made `WAYLO_DEMO_MODE` authoritative and defaulted every public interaction to a zero-OpenAI-call seeded path.
+- Reworked the command union to use required nullable members and added eager `zodTextFormat` contract construction for strict Structured Outputs.
+- Added a signed 15-minute demo-session gate restricted to the approved Academic Twin workflow, with one concurrent request and six Responses creations per session.
+- Added server-enforced request, command, transcript, image, PDF, output-token, retry, endpoint, and planning-turn ceilings.
+- Reconstructed command, planning, advisor, catalog, profile, constraint, and route context from the bounded server dataset wherever possible.
+- Disabled public live advisor generation and added immediate labeled seeded fallback for unavailable configuration, schema errors, quota failures, timeouts, budget rejection, and upstream failure.
+- Added privacy-safe request IDs and allowlisted operational logging that excludes transcripts, profiles, prompts, model responses, uploads, credentials, and secrets.
+- Verified typecheck, lint, 57 Vitest checks, a 23-page/route production build, and 11 desktop/mobile Playwright checks with seven intentional cross-project skips.
+
 ## 2026-07-14 - Academic Twin first-place experience upgrade
 
 - Reframed the canonical roadmap as an Academic Twin with a focusable dependency canvas on desktop and an equivalent vertical route narrative on mobile.
@@ -41,6 +52,7 @@
 
 ## Remaining release actions
 
-- User adds the local and Vercel `OPENAI_API_KEY`; verify the live workflow without exposing it.
+- Keep the public deployment seeded-only. Before controlled live verification, add a durable atomic session ledger for multi-instance availability, then have the user configure all protected live values without exposing them.
+- Verify the signed live workflow and `xhigh` acceptance only after the user intentionally supplies local credentials and enables the protected demo mode.
 - Complete the post-publication Git clone and logged-out deployment verification.
 - Recheck official Build Week requirements, record the final demo, verify all public links, and submit.

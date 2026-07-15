@@ -58,9 +58,9 @@ export function ExtractionWorkflow() {
     setCommitted(false);
     if (!candidate) return setFile(undefined);
     const supported = ["application/pdf", "image/png", "image/jpeg", "image/webp"].includes(candidate.type);
-    if (!supported || candidate.size > 8 * 1024 * 1024) {
+    if (!supported || candidate.size > 2 * 1024 * 1024) {
       setFile(undefined);
-      setError("Use a PDF, PNG, JPEG, or WebP file up to 8 MB.");
+      setError("Use one PDF, PNG, JPEG, or WebP file up to 2 MB. PDFs may contain at most two pages; images should be about four megapixels or less.");
       return;
     }
     setFile(candidate);
@@ -80,7 +80,15 @@ export function ExtractionWorkflow() {
     form.set("file", file);
     try {
       const response = await fetch("/api/transcripts/extract", { method: "POST", headers: { Accept: "application/x-ndjson" }, body: form });
-      if (!response.ok || !response.body) throw new Error("The extraction request could not start.");
+      if (!response.ok || !response.body) {
+        const payload = await response.json().catch(() => ({}));
+        if (selectedMode === "live" && payload.seededModeAvailable) {
+          setMode("seeded");
+          await run("seeded");
+          return;
+        }
+        throw new Error(payload.message ?? "The extraction request could not start.");
+      }
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -97,6 +105,7 @@ export function ExtractionWorkflow() {
             setDetails((current) => ({ ...current, [event.stage]: event.detail }));
             if (selectedMode === "seeded" && !reduceMotion) await new Promise((resolve) => setTimeout(resolve, 130));
           } else if (event.type === "result") {
+            setMode(event.mode);
             setExtraction(event.extraction);
             const existingIds = new Set(existingCourses.map((course) => course.courseId));
             setExcludedRows(new Set(event.extraction.courses.flatMap((course, index) => course.normalizedCourseId && existingIds.has(course.normalizedCourseId) ? [index] : [])));
@@ -136,7 +145,7 @@ export function ExtractionWorkflow() {
         <div className="upload-column">
           <button className={`upload-zone ${file ? "has-file" : ""}`} type="button" onClick={() => inputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); selectFile(event.dataTransfer.files[0]); }}>
             <input ref={inputRef} hidden type="file" accept=".pdf,image/png,image/jpeg,image/webp" onChange={(event) => selectFile(event.target.files?.[0])} />
-            {file ? <>{file.type === "application/pdf" ? <FileText /> : <FileImage />}<strong>{file.name}</strong><span>{(file.size / 1024 / 1024).toFixed(2)} MB · ready for temporary processing</span></> : <><Upload /><strong>Drop a transcript screenshot or PDF</strong><span>PDF, PNG, JPEG, or WebP · up to 8 MB</span></>}
+            {file ? <>{file.type === "application/pdf" ? <FileText /> : <FileImage />}<strong>{file.name}</strong><span>{(file.size / 1024 / 1024).toFixed(2)} MB · ready for temporary processing</span></> : <><Upload /><strong>Drop a transcript screenshot or PDF</strong><span>One file · up to 2 MB · PDF up to 2 pages · image about 4 MP</span></>}
           </button>
           <div className="upload-actions"><Button variant="outline" disabled={!file || working} onClick={() => void run("seeded")}>Use recorded demo</Button><Button disabled={!file || working} onClick={() => void run("live")}>{working ? <LoaderCircle className="spin" data-icon="inline-start" /> : null}Run live extraction</Button></div>
           <div className="privacy-line"><LockKeyhole />No upload, raw text, prompt, or model response is stored.</div>

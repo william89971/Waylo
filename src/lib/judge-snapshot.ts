@@ -1,6 +1,7 @@
 import { evidence, seedProfile } from "@/lib/academic-data";
 import { ACADEMIC_DATA_VERSION, planningEngine } from "@/lib/planning-engine";
 import { WAYLO_MODEL } from "@/lib/ai/provider";
+import { isLiveAIConfigured } from "@/lib/ai/live-demo";
 import { JudgeModeSnapshotSchema, type JudgeModeSnapshot } from "@/lib/domain";
 
 const verificationManifest = {
@@ -10,6 +11,7 @@ const verificationManifest = {
 };
 
 export function buildJudgeSnapshot(): JudgeModeSnapshot {
+  const liveConfigured = isLiveAIConfigured();
   const plan = planningEngine.buildPlan(seedProfile);
   const runtimeCommit = process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? "local-working-tree";
   const verified = runtimeCommit !== "local-working-tree" && verificationManifest.commit === runtimeCommit && verificationManifest.suites.length > 0;
@@ -17,10 +19,10 @@ export function buildJudgeSnapshot(): JudgeModeSnapshot {
   const snapshot: JudgeModeSnapshot = {
     generatedAt: new Date().toISOString(),
     execution: {
-      mode: process.env.OPENAI_API_KEY ? "live" : "recorded",
+      mode: liveConfigured ? "live" : "recorded",
       model: WAYLO_MODEL,
       reasoningEffort: "high",
-      label: process.env.OPENAI_API_KEY ? "Live GPT-5.6 is configured." : "Recorded GPT-5.6 demo result.",
+      label: liveConfigured ? "Live GPT-5.6 is configured." : "Recorded GPT-5.6 demo result.",
     },
     planning: {
       candidateCount: plan.candidateOutcomes.length,

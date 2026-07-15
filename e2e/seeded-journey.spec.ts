@@ -94,7 +94,11 @@ test("recorded multimodal workflow shows all seven stages before normalized comm
   test.skip(testInfo.project.name === "mobile", "Desktop verifies upload and commit; mobile verifies layout.");
   await page.goto("/profile");
   const input = page.locator('input[type="file"]');
-  await input.setInputFiles({ name: "sanitized-transcript.png", mimeType: "image/png", buffer: Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]) });
+  const boundedPngHeader = Buffer.alloc(24);
+  boundedPngHeader.set([137, 80, 78, 71, 13, 10, 26, 10]);
+  boundedPngHeader.writeUInt32BE(1, 16);
+  boundedPngHeader.writeUInt32BE(1, 20);
+  await input.setInputFiles({ name: "sanitized-transcript.png", mimeType: "image/png", buffer: boundedPngHeader });
   await expect(page.getByText("sanitized-transcript.png")).toBeVisible();
   await page.getByRole("button", { name: "Use recorded demo" }).click();
   await expect(page.getByText("4 of 7 stages complete")).toBeVisible();
@@ -183,6 +187,6 @@ test("health endpoint exposes configuration state without secrets", async ({ req
   const response = await request.get("/api/health");
   expect(response.ok()).toBe(true);
   const body = await response.json();
-  expect(body).toMatchObject({ status: "ok", application: "Waylo", model: "gpt-5.6-sol", seededMode: true });
+  expect(body).toMatchObject({ status: "ok", application: "Waylo", model: "gpt-5.6-sol", seededMode: true, demoMode: "seeded", aiConfigured: false });
   expect(JSON.stringify(body)).not.toContain("OPENAI_API_KEY");
 });

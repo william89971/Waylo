@@ -126,7 +126,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   simulateRemoval(courseId) {
     const course = courseById.get(courseId);
-    get().simulateChanges([{ id: `defer-${courseId}`, type: "defer_course", courseId, courseCode: course?.code ?? courseId, courseTitle: course?.title ?? courseId }]);
+    get().simulateChanges([{ id: `defer-${courseId}`, type: "defer_course", courseId, courseCode: course?.code ?? courseId, courseTitle: course?.title ?? courseId, namedTerm: null }]);
   },
   simulateChanges(changes) {
     const current = get().workspace;

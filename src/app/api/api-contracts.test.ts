@@ -10,15 +10,21 @@ import { seedProfile } from "@/lib/academic-data";
 import { planningEngine } from "@/lib/planning-engine";
 
 const originalKey = process.env.OPENAI_API_KEY;
-afterEach(() => { if (originalKey === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = originalKey; });
+const originalMode = process.env.WAYLO_DEMO_MODE;
+afterEach(() => {
+  if (originalKey === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = originalKey;
+  if (originalMode === undefined) delete process.env.WAYLO_DEMO_MODE; else process.env.WAYLO_DEMO_MODE = originalMode;
+});
 
 describe("API contracts", () => {
   const plan = planningEngine.buildPlan(seedProfile);
 
   it("reports configuration state without values", async () => {
     delete process.env.OPENAI_API_KEY;
+    delete process.env.WAYLO_DEMO_MODE;
     const response = await health(); const body = await response.json();
     expect(body.aiConfigured).toBe(false);
+    expect(body.demoMode).toBe("seeded");
     expect(JSON.stringify(body)).not.toContain("OPENAI_API_KEY");
   });
 
@@ -35,31 +41,34 @@ describe("API contracts", () => {
     expect(events.at(-1).type).toBe("result");
   });
 
-  it("parses bounded seeded commands and safely rejects missing-key live parsing", async () => {
+  it("parses bounded seeded commands and rejects live parsing on a seeded deployment", async () => {
     const seededRequest = new Request("http://localhost/api/plan-commands/parse", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "seeded", command: "Remove Linear Algebra and use summer classes", selectedPathwayId: "ucla-data" }) });
     const seededResponse = await parseCommand(seededRequest); const seededBody = await seededResponse.json();
     expect(seededBody.changes.some((change: { courseId?: string }) => change.courseId === "coc-math-214")).toBe(true);
     delete process.env.OPENAI_API_KEY;
+    delete process.env.WAYLO_DEMO_MODE;
     const liveRequest = new Request("http://localhost/api/plan-commands/parse", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "live", command: "Remove Linear Algebra", selectedPathwayId: "ucla-data" }) });
     const liveResponse = await parseCommand(liveRequest); const liveBody = await liveResponse.json();
-    expect(liveResponse.status).toBe(503); expect(liveBody.seededModeAvailable).toBe(true);
+    expect(liveResponse.status).toBe(503); expect(liveBody.error).toBe("live_mode_disabled"); expect(liveBody.seededModeAvailable).toBe(true);
   });
 
   it("returns a safe missing-key response for live extraction", async () => {
     delete process.env.OPENAI_API_KEY;
+    delete process.env.WAYLO_DEMO_MODE;
     const request = new Request("http://localhost/api/transcripts/extract", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "live", text: "MATH 211 Calculus I" }) });
     const response = await extract(request); const body = await response.json();
-    expect(response.status).toBe(503); expect(body.error).toBe("missing_key"); expect(body.seededModeAvailable).toBe(true);
+    expect(response.status).toBe(503); expect(body.error).toBe("live_mode_disabled"); expect(body.seededModeAvailable).toBe(true);
   });
 
   it("builds advisor summary only from validated normalized state", async () => {
-    const request = new Request("http://localhost/api/advisor-summary", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "seeded", profile: seedProfile, plan }) });
+    const request = new Request("http://localhost/api/advisor-summary", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "seeded", pathwayId: seedProfile.selectedPathwayId }) });
     const response = await advisor(request); const body = await response.json();
     expect(response.status).toBe(200); expect(body.packet.disclaimer).toContain("not an admission or transfer guarantee");
   });
 
   it("returns a sanitized judge snapshot with explicit build attestation", async () => {
     delete process.env.OPENAI_API_KEY;
+    delete process.env.WAYLO_DEMO_MODE;
     const response = await judgeSnapshot(); const body = await response.json();
     expect(body.execution.label).toBe("Recorded GPT-5.6 demo result.");
     expect(body.build.label).toBe("Not verified for this build.");
@@ -75,12 +84,13 @@ describe("API contracts", () => {
     expect(body.disclaimer).toContain("not a real catalog");
   });
 
-  it("streams discriminated planning events and a safe live fallback", async () => {
+  it("streams discriminated planning events from server-reconstructed state", async () => {
     delete process.env.OPENAI_API_KEY;
-    const request = new Request("http://localhost/api/planning-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "live", profile: seedProfile, plan }) });
+    delete process.env.WAYLO_DEMO_MODE;
+    const request = new Request("http://localhost/api/planning-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "seeded", pathwayId: seedProfile.selectedPathwayId, activeRouteId: plan.routes[0]?.id }) });
     const response = await planning(request); const text = await response.text(); const events = text.trim().split("\n").map((line) => JSON.parse(line));
     expect(response.headers.get("Content-Type")).toContain("application/x-ndjson");
     expect(events.some((event) => event.status === "rejected")).toBe(true);
-    expect(events.at(-1).label).toBe("Live explanation unavailable");
+    expect(events.at(-1).label).toBe("Published validated routes");
   });
 });

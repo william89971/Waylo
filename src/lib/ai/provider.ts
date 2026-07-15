@@ -6,34 +6,54 @@ import { AdvisorSummarySchema, PlanCommandInterpretationSchema, TranscriptExtrac
 import { createPlanningTools } from "@/lib/ai/planning-tools";
 import { courses } from "@/lib/academic-data";
 import { validateBoundedInterpretation } from "@/lib/plan-command";
+import { getDemoMode, isLiveAIConfigured, LiveDemoError, MAX_PUBLIC_PLANNING_TURNS, type LiveAIRequestContext } from "@/lib/ai/live-demo";
 
 export const WAYLO_MODEL = "gpt-5.6-sol" as const;
 export const SDK_REASONING_EFFORT = "high" as const;
 export const SDK_XHIGH_REASONING_EFFORT = "xhigh" satisfies ReasoningEffort;
 export const XHIGH_SCHEMA_SUPPORTED = true as const;
 export const XHIGH_LIVE_VERIFIED = false as const;
+export const OPENAI_SDK_MAX_RETRIES = 1 as const;
+export const OUTPUT_TOKEN_CEILINGS = {
+  command: 3_000,
+  transcript: 6_000,
+  planning: 4_000,
+} as const;
+
+export function buildStructuredOutputFormats() {
+  return {
+    planCommand: zodTextFormat(PlanCommandInterpretationSchema, "waylo_plan_command"),
+    transcript: zodTextFormat(TranscriptExtractionSchema, "waylo_transcript_extraction"),
+    advisor: zodTextFormat(AdvisorSummarySchema, "waylo_advisor_summary"),
+  };
+}
+
+export const STRUCTURED_OUTPUT_FORMATS = buildStructuredOutputFormats();
 
 export class AIConfigurationError extends Error {
-  constructor() { super("Live planning is not configured. Add OPENAI_API_KEY locally or use seeded mode."); this.name = "AIConfigurationError"; }
+  constructor() { super("Live planning is unavailable on this deployment. The recorded deterministic workflow remains available."); this.name = "AIConfigurationError"; }
 }
 
 export class AIWorkflowError extends Error {
-  constructor(public readonly category: "timeout" | "rate_limit" | "invalid_output" | "upstream", message: string) { super(message); this.name = "AIWorkflowError"; }
+  constructor(public readonly category: "timeout" | "rate_limit" | "invalid_output" | "budget" | "upstream", message: string) { super(message); this.name = "AIWorkflowError"; }
 }
 
 export type TranscriptInput = { kind: "text"; text: string } | { kind: "file"; filename: string; mimeType: string; dataBase64: string };
 type ModelInput = string | ResponseInput;
 
 function client() {
+  if (getDemoMode() !== "live") throw new AIConfigurationError();
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new AIConfigurationError();
-  return new OpenAI({ apiKey, timeout: 45_000, maxRetries: 2 });
+  return new OpenAI({ apiKey, timeout: 45_000, maxRetries: OPENAI_SDK_MAX_RETRIES });
 }
 
 function classify(error: unknown): AIWorkflowError {
   if (error instanceof AIWorkflowError) return error;
+  if (error instanceof LiveDemoError) return new AIWorkflowError("budget", error.message);
   if (error instanceof OpenAI.APIConnectionTimeoutError) return new AIWorkflowError("timeout", "The live planning request timed out.");
   if (error instanceof OpenAI.RateLimitError) return new AIWorkflowError("rate_limit", "The live planning service is busy.");
+  if (error instanceof OpenAI.APIError && error.status === 400) return new AIWorkflowError("invalid_output", "The live response did not satisfy the required schema.");
   return new AIWorkflowError("upstream", "The live planning service could not complete the request.");
 }
 
@@ -48,71 +68,83 @@ function transcriptContent(input: TranscriptInput): ModelInput {
 
 export interface AcademicAIProvider {
   isConfigured(): boolean;
-  parsePlanCommand(command: string, selectedPathwayId: string, activeRoute?: RouteCandidate, context?: { constraints?: AcademicConstraint; selectedDestinationIds?: string[] }): Promise<PlanCommandInterpretation>;
-  extractTranscript(input: TranscriptInput): Promise<TranscriptExtraction>;
-  createAdvisorSummary(profile: StudentProfile, plan: PlanResult): Promise<AdvisorSummary>;
-  explainPlanningSession(profile: StudentProfile, plan: PlanResult): Promise<AdvisorSummary>;
+  parsePlanCommand(command: string, selectedPathwayId: string, activeRoute: RouteCandidate, context: { constraints: AcademicConstraint; selectedDestinationIds: string[] }, liveContext: LiveAIRequestContext): Promise<PlanCommandInterpretation>;
+  extractTranscript(input: TranscriptInput, liveContext: LiveAIRequestContext): Promise<TranscriptExtraction>;
+  createAdvisorSummary(profile: StudentProfile, plan: PlanResult, liveContext: LiveAIRequestContext): Promise<AdvisorSummary>;
+  explainPlanningSession(profile: StudentProfile, plan: PlanResult, liveContext: LiveAIRequestContext): Promise<AdvisorSummary>;
 }
 
-async function parseAdvisor(profile: StudentProfile, plan: PlanResult, useTools: boolean): Promise<AdvisorSummary> {
+async function parseAdvisor(profile: StudentProfile, plan: PlanResult, useTools: boolean, liveContext: LiveAIRequestContext): Promise<AdvisorSummary> {
   const openai = client();
   const activeRoute = plan.routes[0];
   const input = `Create a concise advisor-ready summary from this normalized, deterministic state. Do not add requirements or claim admission likelihood. Profile: ${JSON.stringify({ origin: profile.originInstitutionName, selectedPathwayId: profile.selectedPathwayId, maxUnits: profile.maxUnits, summerEnrollment: profile.summerEnrollment, completedCourseIds: profile.courses.filter((course) => course.status === "completed").map((course) => course.courseId) })}. Route: ${JSON.stringify(activeRoute)}.`;
   const toolContext = createPlanningTools(profile, plan);
-  let previousResponseId: string | undefined;
   let nextInput: ModelInput = input;
-  for (let turn = 0; turn < (useTools ? 4 : 1); turn += 1) {
+  for (let turn = 0; turn < (useTools ? MAX_PUBLIC_PLANNING_TURNS : 1); turn += 1) {
+    liveContext.recordResponseCreation();
     const response: ParsedResponse<AdvisorSummary> = await openai.responses.parse({
       model: WAYLO_MODEL,
-      previous_response_id: previousResponseId,
       instructions: "You are Waylo's academic planning explainer. Use only supplied normalized state and tool results. Distinguish verified facts from review items. Recommend counselor review. Never promise admission or transfer.",
       input: nextInput,
       reasoning: { effort: "medium" },
-      text: { format: zodTextFormat(AdvisorSummarySchema, "waylo_advisor_summary") },
+      text: { format: STRUCTURED_OUTPUT_FORMATS.advisor },
       tools: useTools ? toolContext.tools : undefined,
+      max_output_tokens: OUTPUT_TOKEN_CEILINGS.planning,
+      safety_identifier: liveContext.safetyIdentifier,
+      store: false,
     });
     if (response.output_parsed) return AdvisorSummarySchema.parse(response.output_parsed);
     const calls = response.output.filter((item): item is ParsedResponseFunctionToolCall => item.type === "function_call");
     if (calls.length === 0) throw new AIWorkflowError("invalid_output", "The live response did not match the required advisor-summary schema.");
-    nextInput = calls.map((call) => ({ type: "function_call_output" as const, call_id: call.call_id, output: JSON.stringify(toolContext.execute(call.name, call.arguments)) }));
-    previousResponseId = response.id;
+    nextInput = [
+      ...response.output,
+      ...calls.map((call) => ({ type: "function_call_output" as const, call_id: call.call_id, output: JSON.stringify(toolContext.execute(call.name, call.arguments)) })),
+    ] as ResponseInput;
   }
   throw new AIWorkflowError("invalid_output", "The live planning session exceeded its bounded tool-call limit.");
 }
 
 export const academicAIProvider: AcademicAIProvider = {
-  isConfigured: () => Boolean(process.env.OPENAI_API_KEY),
-  async parsePlanCommand(command, selectedPathwayId, activeRoute, context) {
+  isConfigured: () => isLiveAIConfigured(),
+  async parsePlanCommand(command, selectedPathwayId, activeRoute, context, liveContext) {
     try {
       const catalog = courses.map((course) => ({ id: course.id, code: course.code, title: course.title }));
+      liveContext.recordResponseCreation();
       const response = await client().responses.parse({
         model: WAYLO_MODEL,
         instructions: "Normalize a planning request into only the allowed bounded changes. Never invent a course, pathway, destination, or requirement ID and never edit a plan. A named course term must match the supplied active route or produce a clarification. Weekly work hours are advisory; max units are hard. 'Remove' means defer the named course outside its current route position. The deterministic engine decides all scheduling and validation.",
-        input: JSON.stringify({ command, selectedPathwayId, activeRoute: activeRoute ? { id: activeRoute.id, terms: activeRoute.terms.map((term) => ({ label: term.label, courseIds: term.courses.map((course) => course.courseId) })) } : null, constraints: context?.constraints, selectedDestinationIds: context?.selectedDestinationIds, boundedCourseCatalog: catalog, boundedPathways: ["berkeley-cogsci", "berkeley-data", "ucla-cogsci", "ucla-data", "ucsd-cogsci", "ucsd-data"], boundedDestinations: ["berkeley", "ucla", "ucsd"], allowedChanges: ["defer_course", "restore_course", "replace_course", "set_summer_enrollment", "set_summer_limit", "set_max_units", "set_transfer_target", "set_pathway", "add_destination", "remove_destination", "set_weekly_work_hours"] }),
+        input: JSON.stringify({ command, selectedPathwayId, activeRoute: { id: activeRoute.id, terms: activeRoute.terms.map((term) => ({ label: term.label, courseIds: term.courses.map((course) => course.courseId) })) }, constraints: context.constraints, selectedDestinationIds: context.selectedDestinationIds, boundedCourseCatalog: catalog, boundedPathways: ["berkeley-cogsci", "berkeley-data", "ucla-cogsci", "ucla-data", "ucsd-cogsci", "ucsd-data"], boundedDestinations: ["berkeley", "ucla", "ucsd"], allowedChanges: ["defer_course", "restore_course", "replace_course", "set_summer_enrollment", "set_summer_limit", "set_max_units", "set_transfer_target", "set_pathway", "add_destination", "remove_destination", "set_weekly_work_hours"] }),
         reasoning: { effort: SDK_REASONING_EFFORT },
-        text: { format: zodTextFormat(PlanCommandInterpretationSchema, "waylo_plan_command") },
+        text: { format: STRUCTURED_OUTPUT_FORMATS.planCommand },
+        max_output_tokens: OUTPUT_TOKEN_CEILINGS.command,
+        safety_identifier: liveContext.safetyIdentifier,
+        store: false,
       });
       if (!response.output_parsed) throw new AIWorkflowError("invalid_output", "The live command response did not match the required schema.");
       return validateBoundedInterpretation(PlanCommandInterpretationSchema.parse({ ...response.output_parsed, source: "live" }));
     } catch (error) { if (error instanceof AIConfigurationError) throw error; throw classify(error); }
   },
-  async extractTranscript(input) {
+  async extractTranscript(input, liveContext) {
     try {
+      liveContext.recordResponseCreation();
       const response = await client().responses.parse({
         model: WAYLO_MODEL,
         instructions: "Extract a transcript into the strict schema. Preserve source codes and titles. Use null when a normalized College of the Canyons course identity is not supported by the provided text or image. Low confidence or uncertain matches must set reviewRequired=true. Do not calculate a route.",
         input: transcriptContent(input),
         reasoning: { effort: SDK_REASONING_EFFORT },
-        text: { format: zodTextFormat(TranscriptExtractionSchema, "waylo_transcript_extraction") },
+        text: { format: STRUCTURED_OUTPUT_FORMATS.transcript },
+        max_output_tokens: OUTPUT_TOKEN_CEILINGS.transcript,
+        safety_identifier: liveContext.safetyIdentifier,
+        store: false,
       });
       if (!response.output_parsed) throw new AIWorkflowError("invalid_output", "The live transcript response did not match the required schema.");
       return TranscriptExtractionSchema.parse(response.output_parsed);
     } catch (error) { if (error instanceof AIConfigurationError) throw error; throw classify(error); }
   },
-  async createAdvisorSummary(profile, plan) {
-    try { return await parseAdvisor(profile, plan, false); } catch (error) { if (error instanceof AIConfigurationError) throw error; throw classify(error); }
+  async createAdvisorSummary(profile, plan, liveContext) {
+    try { return await parseAdvisor(profile, plan, false, liveContext); } catch (error) { if (error instanceof AIConfigurationError) throw error; throw classify(error); }
   },
-  async explainPlanningSession(profile, plan) {
-    try { return await parseAdvisor(profile, plan, true); } catch (error) { if (error instanceof AIConfigurationError) throw error; throw classify(error); }
+  async explainPlanningSession(profile, plan, liveContext) {
+    try { return await parseAdvisor(profile, plan, true, liveContext); } catch (error) { if (error instanceof AIConfigurationError) throw error; throw classify(error); }
   },
 };
