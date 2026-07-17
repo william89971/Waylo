@@ -2,6 +2,15 @@
 
 Last updated: 2026-07-16
 
+## Revision under review
+
+- Branch: `codex/waylo-build-week`
+- Target: Vercel Preview only
+- Configuration: `WAYLO_DEMO_MODE=seeded`; no OpenAI key required
+- Stable branch Preview: [waylo-git-codex-waylo-build-week-williampuppet-4258s-projects.vercel.app](https://waylo-git-codex-waylo-build-week-williampuppet-4258s-projects.vercel.app)
+
+The exact deployed commit and unique Preview URL are recorded in `PREVIEW_DEPLOYMENT.md` after Vercel reports the pushed revision ready.
+
 ## Automated verification
 
 | Check | Result |
@@ -9,61 +18,50 @@ Last updated: 2026-07-16
 | Strict TypeScript | Pass |
 | ESLint | Pass with zero warnings |
 | Vitest unit, contract, and API tests | 57/57 pass |
-| Next.js production build | Pass; 23 pages/routes generated or compiled |
-| Protected Preview Playwright | 11 executed tests passed; 7 intentional cross-project skips |
-| Viewports | 1440x900 desktop and 390x844 mobile |
-| Route coverage | Landing, demo, onboarding, all workspace routes, evidence detail, Academic Twin, and Judge Mode |
+| Next.js production build | Pass; 24 pages/routes generated or compiled, including `/judge-tour` |
+| Playwright desktop/mobile suite | 12 executed tests passed; 8 intentional cross-project skips |
+| Viewports | 1440×900 desktop and 390×844 mobile |
+| Route coverage | Landing, Judge Tour, demo, onboarding, every workspace route, evidence detail, Judge Mode, and health API |
 | axe serious/critical issues | 0 across every public/workspace route in desktop and mobile projects |
+| Console errors and horizontal overflow | 0 across the route matrix |
 | Reduced motion | Pass |
 | Print output | Pass |
+| IndexedDB persistence and reload | Pass |
 | Raw upload/command persistence check | Pass; only normalized confirmed workspace data persists |
-| Live GPT request | Pending user-supplied key |
-| Exact public Git clone | Deferred while the repository remains private at the user's request |
-| Deployment of this revision | Pass; private seeded Preview at [waylo-141cokmj1-williampuppet-4258s-projects.vercel.app](https://waylo-141cokmj1-williampuppet-4258s-projects.vercel.app) |
+| Seeded health contract | Pass: seeded mode on, demo mode seeded, AI not configured, no secret value returned |
+| Credential pattern scan | Pass; no credential value or private-key material found |
+| Human validation | Protocol ready; three participant sessions pending |
 
-## Protected seeded Preview verification
+## Judge Tour verification
 
-- Deployment state: Ready, Preview target only, protected by Vercel authentication.
-- Source branch: `codex/waylo-build-week`.
-- Deployed commit: `b73d8cc802017009de68ab5c58c19dac1749264c`.
-- Preview configuration: branch-scoped `WAYLO_DEMO_MODE=seeded`; no OpenAI environment variable is present or required.
-- Health response: `demoMode=seeded`, `seededMode=true`, and `aiConfigured=false`.
-- Live command, transcript, and planning requests returned `503 live_mode_disabled`; the live advisor request returned `403 live_advisor_disabled`. Each response kept seeded fallback available.
-- Runtime logs contained only request identifiers, endpoint, mode, outcome, category, and duration. Searches found no credential name or sample transcript text, and Vercel reported no runtime errors during verification.
-- A fresh authenticated browser context completed the desktop and mobile suite at 1440x900 and 390x844 with no console errors, horizontal overflow, or serious/critical axe findings. Reduced motion, keyboard activation, IndexedDB reload persistence, and print output passed.
+Tested flow:
 
-## Actual User Demo Test
+Landing CTA → seeded College of the Canyons student → Academic Twin baseline → “I may have to drop Calculus I” → recorded GPT-5.6 structured interpretation → deterministic simulation → Fall 2028 to Spring 2029 → four moved milestones → candidate rejection → bounded repair and revalidation → Judge Mode → exact evidence status → counselor action → Advisor Decision Packet.
 
-Tested flow: Academic Twin roadmap -> bounded four-change command -> structured preview -> deterministic candidate search -> baseline/proposed/repaired Time Machine -> target-miss acknowledgment -> confirmation-only persistence -> exact evidence drawer -> editable counselor inquiry -> alternate-route check -> counselor-confirmed resolution -> transcript upload -> seven visible stages -> student review -> normalized workspace commit -> operational trace -> pathway overlap -> controlled requirement comparison -> Judge Mode -> printable advisor decision packet.
+Verified product truths:
 
-What worked:
+- The consequence appears before the technical architecture explanation.
+- The recorded result uses the exact label `Recorded GPT-5.6 demo result.`
+- The tour states `Seeded · no OpenAI request` and exposes no prominent missing-key action.
+- GPT-5.6 is described as interpreting unstructured intent; deterministic code controls route validity.
+- Invalid candidates remain inspectable and cannot replace the saved baseline.
+- Human confirmation remains required before persistence.
+- Evidence status and counselor-confirmed status remain separate.
+- Judge Mode shows only sanitized technical facts and excludes prompts, transcript/profile contents, chain-of-thought, secrets, and raw model responses.
+- The printable packet remains available outside the tour, as does the complete Waylo workspace.
 
-- The primary command resolves to exactly four bounded changes: remove Linear Algebra from Spring 2028, allow one summer course, set 25 weekly work hours, and stay as close as possible to Fall 2028.
-- The parser asks for clarification when a named course and term do not match the active route.
-- No workspace route changes before confirmation, and a missed target requires explicit acknowledgment.
-- Candidate rejection and repair are produced by the same deterministic validator used for displayed routes; the baseline remains protected.
-- Weekly work hours change advisory workload guidance but never silently relax hard unit or prerequisite rules.
-- Evidence actions cite exact records without declaring an unsettled equivalency verified. Counselor confirmation remains a distinct status through `WayloWorkspaceV3`.
-- PDF/image onboarding visibly covers all seven stages, supports student edits and duplicate review, and excludes raw upload data from storage.
-- The operational trace exposes safe source IDs, counts, validations, rejected candidates, repair, duration, and final routes without hidden reasoning.
-- Judge Mode is session-only and displays bounded coverage, model/mode, outcome counts, validation rules, architecture stages, evidence status, and honest stale/missing build verification.
-- The requirement detector is visibly labeled as a controlled fixture and produces only proposed review state.
-- Desktop and mobile roadmap experiences use equivalent dependency information without horizontal page overflow.
+## Browser-directed fixes made in this pass
 
-What failed and was fixed:
+- Removed judge-facing live controls that could end in missing-key errors.
+- Added the four-stage consequence-first tour and direct landing CTA.
+- Corrected dark-surface status contrast found by axe; reran the complete suite on both viewports.
+- Confirmed no horizontal overflow at 390×844 and no framework error overlay or console errors.
 
-- Primary shadcn button text inherited navy on Waylo blue; the semantic foreground cascade was corrected.
-- The extraction progress bar lacked an accessible name; it now has a stable label.
-- Scrollable roadmap regions were not keyboard-focusable; they now expose labeled focusable regions.
-- A nested focusable SVG used an image role; the route canvas now uses a group role with accessible title and description.
-- Route-label contrast and mobile trace layout failed early checks; tokens and responsive layout were corrected.
-- Proposed and repaired contextual rails initially showed baseline constraints; they now show simulated constraints.
-- SVG title/description composition produced a hydration warning; each is now rendered as a stable text node.
+## Remaining human work
 
-Remaining verification:
-
-- Live GPT verification remains intentionally deferred until the user separately authorizes a protected live rehearsal and supplies credentials. Public live mode must remain disabled until the session ledger is backed by a durable shared atomic store.
-- Keep `xhigh` disabled unless a future live request accepts it; otherwise remain on `high`.
-- Exact public-clone and anonymous public-link verification remain deferred until the user authorizes repository and demo publication.
-
-Current readiness: the seeded product is implementation-complete and verified locally and on a private Vercel Preview. There are no release blockers for the protected seeded demo. Live GPT and public-release verification remain intentionally out of scope.
+- Complete the three participant sessions in `HUMAN_VALIDATION.md` without fabricating results.
+- Record and publish the narrated video under three minutes.
+- Add the final Codex `/feedback` session ID.
+- Satisfy and verify private-repository reviewer access, or make the repository public.
+- Recheck official Devpost requirements immediately before submission.
+- Promote this same verified revision to Production only after the final Preview report; Production was not touched during this pass.

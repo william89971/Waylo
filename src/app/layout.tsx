@@ -7,10 +7,10 @@ const geistMono = localFont({ src: "./fonts/GeistMono-Variable.woff2", variable:
 
 export const metadata: Metadata = {
   title: {
-    default: "Waylo — Find your way through college",
+    default: "Waylo — See what changes before you change your plan",
     template: "%s | Waylo",
   },
-  description: "Evidence-grounded academic navigation for community-college transfer students.",
+  description: "An evidence-grounded academic decision simulator for community-college transfer students.",
   applicationName: "Waylo",
 };
 

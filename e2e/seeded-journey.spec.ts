@@ -1,7 +1,38 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-const routes = ["/", "/demo", "/onboarding", "/overview", "/profile", "/pathways", "/roadmap", "/compare", "/what-if", "/planning-session", "/evidence", "/evidence/coc-math-2025", "/advisor-summary"];
+const routes = ["/", "/demo", "/onboarding", "/judge-tour", "/overview", "/profile", "/pathways", "/roadmap", "/compare", "/what-if", "/planning-session", "/evidence", "/evidence/coc-math-2025", "/advisor-summary"];
+
+test("two-minute judge tour proves consequence, validation, evidence, and handoff", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "Desktop covers the complete guided sequence; mobile covers responsive route health.");
+  await page.goto("/judge-tour?fresh=1");
+  await expect(page.getByRole("heading", { name: "See one decision become a validated route." })).toBeVisible();
+  await expect(page.getByText("Seeded · no OpenAI request", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Show me the consequence" }).click();
+  await expect(page.getByText("Recorded GPT-5.6 demo result.", { exact: true })).toBeVisible();
+  await expect(page.locator(".tour-before-after")).toContainText("Fall 2028");
+  await expect(page.locator(".tour-before-after")).toContainText("Spring 2029");
+  await expect(page.locator(".tour-impact-statement")).toContainText("4 academic milestones");
+
+  await page.getByRole("button", { name: "See how Waylo validates it" }).click();
+  await expect(page.getByRole("heading", { name: "The model interprets. Deterministic code decides." })).toBeVisible();
+  await expect(page.getByText("GPT-5.6 structured interpretation", { exact: true })).toBeVisible();
+  await expect(page.getByText("Deterministic rejection", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Open Judge Mode" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText("PlanCommandInterpretationSchema");
+  await expect(dialog).toContainText("Human gate");
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: /Evidence and trust/ }).click();
+  await expect(page.getByRole("heading", { name: "A valid schedule is not the same as a verified equivalency." })).toBeVisible();
+  await expect(page.getByText("assist-review", { exact: false })).toBeVisible();
+  await page.getByRole("button", { name: /Counselor handoff/ }).click();
+  await expect(page.getByRole("heading", { name: "Turn the simulation into a better conversation." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open printable packet" })).toBeVisible();
+  await expect(page.locator(".app-main")).not.toContainText("OPENAI_API_KEY");
+});
 
 test("Academic Twin command lifecycle previews, simulates, repairs, gates, and confirms", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === "mobile", "The mobile project covers responsive command access separately.");
@@ -100,7 +131,7 @@ test("recorded multimodal workflow shows all seven stages before normalized comm
   boundedPngHeader.writeUInt32BE(1, 20);
   await input.setInputFiles({ name: "sanitized-transcript.png", mimeType: "image/png", buffer: boundedPngHeader });
   await expect(page.getByText("sanitized-transcript.png")).toBeVisible();
-  await page.getByRole("button", { name: "Use recorded demo" }).click();
+  await page.getByRole("button", { name: "Replay GPT-5.6 demonstration" }).click();
   await expect(page.getByText("4 of 7 stages complete")).toBeVisible();
   await expect(page.getByText("Student review", { exact: true })).toBeVisible();
   await expect(page.getByText("3 extracted courses")).toBeVisible();
@@ -126,7 +157,9 @@ test("recorded multimodal workflow shows all seven stages before normalized comm
 test("sanitized planning trace reports operations without hidden reasoning", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === "mobile", "Trace semantics are viewport-independent.");
   await page.goto("/planning-session");
-  await page.getByRole("button", { name: "Replay recorded run" }).click();
+  await expect(page.getByRole("button", { name: "Replay GPT-5.6 demonstration" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Try live GPT-5.6/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Replay GPT-5.6 demonstration" }).click();
   await expect(page.getByText("Rejected candidate").first()).toBeVisible();
   await expect(page.getByText("Published validated routes")).toBeVisible();
   await expect(page.getByText("Operational facts only")).toBeVisible();

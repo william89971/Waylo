@@ -147,7 +147,8 @@ export function ExtractionWorkflow() {
             <input ref={inputRef} hidden type="file" accept=".pdf,image/png,image/jpeg,image/webp" onChange={(event) => selectFile(event.target.files?.[0])} />
             {file ? <>{file.type === "application/pdf" ? <FileText /> : <FileImage />}<strong>{file.name}</strong><span>{(file.size / 1024 / 1024).toFixed(2)} MB · ready for temporary processing</span></> : <><Upload /><strong>Drop a transcript screenshot or PDF</strong><span>One file · up to 2 MB · PDF up to 2 pages · image about 4 MP</span></>}
           </button>
-          <div className="upload-actions"><Button variant="outline" disabled={!file || working} onClick={() => void run("seeded")}>Use recorded demo</Button><Button disabled={!file || working} onClick={() => void run("live")}>{working ? <LoaderCircle className="spin" data-icon="inline-start" /> : null}Run live extraction</Button></div>
+          <div className="upload-actions"><Button disabled={!file || working} onClick={() => void run("seeded")}>{working ? <LoaderCircle className="spin" data-icon="inline-start" /> : null}Replay GPT-5.6 demonstration</Button></div>
+          <p className="recorded-result-label">Recorded GPT-5.6 demo result. The public seeded flow makes no OpenAI request.</p>
           <div className="privacy-line"><LockKeyhole />No upload, raw text, prompt, or model response is stored.</div>
           {error ? <div className="inline-error"><AlertTriangle />{error}{mode === "live" ? <Button size="sm" variant="outline" onClick={() => void run("seeded")}>Continue with recorded demo</Button> : null}</div> : null}
         </div>

@@ -6,17 +6,18 @@ export default function LandingPage() {
     <main className="landing">
       <nav className="landing-nav" aria-label="Landing navigation">
         <Link href="/" className="landing-brand">Waylo</Link>
-        <Link href="/overview" className="button primary">Open seeded demo <ArrowRight size={17} /></Link>
+        <Link href="/judge-tour?fresh=1" className="button primary">Start the 2-minute judge tour <ArrowRight size={17} /></Link>
       </nav>
       <section className="landing-hero">
         <div className="landing-copy">
-          <h1>Find your way through college.</h1>
-          <p>Waylo helps community-college students compare transfer pathways, build semester-by-semester routes, spot planning risks, and see what changes before they change their plan.</p>
+          <h1>See what changes before you change your plan.</h1>
+          <p>Waylo turns transcripts, transfer requirements, and real-life constraints into validated academic routes you can review with a counselor.</p>
+          <p className="landing-positioning">An evidence-grounded academic decision simulator for community-college transfer students.</p>
           <div className="cluster">
-            <Link href="/overview" className="button primary">Explore your academic routes <ArrowRight size={17} /></Link>
-            <Link href="/pathways" className="button">See six pathways</Link>
+            <Link href="/judge-tour?fresh=1" className="button primary">Start the 2-minute judge tour <ArrowRight size={17} /></Link>
+            <Link href="/overview" className="button">Open the full seeded app</Link>
           </div>
-          <div className="landing-note"><ShieldCheck size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Seeded demo data. Review academic plans with a counselor.</div>
+          <div className="landing-note"><ShieldCheck size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Seeded College of the Canyons example. Recorded GPT-5.6 demo results are labeled. No OpenAI request is made in the judge tour.</div>
         </div>
         <div className="landing-preview panel" aria-label="Preview of Waylo's semester roadmap">
           <div className="preview-bar"><span className="preview-title">Your route to UCLA</span><span className="status confirmed"><span className="status-icon"><Check size={14} /></span>On track</span></div>
@@ -33,6 +34,7 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          <div className="preview-consequence"><span>Test a change</span><strong>Calculus I moves → four milestones shift</strong><small>Saved baseline stays protected until human confirmation.</small></div>
         </div>
       </section>
     </main>

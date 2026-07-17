@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Bell, CalendarDays, CircleHelp, Home, Library, Menu, Route, Scale, SlidersHorizontal, UserRound, X, FileText, Waypoints } from "lucide-react";
+import { Bell, CalendarDays, CircleHelp, Home, Library, Menu, Route, Scale, SlidersHorizontal, Sparkles, UserRound, X, FileText, Waypoints } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/workspace-store";
 import { JudgeMode } from "@/components/judge-mode";
 
 const navItems = [
+  { href: "/judge-tour", label: "Judge Tour", icon: Sparkles },
   { href: "/overview", label: "Overview", icon: Home },
   { href: "/profile", label: "My Profile", icon: UserRound },
   { href: "/pathways", label: "Pathways", icon: Waypoints },

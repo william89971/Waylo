@@ -1,50 +1,46 @@
-# Private Preview Deployment
+# Seeded Preview Deployment
 
-Last verified: 2026-07-16
+Last updated: 2026-07-16
 
-## Deployment record
+## Target
 
-- Preview URL: [waylo-141cokmj1-williampuppet-4258s-projects.vercel.app](https://waylo-141cokmj1-williampuppet-4258s-projects.vercel.app)
-- Vercel deployment: `dpl_Gg2Fwg9Hd7yuhg9k7vxk8BwSn8aL`
+- Project: `waylo` (`prj_xzHW8n9JS3r10WSJTDQ1Yz8L0a5j`)
+- Team: `williampuppet-4258s-projects`
 - Source branch: `codex/waylo-build-week`
-- Source commit: `b73d8cc802017009de68ab5c58c19dac1749264c`
 - Target: Preview only
-- Access: private through Vercel authentication
-- Repository visibility: private
+- Stable branch alias: [waylo-git-codex-waylo-build-week-williampuppet-4258s-projects.vercel.app](https://waylo-git-codex-waylo-build-week-williampuppet-4258s-projects.vercel.app)
+- Production: unchanged
 
-## Seeded-only configuration
+## Required configuration
 
-The branch-scoped Preview environment sets `WAYLO_DEMO_MODE=seeded`. No `OPENAI_API_KEY` is present or required. The deployed health endpoint reports seeded mode and `aiConfigured=false`.
+The branch-scoped Preview environment must keep `WAYLO_DEMO_MODE=seeded`. No `OPENAI_API_KEY` is present or required for the judging path. A successful health check must report:
 
-Seeded mode is authoritative. Recorded extraction, command parsing, planning, and Judge Mode results are labeled `Recorded GPT-5.6 demo result.` Live requests are rejected before provider access and return a safe seeded-fallback signal.
+- `demoMode=seeded`
+- `seededMode=true`
+- `aiConfigured=false`
+- `model=gpt-5.6-sol`
 
-## Verification results
+## Verification checklist
 
-- Deployment state: Ready.
-- Exact deployment commit: verified through Vercel deployment metadata.
-- Local TypeScript: pass.
-- ESLint: pass with zero warnings after temporary browser artifacts were removed.
-- Vitest: 57/57 pass.
-- Next.js production build: pass; 23 pages/routes.
-- Deployed Playwright: 11 pass and 7 intentional viewport skips.
-- Desktop viewport: 1440x900 pass.
-- Mobile viewport: 390x844 pass.
-- Console errors: none.
-- Horizontal overflow: none across public and workspace routes.
-- axe serious/critical findings: none.
-- Keyboard activation and focus handling: pass.
-- Reduced motion: pass.
-- Workspace persistence and reload: pass.
-- Print output: pass.
-- Runtime errors during verification: none.
-- Credential or sample transcript text in runtime-log searches: none.
+- [x] Local typecheck, lint, 57 tests, and production build pass.
+- [x] Local desktop/mobile Playwright suite passes with zero serious/critical axe findings.
+- [x] Local Judge Tour completes from consequence through counselor handoff.
+- [ ] Vercel reports the exact pushed commit Ready as a Preview.
+- [ ] Unique deployment URL and deployment ID are recorded below.
+- [ ] Online health response confirms seeded mode and no configured AI.
+- [ ] Online landing CTA opens the four-stage Judge Tour.
+- [ ] Online Calculus I flow shows Fall 2028 → Spring 2029 and four affected milestones.
+- [ ] Online Judge Mode, evidence actions, Advisor Decision Packet, mobile layout, persistence, and print are verified.
+- [ ] Online UI contains no judge-facing `Try live GPT-5.6` action or API-key error.
 
-The deployed journey covered landing/demo entry, Evidence-to-Plan extraction and review, Academic Twin desktop and mobile routes, the seeded command parser, structured preview, deterministic simulation, candidate rejection, bounded repair, revalidation, Academic Time Machine, pathway comparison, evidence actions, counselor inquiry, Advisor Decision Packet, Judge Mode, controlled requirement-change demonstration, persistence, print, and missing-live-AI behavior.
+## Exact deployment record
 
-## Remaining blockers
+- Commit: pending pushed revision
+- Deployment ID: pending
+- Unique Preview URL: pending
+- State: pending
+- Access: expected to use Vercel authentication; create a temporary share URL for logged-out verification if required
 
-There are no release blockers for this private seeded Preview. The following items remain intentionally deferred:
+## Promotion decision
 
-- Live GPT-5.6 verification requires separate authorization and a user-supplied credential.
-- Public live mode remains blocked until the process-local session ledger is replaced by durable shared atomic quota storage.
-- Public repository, anonymous demo access, public-clone verification, and production deployment remain pending user approval.
+Do not promote to Production until every online checkbox above passes for the exact pushed revision. After that report, the revision is ready for a same-revision Production promotion; the promotion itself remains a separate user action.

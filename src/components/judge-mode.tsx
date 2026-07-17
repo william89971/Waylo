@@ -25,12 +25,18 @@ export function JudgeMode() {
   }, []);
 
   useEffect(() => {
+    const openJudgeMode = () => {
+      setOpen(true);
+      void load();
+    };
+    window.addEventListener("waylo:open-judge-mode", openJudgeMode);
     if (new URLSearchParams(window.location.search).get("judge") === "1") {
       queueMicrotask(() => {
         setOpen(true);
         void load();
       });
     }
+    return () => window.removeEventListener("waylo:open-judge-mode", openJudgeMode);
   }, [load]);
 
   function changeOpen(next: boolean) {
@@ -55,10 +61,14 @@ export function JudgeMode() {
               <Status tone={snapshot.execution.mode === "live" ? "confirmed" : "planned"} label={`${snapshot.execution.mode} · ${snapshot.execution.reasoningEffort}`} />
             </section>
             <section className="judge-metrics" aria-label="Planning metrics">
-              <div><Activity /><strong>{snapshot.planning.candidateCount}</strong><span>retained outcomes</span></div>
+              <div><Activity /><strong>{snapshot.planning.candidateCount}</strong><span>candidate outcomes</span></div>
               <div><Check /><strong>{snapshot.planning.acceptedCount}</strong><span>accepted strategies</span></div>
               <div><Wrench /><strong>{snapshot.planning.repairCount}</strong><span>repair attempt</span></div>
               <div><Database /><strong>{snapshot.evidence.sourceCount}</strong><span>source records</span></div>
+            </section>
+            <section className="judge-section">
+              <div className="judge-section-title"><Check /><div><strong>Structured interpretation</strong><span>{snapshot.execution.schemaName}</span></div></div>
+              <dl><div><dt>Schema validated</dt><dd>{snapshot.execution.schemaValidated ? "Yes" : "No"}</dd></div><div><dt>Search cap</dt><dd>{snapshot.planning.searchCap}</dd></div><div><dt>Human gate</dt><dd>Required</dd></div></dl>
             </section>
             <section className="judge-section">
               <div className="judge-section-title"><ShieldCheck /><div><strong>Deterministic validation</strong><span>{snapshot.planning.rejectedCount} rejected outcomes retained for inspection</span></div></div>

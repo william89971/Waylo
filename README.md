@@ -1,8 +1,8 @@
 # Waylo
 
-> Find your way through college.
+> See what changes before you change your plan.
 
-Waylo helps California community-college students find a clear path through college. Students can compare transfer and major pathways, build semester-by-semester routes, test a change before committing to it, understand blockers, and print a plan to review with a counselor.
+Waylo is an evidence-grounded academic decision simulator for community-college transfer students. It turns transcripts, transfer requirements, and real-life constraints into validated academic routes students can review with a counselor.
 
 This OpenAI Build Week project deeply supports six College of the Canyons university-program pathways across three destinations:
 
@@ -10,12 +10,13 @@ This OpenAI Build Week project deeply supports six College of the Canyons univer
 - UCLA: Cognitive Science B.S. and Statistics and Data Science B.S.
 - UC San Diego: Cognitive Science B.S. and Data Science B.S.
 
-[Open the deployed Waylo demo](https://waylo-phi.vercel.app)
+The primary Build Week path is a four-stage, two-minute Judge Tour: consequence, intelligence and validation, evidence and trust, and counselor handoff. The final verified Preview URL is recorded in [`docs/PREVIEW_DEPLOYMENT.md`](docs/PREVIEW_DEPLOYMENT.md).
 
 Waylo is a planning aid, not an official degree audit, admissions decision, or promise of transfer. Requirements, articulations, and course offerings change. Review the evidence and confirm the plan with a counselor before enrollment decisions.
 
 ## What the demo includes
 
+- A consequence-first Judge Tour that moves Calculus I, shows the revised completion date and affected milestones, then leads into validation, evidence, and the Advisor Decision Packet.
 - Three meaningfully different route strategies: fastest valid route, greatest verified overlap, and balanced workload.
 - Deterministic prerequisite, duplicate-credit, known-offering, unit-limit, completion-grade, and route-coverage checks.
 - A side-by-side what-if simulation derived from the prerequisite graph.
@@ -28,7 +29,13 @@ Waylo is a planning aid, not an official degree audit, admissions decision, or p
 - Evidence status, academic year, retrieval date, assumptions, and counselor-review items at the point of use.
 - Transcript review, streamed planning-session events, and an advisor-ready printable summary.
 - Login-free IndexedDB persistence using a strict, migrated `WayloWorkspaceV3` record.
-- A fully functional seeded journey without an API key, plus optional server-side GPT-5.6 Sol workflows.
+- A fully functional seeded journey without an API key, plus genuine protected server-side GPT-5.6 Sol workflows.
+
+## GPT-5.6 and the deterministic boundary
+
+GPT-5.6 supports multimodal transcript extraction, unstructured-intent interpretation, ambiguity surfacing, and grounded explanation. Deterministic application code controls trusted identifiers, prerequisites, requirements, course offerings, unit limits, schedule generation, consequences, route acceptance, and confirmation-gated persistence.
+
+The public judging path is intentionally seeded. Every recorded model-assisted result is labeled `Recorded GPT-5.6 demo result.` The tour states that it makes no OpenAI request and does not expose a live control that ends in a missing-key error.
 
 ## Local setup
 
@@ -84,7 +91,7 @@ npm.cmd run build
 npm.cmd start
 ```
 
-The browser suite covers desktop and mobile flows, persistence, what-if comparison, evidence, print output, API health, and axe accessibility checks.
+The browser suite covers the four-stage Judge Tour, desktop and mobile flows, persistence, what-if comparison, evidence, print output, API health, and axe accessibility checks.
 
 ## API surface
 
@@ -105,11 +112,11 @@ Only normalized confirmed profile, plan, simulation, evidence-resolution, Academ
 
 V1 covers only the six pathways above. Program requirements and College of the Canyons course facts are connected to official source records. Exact institution-to-institution course articulations remain explicitly marked for ASSIST/counselor review where the curated dataset does not contain a verified agreement. Waylo does not extrapolate to unsupported schools or majors, predict admission, or guess unknown course offerings.
 
-See [data coverage](docs/DATA_COVERAGE.md), [architecture](docs/ARCHITECTURE.md), [evaluation](docs/EVALUATION_REPORT.md), and the [Build Week requirements register](docs/HACKATHON_REQUIREMENTS.md).
+See [data coverage](docs/DATA_COVERAGE.md), [architecture](docs/ARCHITECTURE.md), [evaluation](docs/EVALUATION_REPORT.md), [Codex collaboration](docs/CODEX_USAGE.md), [human validation protocol](docs/HUMAN_VALIDATION.md), and the [Build Week requirements register](docs/HACKATHON_REQUIREMENTS.md).
 
 ## Deployment
 
-Deploy with Vercel using the repository defaults and keep `WAYLO_DEMO_MODE=seeded`. A key by itself never enables live mode. Before any future multi-instance live deployment, replace the current process-local atomic session budget with a durable atomic store; until then, protected live mode is suitable only for a controlled single-instance rehearsal. Do not prefix any server value with `NEXT_PUBLIC_`. The repository remains private until the user elects to publish it; exact public-clone verification is therefore a release step, not a current claim.
+Deploy with Vercel using the repository defaults and keep `WAYLO_DEMO_MODE=seeded`. A key by itself never enables live mode. Before any future multi-instance live deployment, replace the current process-local atomic session budget with a durable atomic store; until then, protected live mode is suitable only for a controlled single-instance rehearsal. Do not prefix any server value with `NEXT_PUBLIC_`. The repository is currently private, so final submission access must follow the private-repository sharing requirement documented in `HACKATHON_REQUIREMENTS.md`.
 
 ## License
 

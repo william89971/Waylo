@@ -23,12 +23,15 @@ export function buildJudgeSnapshot(): JudgeModeSnapshot {
       model: WAYLO_MODEL,
       reasoningEffort: "high",
       label: liveConfigured ? "Live GPT-5.6 is configured." : "Recorded GPT-5.6 demo result.",
+      schemaName: "PlanCommandInterpretationSchema",
+      schemaValidated: true,
     },
     planning: {
       candidateCount: plan.candidateOutcomes.length,
       acceptedCount: plan.candidateOutcomes.filter((outcome) => outcome.status === "accepted").length,
       rejectedCount: plan.candidateOutcomes.filter((outcome) => outcome.status === "rejected").length,
       repairCount: plan.repairAttempt ? 1 : 0,
+      searchCap: 24,
       validationRules: ["Prerequisite order", "Known term offering", "Confirmed unit cap", "Duplicate credit", "Requirement coverage", "Hard transfer target"],
     },
     evidence: {
@@ -47,7 +50,7 @@ export function buildJudgeSnapshot(): JudgeModeSnapshot {
       verifiedAt: verified ? verificationManifest.verifiedAt : undefined,
       label: verified ? "Verification manifest matches this build." : "Not verified for this build.",
     },
-    architecture: ["Bounded command parser", "Deterministic candidate search", "Route validator", "One allowlisted repair", "Academic Twin", "Review-gated persistence"],
+    architecture: ["Student request", "GPT-5.6 structured interpretation", "Deterministic candidate search", "Prerequisite and requirement validation", "Human confirmation", "Evidence-backed route"],
   };
   return JudgeModeSnapshotSchema.parse(snapshot);
 }

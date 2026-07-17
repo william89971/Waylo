@@ -551,8 +551,8 @@ export type AcademicTwin = z.infer<typeof AcademicTwinSchema>;
 
 export const JudgeModeSnapshotSchema = z.object({
   generatedAt: z.string(),
-  execution: z.object({ mode: z.enum(["recorded", "live"]), model: z.literal("gpt-5.6-sol"), reasoningEffort: z.enum(["medium", "high", "xhigh"]), label: z.string() }),
-  planning: z.object({ candidateCount: z.number().int().nonnegative(), acceptedCount: z.number().int().nonnegative(), rejectedCount: z.number().int().nonnegative(), repairCount: z.number().int().nonnegative(), validationRules: z.array(z.string()) }),
+  execution: z.object({ mode: z.enum(["recorded", "live"]), model: z.literal("gpt-5.6-sol"), reasoningEffort: z.enum(["medium", "high", "xhigh"]), label: z.string(), schemaName: z.string(), schemaValidated: z.boolean() }),
+  planning: z.object({ candidateCount: z.number().int().nonnegative(), acceptedCount: z.number().int().nonnegative(), rejectedCount: z.number().int().nonnegative(), repairCount: z.number().int().nonnegative(), searchCap: z.number().int().positive(), validationRules: z.array(z.string()) }),
   evidence: z.object({ sourceCount: z.number().int().nonnegative(), verifiedCount: z.number().int().nonnegative(), reviewCount: z.number().int().nonnegative(), pathwayCount: z.number().int().nonnegative(), destinationCount: z.number().int().nonnegative(), dataVersion: z.string(), lastVerifiedAt: z.string() }),
   latency: z.object({ totalMs: z.number().int().nonnegative(), planningMs: z.number().int().nonnegative(), validationMs: z.number().int().nonnegative() }),
   build: z.object({ commit: z.string(), verified: z.boolean(), verifiedAt: z.string().optional(), label: z.string() }),

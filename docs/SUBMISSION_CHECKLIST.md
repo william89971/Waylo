@@ -1,28 +1,41 @@
 # Submission Checklist
 
-Submission deadline: July 21, 2026 at 5:00 PM PT.
+Submission deadline: July 21, 2026 at 5:00 PM PDT.
 
-## Product freeze — by July 18 at 5:00 PM PT
+## Product and Preview
 
-- [ ] Public Vercel URL works in an incognito browser.
-- [ ] Seeded journey completes without an API key.
-- [ ] User-supplied server key enables a verified live `gpt-5.6-sol` run.
-- [ ] Typecheck, lint, unit/contract/API, Playwright, axe, and production build pass.
-- [ ] Clean clone installs with `npm.cmd ci`, builds, and starts under Node 22.
-- [ ] Six pathways, three strategies, what-if, evidence, persistence, and print summary are verified.
-- [ ] No key, raw transcript, prompt, model response, or sensitive profile content appears in repository, storage, or logs.
-- [ ] Public GitHub repository has MIT license, setup instructions, sample-data explanation, and academic limitations.
+- [x] Landing page explains the decision-simulation product and audience without narration.
+- [x] Primary CTA says `Start the 2-minute judge tour`.
+- [x] Four-stage tour covers consequence, validation, evidence, and counselor handoff.
+- [x] Calculus I demonstration moves Fall 2028 to Spring 2029 and exposes four affected milestones.
+- [x] Public seeded controls say `Replay GPT-5.6 demonstration`; no prominent missing-key dead end remains.
+- [x] Recorded results use the exact label `Recorded GPT-5.6 demo result.`
+- [x] Judge Mode shows sanitized model/mode, schema, candidates, rejection, repair, rules, evidence, safe latency, architecture, and build status.
+- [x] Typecheck, lint, 57 unit/contract/API tests, and production build pass on this revision.
+- [ ] Full Playwright desktop/mobile, axe, persistence, and print suite passes on this revision.
+- [ ] Exact branch revision is deployed to Vercel Preview with `WAYLO_DEMO_MODE=seeded` and no OpenAI key.
+- [ ] Preview is verified through the full Judge Tour on desktop and mobile.
+- [ ] Production is promoted from the verified revision only after the Preview report.
 
-## Demo and Devpost — July 18–21
+## Trust and repository
 
-- [ ] Recheck Overview, Resources, Rules, and official updates; record conflicts in `HACKATHON_REQUIREMENTS.md`.
-- [ ] Rehearse the under-three-minute script against the public deployment.
-- [ ] Record at least one verified live GPT-5.6 Sol execution; label a recording if live availability prevents it.
-- [ ] Explain how Codex and GPT-5.6 were used.
-- [ ] Verify video is public and playable without login.
-- [ ] Select Education and use “Waylo — Find your way through college.” consistently.
-- [ ] Add public app URL, public repository URL, description, video, README, and required Codex `/feedback` session ID.
-- [ ] Verify every link from a logged-out/incognito browser.
-- [ ] Submit before July 21, 2026 at 5:00 PM PT and save confirmation.
+- [x] Academic scope stays limited to six pathways across three destinations.
+- [x] Evidence status and counselor-confirmed status remain separate.
+- [x] Raw uploads, raw commands, prompts, model responses, and secrets are excluded from workspace persistence.
+- [x] Human validation protocol exists and contains no fabricated results.
+- [ ] Three participant sessions are complete and recorded honestly in `HUMAN_VALIDATION.md`.
+- [ ] Secret scan and clean-clone install/build check pass for the final commit.
+- [ ] Private repository is shared with the required reviewers, or made public, and access is verified.
 
-After freeze, allow only release blockers, factual corrections, and submission-document changes. Every code fix requires targeted tests and another production build.
+## Demo and Devpost
+
+- [x] Under-three-minute script follows the four-stage judge flow.
+- [x] Codex story includes one concrete boundary/candidate-loop/browser-testing example.
+- [x] Devpost draft accurately separates GPT-5.6 interpretation from deterministic validation.
+- [ ] Recheck official Overview, FAQ, Rules, and updates; record the result in `HACKATHON_REQUIREMENTS.md`.
+- [ ] Record and publish the narrated YouTube video; verify it plays logged out.
+- [ ] Add the final public app URL, repository URL/access, video URL, and main Codex `/feedback` session ID.
+- [ ] Verify every submission link in a logged-out browser.
+- [ ] Submit before the deadline and save the confirmation.
+
+After product freeze, allow only release blockers, factual corrections, and submission-document changes. Every code fix requires targeted tests and another production build.

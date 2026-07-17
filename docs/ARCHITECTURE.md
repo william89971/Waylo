@@ -20,7 +20,7 @@ UI routes
        -> EvidenceRepository
        -> RouteValidator
   -> server route handlers
-       -> AcademicAIProvider (optional live GPT-5.6 Sol)
+       -> AcademicAIProvider (protected live GPT-5.6 Sol integration)
        -> deterministic tools and validator
 ```
 

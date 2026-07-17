@@ -1,26 +1,42 @@
 # OpenAI Build Week Requirements Register
 
-Retrieved: 2026-07-13
+Last checked: 2026-07-16 against the official Build Week site and Devpost Overview, FAQ, and Rules. Recheck immediately before submission because Devpost requirements can change.
 
-Submission requirements follow the current Overview, Resources, and official updates. The Rules page is rechecked once finalized and immediately before submission. Conflicts are recorded instead of silently choosing one version.
+## Current submission requirements
 
-| Source | Current fact used by Waylo | Status / conflict |
+| Requirement | Waylo evidence | Status |
 | --- | --- | --- |
-| [Overview](https://openai.devpost.com/) | Submission deadline: July 21, 2026 at 5:00 PM PT | Confirmed; Waylo omits the weekday everywhere |
-| [Overview](https://openai.devpost.com/) | Working Codex/GPT-5.6 project; category, description, demo video, repository URL, README, `/feedback` session ID | Working checklist |
-| [Resources](https://openai.devpost.com/resources) | Keep repository testable; video voiceover explains Codex and GPT-5.6 use | Working checklist |
-| [Official updates](https://openai.devpost.com/updates) | Monitor announcements and requirement changes | Recheck before freeze/submission |
-| [Rules](https://openai.devpost.com/rules) | Deadline currently agrees with Overview | Recheck finalized artifact requirements |
+| Submit by July 21, 2026 at 5:00 PM PDT | Date is repeated in the submission checklist | Confirmed |
+| Meaningfully use Codex and GPT-5.6 | `CODEX_USAGE.md`, protected GPT-5.6 provider integration, strict outputs/tools, Judge Mode, recorded seeded demonstration | Implemented; final narration pending |
+| Demo video under three minutes | `DEMO_SCRIPT.md` targets 2:20–2:40 | Recording pending |
+| Public YouTube video with audio | Final URL must play logged out | Pending user action |
+| Working application URL | Consequence-first seeded Judge Tour | Exact Preview verification pending |
+| Repository access and MIT license | MIT license present; repository currently private | User must share private repository with `testing@devpost.com` and `build-week-event@openai.com`, or make it public, then verify access |
+| README with setup, sample-data explanation, and Codex/GPT-5.6 details | Root README and linked technical docs | Implemented; final URL pending |
+| Codex `/feedback` session ID | Add the main Build Week session ID to Devpost | Pending user action |
 
-## Waylo deliverables
+## Judging criteria
 
-- Education category and Vercel application with seeded judge path: remote build ready at [waylo-phi.vercel.app](https://waylo-phi.vercel.app); final logged-out verification pending.
-- MIT-licensed GitHub repository and complete README: implementation is local; the connected repository is currently private and branch publication is pending renewed GitHub CLI authentication.
-- Public video under three minutes covering Codex and GPT-5.6.
-- Project description, repository URL, and main Codex `/feedback` session ID supplied by the user.
+Waylo is prepared around the four published criteria:
 
-## Internal controls
+1. Technological implementation, including meaningful Codex use.
+2. Design.
+3. Potential impact.
+4. Quality of the idea.
 
-- Product complete/frozen by July 18, 2026 at 5:00 PM PT.
-- Final official-source check between July 18 and July 21.
-- Material changes are added here with date, source, impact, and resolution.
+The evidence map and honest internal grade live in `JUDGING_SCORECARD.md`.
+
+## Product truth for judges
+
+- The public judging path is seeded, complete, and authoritative.
+- Recorded model-assisted results use the exact label `Recorded GPT-5.6 demo result.`
+- The seeded path makes no OpenAI request and never presents itself as live.
+- GPT-5.6 handles multimodal extraction, unstructured-intent interpretation, ambiguity, and explanation.
+- Deterministic code controls prerequisites, requirements, schedules, consequences, candidate acceptance, and persistence.
+- Waylo is a planning aid, not an official degree audit, admissions predictor, or counselor replacement.
+
+## Final recheck record
+
+| Date/time | Pages checked | Change found | Impact and resolution |
+| --- | --- | --- | --- |
+| Pending | Overview, FAQ, Rules, updates | Pending | Complete before submission |

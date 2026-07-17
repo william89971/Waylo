@@ -1,43 +1,61 @@
 # Waylo Demo Script
 
-Target length: 2:35-2:50. Keep the entire video under three minutes.
+Target: 2:20–2:40. Hard limit: under three minutes. Record the deployed revision with narration and keep the seeded disclosure visible.
 
-## 0:00-0:18 - Problem and promise
+## 0:00–0:18 — Promise
 
-“Waylo helps community-college students find a clear path through college. I’m starting at College of the Canyons, and this Academic Twin turns verified requirements, prerequisites, and my real-life constraints into routes I can review with a counselor.”
+“Changing one course can move an entire transfer plan. Waylo is an evidence-grounded academic decision simulator for community-college transfer students. It lets students see what changes before they change their plan.”
 
-Enter the demo and open the roadmap. Keep the planning-aid guardrail visible.
+Click **Start the 2-minute judge tour**.
 
-## 0:18-0:58 - Ask for a detour
+## 0:18–0:52 — Consequence first
 
-Use the command: “I work 25 hours each week. Remove Linear Algebra from Spring 2028, allow one summer course, and keep me as close as possible to Fall 2028.”
+“This is a seeded College of the Canyons student on a validated Data Science route. I’ll ask: ‘I may have to drop Calculus I. Show me what changes.’”
 
-Show the four-change structured preview. Explain that GPT-5.6 Sol may interpret the request, but it cannot edit the plan. The deterministic engine searches and validates candidates.
+Click **Show me the consequence**. Hold on the result:
 
-## 0:58-1:28 - Time Machine and validation
+- Fall 2028 becomes Spring 2029.
+- Four milestones move.
+- The saved baseline is still protected.
+- The result is explicitly labeled `Recorded GPT-5.6 demo result.`
 
-Run the preview. Move between Baseline, Proposed, and Repaired. Point out the rejected proposal, the one allowlisted repair, prerequisite validation, and the Spring 2029 result. Acknowledge the missed Fall 2028 preference, then confirm. Emphasize that nothing is saved before confirmation.
+“GPT-5.6 interprets the unstructured request into a strict schema. It does not decide whether the route is valid.”
 
-## 1:28-1:52 - Evidence to Plan
+## 0:52–1:28 — Intelligence and validation
 
-Upload a transcript screenshot or PDF. Let the seven visible stages advance, edit one extracted row, review a duplicate/uncertain match, and confirm normalized courses. Say that the raw document, raw text, prompts, and model response are not stored.
+Click **See how Waylo validates it**.
 
-## 1:52-2:13 - Evidence and requirement impact
+“Deterministic code searches bounded candidates, rejects invalid schedules, attempts one allowlisted repair, and revalidates from scratch. A model cannot grant credit, waive a prerequisite, or bypass the human confirmation gate.”
 
-Open an uncertainty action. Show exact evidence and the counselor inquiry language. On Evidence, run the controlled version comparison and point out that it is a fixture that proposes an affected MATH 214 segment; it does not claim a real catalog or ASSIST change.
+Open **Judge Mode** for five seconds. Point to model ID, recorded mode, reasoning effort, schema validation, candidate/rejection/repair counts, rules, evidence version, safe latency, architecture flow, and build attestation. Do not show prompts, transcript content, raw model responses, chain-of-thought, secrets, or personal data.
 
-## 2:13-2:34 - Judge Mode and live GPT
+## 1:28–1:58 — Evidence and trust
 
-Open Judge Mode with `?judge=1`. Show the explicit model ID, recorded/live label, bounded six-pathway coverage, candidate outcomes, validation rules, sources, architecture stages, latency, and honest build-verification status. Include one verified live `gpt-5.6-sol` execution if a key and API availability permit it. Otherwise keep the exact label “Recorded GPT-5.6 demo result.” visible and say it is recorded.
+Open **Evidence and trust**.
 
-## 2:34-2:48 - Counselor handoff
+“A schedule can be internally valid while an equivalency still needs verification. Waylo carries the source status into the route. Counselor confirmation is recorded separately and never relabels partial evidence as verified.”
 
-Open the printable advisor decision packet. Show verified, counselor-confirmed, and unresolved facts separately. Close with: “Waylo keeps evidence and deterministic validation in control, so students can see what changes before they change their plan. Find your way through college.”
+Open **Review evidence** or **Draft counselor inquiry** briefly.
+
+## 1:58–2:24 — Counselor handoff
+
+Open **Counselor handoff**.
+
+“The Advisor Decision Packet separates route facts, unresolved evidence, constraints, alternatives, and exact questions. Waylo makes a high-stakes plan change reviewable before it becomes real.”
+
+Open the printable packet, then close with:
+
+“Waylo combines GPT-5.6 interpretation, deterministic academic validation, and human confirmation so students can see what changes before they change their plan.”
+
+## Optional 10-second Codex line
+
+If time permits: “Codex helped us turn the human safety boundary into the candidate-search and revalidation loop, then browser-tested the product as a judge would and caught presentation and live-mode risks before release.”
 
 ## Recording checklist
 
-- Use the deployed revision in an incognito browser after link verification.
-- Keep seeded mode ready as the reliability fallback.
-- Do not show the terminal, environment settings, network request bodies, hidden reasoning, transcript contents, or any key.
+- Use the exact deployed revision in a logged-out browser.
+- Keep the video public, playable without login, narrated, and under three minutes.
+- Do not show a terminal, environment settings, network bodies, hidden reasoning, transcript contents, or credentials.
+- Never call the recorded result live. Use the exact label shown in the UI.
+- Say “planning aid,” not official degree audit, guaranteed transfer, admissions prediction, or counselor replacement.
 - Do not call the controlled requirement fixture a real source update.
-- Verify narration says “planning aid,” not guaranteed transfer/admission or counselor replacement.
