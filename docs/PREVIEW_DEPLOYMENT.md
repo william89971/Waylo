@@ -1,6 +1,6 @@
 # Seeded Preview Deployment
 
-Last updated: 2026-07-16
+Last updated: 2026-07-17
 
 ## Target
 
@@ -35,13 +35,13 @@ The branch-scoped Preview environment must keep `WAYLO_DEMO_MODE=seeded`. No `OP
 
 ## Exact deployment record
 
-- Application commit: `4e53290e6ac62c4737150740b4037d0e7392b15d`
-- Deployment ID: `dpl_9VTq68RadzBFJWNSPXrt3jeNkWhJ`
-- Unique Preview URL: [waylo-mpy48wmgn-williampuppet-4258s-projects.vercel.app](https://waylo-mpy48wmgn-williampuppet-4258s-projects.vercel.app)
+- Application commit: `92c72701fa1a6c850a2803c71ecfa1b717e3b861`
+- Deployment ID: `dpl_4PJGWG4rDPf8xxV6HLhhVr2WMDCt`
+- Unique Preview URL: [waylo-qwycx9v0a-williampuppet-4258s-projects.vercel.app](https://waylo-qwycx9v0a-williampuppet-4258s-projects.vercel.app)
 - State: Ready (Preview; Production unchanged)
 - Access: Vercel Authentication is enabled. Temporary authenticated share links were used for logged-out desktop and mobile verification and were not recorded in the repository.
 
-The online pass covered the complete Judge Tour, the sanitized Judge Mode trace, exact evidence statuses, counselor handoff, Advisor Decision Packet, 390×844 mobile layout, and saved-route persistence after reload. Vercel runtime evidence showed three successful `/api/health` requests, 63 HTTP 200 responses overall, no 5xx responses, and no runtime error clusters during verification.
+The online pass covered the consequence-complete landing page, the complete Judge Tour, the sanitized Judge Mode trace, exact evidence statuses, counselor handoff, Advisor Decision Packet availability, and the 390×844 mobile layout. The exact deployed `/api/health` endpoint returned HTTP 200 with the seeded contract. Vercel runtime evidence showed 49 HTTP 200, 13 HTTP 304, and 2 HTTP 204 responses overall, with no 5xx responses during verification.
 
 ## Promotion decision
 

@@ -1,6 +1,6 @@
 # Final Verification Report
 
-Last updated: 2026-07-16
+Last updated: 2026-07-17
 
 ## Revision under review
 
@@ -9,7 +9,7 @@ Last updated: 2026-07-16
 - Configuration: `WAYLO_DEMO_MODE=seeded`; no OpenAI key required
 - Stable branch Preview: [waylo-git-codex-waylo-build-week-williampuppet-4258s-projects.vercel.app](https://waylo-git-codex-waylo-build-week-williampuppet-4258s-projects.vercel.app)
 
-The verified application commit is `4e53290e6ac62c4737150740b4037d0e7392b15d`. Its unique Ready Preview URL and deployment ID are recorded in `PREVIEW_DEPLOYMENT.md`.
+The verified application commit is `92c72701fa1a6c850a2803c71ecfa1b717e3b861`. Its unique Ready Preview URL and deployment ID are recorded in `PREVIEW_DEPLOYMENT.md`.
 
 ## Automated verification
 
@@ -19,7 +19,7 @@ The verified application commit is `4e53290e6ac62c4737150740b4037d0e7392b15d`. I
 | ESLint | Pass with zero warnings |
 | Vitest unit, contract, and API tests | 57/57 pass |
 | Next.js production build | Pass; 24 pages/routes generated or compiled, including `/judge-tour` |
-| Playwright desktop/mobile suite | 12 executed tests passed; 8 intentional cross-project skips |
+| Playwright desktop/mobile suite | 14 executed tests passed; 8 intentional cross-project skips |
 | Viewports | 1440×900 desktop and 390×844 mobile |
 | Route coverage | Landing, Judge Tour, demo, onboarding, every workspace route, evidence detail, Judge Mode, and health API |
 | axe serious/critical issues | 0 across every public/workspace route in desktop and mobile projects |
@@ -34,12 +34,13 @@ The verified application commit is `4e53290e6ac62c4737150740b4037d0e7392b15d`. I
 
 ## Online Preview verification
 
-- Vercel deployment `dpl_9VTq68RadzBFJWNSPXrt3jeNkWhJ` reached Ready as a Preview for the exact application commit; Production remained unchanged.
+- Vercel deployment `dpl_4PJGWG4rDPf8xxV6HLhhVr2WMDCt` reached Ready as a Preview for the exact application commit; Production remained unchanged.
+- The deployed first viewport shows Fall 2028 → Spring 2029, four real engine-derived milestone moves, and the protected saved baseline before the first click.
 - Desktop Judge Tour completed through consequence, Judge Mode, evidence review, counselor handoff, and Advisor Decision Packet.
-- Mobile verification at 390×844 completed before and after the consequence action with no horizontal overflow.
-- The full roadmap workflow rejected the invalid route, revalidated a bounded repair, required explicit acknowledgment, saved the normalized route, and retained Spring 2029 after reload.
-- The deployed Planning Session exposes `Replay GPT-5.6 demonstration`, identifies the result as recorded and seeded, and contains no judge-facing live action or API-key error.
-- Vercel runtime logs recorded `/api/health` as HTTP 200 and showed no 5xx responses or runtime error clusters during the verification window.
+- The deployed landing page was checked at 390×844 with no horizontal overflow; the exact-source mobile suite also covered the consequence and workspace flows.
+- The exact-source browser suite verified that the full roadmap workflow rejects the invalid route, revalidates a bounded repair, requires explicit acknowledgment, saves the normalized route, and retains Spring 2029 after reload.
+- The exact-source browser suite verified that Planning Session exposes `Replay GPT-5.6 demonstration`, labels the result recorded and seeded, and contains no judge-facing live action or API-key error.
+- The deployed `/api/health` endpoint returned HTTP 200 with seeded mode on, AI not configured, and no secret value. Vercel recorded 49 HTTP 200, 13 HTTP 304, and 2 HTTP 204 responses with no 5xx responses during the verification window.
 
 ## Judge Tour verification
 
@@ -61,10 +62,10 @@ Verified product truths:
 
 ## Browser-directed fixes made in this pass
 
-- Removed judge-facing live controls that could end in missing-key errors.
-- Added the four-stage consequence-first tour and direct landing CTA.
-- Corrected dark-surface status contrast found by axe; reran the complete suite on both viewports.
-- Confirmed no horizontal overflow at 390×844 and no framework error overlay or console errors.
+- Moved the exact transfer-term consequence, all four affected courses, and baseline protection into the first viewport.
+- Derived the landing proof from the seeded planning and simulation engines instead of duplicating display-only claims.
+- Kept the primary judge-tour CTA visible above the fold on desktop and mobile.
+- Confirmed no horizontal overflow at 390×844, no serious/critical axe findings, and no console errors across the route matrix.
 
 ## Remaining human work
 
