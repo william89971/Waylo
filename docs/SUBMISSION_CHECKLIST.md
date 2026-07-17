@@ -12,9 +12,9 @@ Submission deadline: July 21, 2026 at 5:00 PM PDT.
 - [x] Recorded results use the exact label `Recorded GPT-5.6 demo result.`
 - [x] Judge Mode shows sanitized model/mode, schema, candidates, rejection, repair, rules, evidence, safe latency, architecture, and build status.
 - [x] Typecheck, lint, 57 unit/contract/API tests, and production build pass on this revision.
-- [ ] Full Playwright desktop/mobile, axe, persistence, and print suite passes on this revision.
-- [ ] Exact branch revision is deployed to Vercel Preview with `WAYLO_DEMO_MODE=seeded` and no OpenAI key.
-- [ ] Preview is verified through the full Judge Tour on desktop and mobile.
+- [x] Full Playwright desktop/mobile, axe, persistence, and print suite passes on this revision.
+- [x] Exact application revision is deployed to Vercel Preview with `WAYLO_DEMO_MODE=seeded` and no OpenAI key.
+- [x] Preview is verified through the full Judge Tour on desktop and mobile.
 - [ ] Production is promoted from the verified revision only after the Preview report.
 
 ## Trust and repository
@@ -24,7 +24,7 @@ Submission deadline: July 21, 2026 at 5:00 PM PDT.
 - [x] Raw uploads, raw commands, prompts, model responses, and secrets are excluded from workspace persistence.
 - [x] Human validation protocol exists and contains no fabricated results.
 - [ ] Three participant sessions are complete and recorded honestly in `HUMAN_VALIDATION.md`.
-- [ ] Secret scan and clean-clone install/build check pass for the final commit.
+- [x] Secret scan and clean dependency install/build check pass for the verified application commit.
 - [ ] Private repository is shared with the required reviewers, or made public, and access is verified.
 
 ## Demo and Devpost
@@ -32,7 +32,7 @@ Submission deadline: July 21, 2026 at 5:00 PM PDT.
 - [x] Under-three-minute script follows the four-stage judge flow.
 - [x] Codex story includes one concrete boundary/candidate-loop/browser-testing example.
 - [x] Devpost draft accurately separates GPT-5.6 interpretation from deterministic validation.
-- [ ] Recheck official Overview, FAQ, Rules, and updates; record the result in `HACKATHON_REQUIREMENTS.md`.
+- [x] Recheck official Overview, FAQ, Rules, and updates; record the result in `HACKATHON_REQUIREMENTS.md`.
 - [ ] Record and publish the narrated YouTube video; verify it plays logged out.
 - [ ] Add the final public app URL, repository URL/access, video URL, and main Codex `/feedback` session ID.
 - [ ] Verify every submission link in a logged-out browser.

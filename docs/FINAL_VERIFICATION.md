@@ -9,7 +9,7 @@ Last updated: 2026-07-16
 - Configuration: `WAYLO_DEMO_MODE=seeded`; no OpenAI key required
 - Stable branch Preview: [waylo-git-codex-waylo-build-week-williampuppet-4258s-projects.vercel.app](https://waylo-git-codex-waylo-build-week-williampuppet-4258s-projects.vercel.app)
 
-The exact deployed commit and unique Preview URL are recorded in `PREVIEW_DEPLOYMENT.md` after Vercel reports the pushed revision ready.
+The verified application commit is `4e53290e6ac62c4737150740b4037d0e7392b15d`. Its unique Ready Preview URL and deployment ID are recorded in `PREVIEW_DEPLOYMENT.md`.
 
 ## Automated verification
 
@@ -31,6 +31,15 @@ The exact deployed commit and unique Preview URL are recorded in `PREVIEW_DEPLOY
 | Seeded health contract | Pass: seeded mode on, demo mode seeded, AI not configured, no secret value returned |
 | Credential pattern scan | Pass; no credential value or private-key material found |
 | Human validation | Protocol ready; three participant sessions pending |
+
+## Online Preview verification
+
+- Vercel deployment `dpl_9VTq68RadzBFJWNSPXrt3jeNkWhJ` reached Ready as a Preview for the exact application commit; Production remained unchanged.
+- Desktop Judge Tour completed through consequence, Judge Mode, evidence review, counselor handoff, and Advisor Decision Packet.
+- Mobile verification at 390×844 completed before and after the consequence action with no horizontal overflow.
+- The full roadmap workflow rejected the invalid route, revalidated a bounded repair, required explicit acknowledgment, saved the normalized route, and retained Spring 2029 after reload.
+- The deployed Planning Session exposes `Replay GPT-5.6 demonstration`, identifies the result as recorded and seeded, and contains no judge-facing live action or API-key error.
+- Vercel runtime logs recorded `/api/health` as HTTP 200 and showed no 5xx responses or runtime error clusters during the verification window.
 
 ## Judge Tour verification
 
