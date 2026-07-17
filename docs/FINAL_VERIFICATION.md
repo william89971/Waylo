@@ -1,6 +1,6 @@
 # Final Verification Report
 
-Last updated: 2026-07-14
+Last updated: 2026-07-16
 
 ## Automated verification
 
@@ -8,9 +8,9 @@ Last updated: 2026-07-14
 | --- | --- |
 | Strict TypeScript | Pass |
 | ESLint | Pass with zero warnings |
-| Vitest unit, contract, and API tests | 40/40 pass |
-| Next.js production build | Pass; 22 pages/routes generated or compiled |
-| Playwright | 11 executed tests passed; 7 intentional cross-project skips |
+| Vitest unit, contract, and API tests | 57/57 pass |
+| Next.js production build | Pass; 23 pages/routes generated or compiled |
+| Protected Preview Playwright | 11 executed tests passed; 7 intentional cross-project skips |
 | Viewports | 1440x900 desktop and 390x844 mobile |
 | Route coverage | Landing, demo, onboarding, all workspace routes, evidence detail, Academic Twin, and Judge Mode |
 | axe serious/critical issues | 0 across every public/workspace route in desktop and mobile projects |
@@ -19,7 +19,18 @@ Last updated: 2026-07-14
 | Raw upload/command persistence check | Pass; only normalized confirmed workspace data persists |
 | Live GPT request | Pending user-supplied key |
 | Exact public Git clone | Deferred while the repository remains private at the user's request |
-| Deployment of this revision | Pending commit, push, and Vercel redeploy |
+| Deployment of this revision | Pass; private seeded Preview at [waylo-141cokmj1-williampuppet-4258s-projects.vercel.app](https://waylo-141cokmj1-williampuppet-4258s-projects.vercel.app) |
+
+## Protected seeded Preview verification
+
+- Deployment state: Ready, Preview target only, protected by Vercel authentication.
+- Source branch: `codex/waylo-build-week`.
+- Deployed commit: `b73d8cc802017009de68ab5c58c19dac1749264c`.
+- Preview configuration: branch-scoped `WAYLO_DEMO_MODE=seeded`; no OpenAI environment variable is present or required.
+- Health response: `demoMode=seeded`, `seededMode=true`, and `aiConfigured=false`.
+- Live command, transcript, and planning requests returned `503 live_mode_disabled`; the live advisor request returned `403 live_advisor_disabled`. Each response kept seeded fallback available.
+- Runtime logs contained only request identifiers, endpoint, mode, outcome, category, and duration. Searches found no credential name or sample transcript text, and Vercel reported no runtime errors during verification.
+- A fresh authenticated browser context completed the desktop and mobile suite at 1440x900 and 390x844 with no console errors, horizontal overflow, or serious/critical axe findings. Reduced motion, keyboard activation, IndexedDB reload persistence, and print output passed.
 
 ## Actual User Demo Test
 
@@ -51,8 +62,8 @@ What failed and was fixed:
 
 Remaining verification:
 
-- After the user adds `OPENAI_API_KEY`, run live transcript and command smoke tests without exposing the key.
-- Keep `xhigh` disabled unless the live request accepts it; otherwise remain on `high`.
-- Commit, push, deploy, and perform the exact public clone/incognito checks only when the user authorizes publication.
+- Live GPT verification remains intentionally deferred until the user separately authorizes a protected live rehearsal and supplies credentials. Public live mode must remain disabled until the session ledger is backed by a durable shared atomic store.
+- Keep `xhigh` disabled unless a future live request accepts it; otherwise remain on `high`.
+- Exact public-clone and anonymous public-link verification remain deferred until the user authorizes repository and demo publication.
 
-Current readiness: the seeded product is implementation-complete, visually verified, and demo-ready locally. Live GPT verification and publication/deployment checks remain intentionally pending.
+Current readiness: the seeded product is implementation-complete and verified locally and on a private Vercel Preview. There are no release blockers for the protected seeded demo. Live GPT and public-release verification remain intentionally out of scope.
