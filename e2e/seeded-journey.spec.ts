@@ -3,6 +3,18 @@ import AxeBuilder from "@axe-core/playwright";
 
 const routes = ["/", "/demo", "/onboarding", "/judge-tour", "/overview", "/profile", "/pathways", "/roadmap", "/compare", "/what-if", "/planning-session", "/evidence", "/evidence/coc-math-2025", "/advisor-summary"];
 
+test("landing communicates the full consequence before the first click", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "See what changes before you change your plan." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start the 2-minute judge tour" })).toHaveCount(2);
+  const preview = page.getByRole("region", { name: "Academic Twin consequence preview" });
+  await expect(preview).toContainText("Fall 2028");
+  await expect(preview).toContainText("Spring 2029");
+  await expect(preview).toContainText("4 milestones move");
+  for (const course of ["MATH 211", "MATH 212", "MATH 213", "MATH 214"]) await expect(preview).toContainText(course);
+  await expect(preview).toContainText("Saved baseline stays protected until human confirmation.");
+});
+
 test("two-minute judge tour proves consequence, validation, evidence, and handoff", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === "mobile", "Desktop covers the complete guided sequence; mobile covers responsive route health.");
   await page.goto("/judge-tour?fresh=1");

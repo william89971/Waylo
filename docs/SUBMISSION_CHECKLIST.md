@@ -5,6 +5,7 @@ Submission deadline: July 21, 2026 at 5:00 PM PDT.
 ## Product and Preview
 
 - [x] Landing page explains the decision-simulation product and audience without narration.
+- [x] Landing page shows the actual Fall 2028 to Spring 2029 consequence and four moved milestones before the first click.
 - [x] Primary CTA says `Start the 2-minute judge tour`.
 - [x] Four-stage tour covers consequence, validation, evidence, and counselor handoff.
 - [x] Calculus I demonstration moves Fall 2028 to Spring 2029 and exposes four affected milestones.
@@ -16,6 +17,7 @@ Submission deadline: July 21, 2026 at 5:00 PM PDT.
 - [x] Exact application revision is deployed to Vercel Preview with `WAYLO_DEMO_MODE=seeded` and no OpenAI key.
 - [x] Preview is verified through the full Judge Tour on desktop and mobile.
 - [ ] Production is promoted from the verified revision only after the Preview report.
+- [ ] Final application URL is available free of charge and without access restriction through the judging period; a temporary Vercel share token is not sufficient.
 
 ## Trust and repository
 
@@ -25,7 +27,9 @@ Submission deadline: July 21, 2026 at 5:00 PM PDT.
 - [x] Human validation protocol exists and contains no fabricated results.
 - [ ] Three participant sessions are complete and recorded honestly in `HUMAN_VALIDATION.md`.
 - [x] Secret scan and clean dependency install/build check pass for the verified application commit.
+- [x] Dated Git history proves the entire repository was created after the submission period opened.
 - [ ] Private repository is shared with the required reviewers, or made public, and access is verified.
+- [ ] Default branch or submitted branch URL exposes the exact judged revision; the current Draft PR is not a substitute for judge instructions.
 
 ## Demo and Devpost
 

@@ -4,7 +4,7 @@ Target: 2:20–2:40. Hard limit: under three minutes. Record the deployed revisi
 
 ## 0:00–0:18 — Promise
 
-“Changing one course can move an entire transfer plan. Waylo is an evidence-grounded academic decision simulator for community-college transfer students. It lets students see what changes before they change their plan.”
+“Changing one course can move an entire transfer plan. Before I click anything, Waylo shows the real consequence in this seeded route: Fall 2028 becomes Spring 2029, four milestones move, and the saved baseline stays protected. Waylo is an evidence-grounded academic decision simulator for community-college transfer students.”
 
 Click **Start the 2-minute judge tour**.
 
@@ -54,6 +54,7 @@ If time permits: “Codex helped us turn the human safety boundary into the cand
 ## Recording checklist
 
 - Use the exact deployed revision in a logged-out browser.
+- Confirm the first viewport visibly shows Fall 2028, Spring 2029, four moved milestones, and the protected baseline before recording.
 - Keep the video public, playable without login, narrated, and under three minutes.
 - Do not show a terminal, environment settings, network bodies, hidden reasoning, transcript contents, or credentials.
 - Never call the recorded result live. Use the exact label shown in the UI.

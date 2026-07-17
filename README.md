@@ -37,6 +37,12 @@ GPT-5.6 supports multimodal transcript extraction, unstructured-intent interpret
 
 The public judging path is intentionally seeded. Every recorded model-assisted result is labeled `Recorded GPT-5.6 demo result.` The tour states that it makes no OpenAI request and does not expose a live control that ends in a missing-key error.
 
+## Build Week provenance
+
+Waylo was created entirely inside the OpenAI Build Week submission period. The repository's initial commit, `da20ac2`, was authored on July 13, 2026 at 5:52 PM Pacific, after the submission period opened at 9:00 AM Pacific. No product code in this repository predates the event.
+
+The dated Git history makes the event work inspectable: architecture and safety boundaries (`7598f2d`), the complete seeded product (`c119a95`), guided planning and evidence workflows (`0309078`), Academic Twin and deterministic candidate repair (`a7070cc`), protected live integration hardening (`b73d8cc`), the consequence-first Judge Tour (`4e53290`), and final judge-readiness evidence. [`docs/BUILD_WEEK_CHANGELOG.md`](docs/BUILD_WEEK_CHANGELOG.md) maps those revisions to the visible product.
+
 ## Local setup
 
 Requirements: Node.js 22 or later and npm. The lockfile is committed for reproducible installs.
@@ -112,7 +118,7 @@ Only normalized confirmed profile, plan, simulation, evidence-resolution, Academ
 
 V1 covers only the six pathways above. Program requirements and College of the Canyons course facts are connected to official source records. Exact institution-to-institution course articulations remain explicitly marked for ASSIST/counselor review where the curated dataset does not contain a verified agreement. Waylo does not extrapolate to unsupported schools or majors, predict admission, or guess unknown course offerings.
 
-See [data coverage](docs/DATA_COVERAGE.md), [architecture](docs/ARCHITECTURE.md), [evaluation](docs/EVALUATION_REPORT.md), [Codex collaboration](docs/CODEX_USAGE.md), [human validation protocol](docs/HUMAN_VALIDATION.md), and the [Build Week requirements register](docs/HACKATHON_REQUIREMENTS.md).
+See [data coverage](docs/DATA_COVERAGE.md), [architecture](docs/ARCHITECTURE.md), [evaluation](docs/EVALUATION_REPORT.md), [Codex collaboration](docs/CODEX_USAGE.md), [judge testing instructions](docs/JUDGE_TESTING_INSTRUCTIONS.md), [human validation protocol](docs/HUMAN_VALIDATION.md), and the [Build Week requirements register](docs/HACKATHON_REQUIREMENTS.md).
 
 ## Deployment
 

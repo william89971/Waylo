@@ -1,5 +1,14 @@
 # Build Week Changelog
 
+## 2026-07-17 - 100-point judge-readiness pass
+
+- Rebuilt the landing proof around the actual deterministic fixture so judges see Fall 2028 to Spring 2029 and all four moved milestones before the first click.
+- Derived the landing consequence from the same seeded parser, planning engine, and simulator used by the Judge Tour instead of duplicating display-only outcome data.
+- Added browser coverage for the complete first-viewport consequence and protected-baseline claim on desktop and mobile.
+- Documented that the entire repository was created after the Build Week submission period opened and mapped dated commits to the visible product.
+- Rechecked the official Build Week site, Devpost Overview, FAQ, Official Rules, and updates; isolated durable public access, repository reviewer access, the public narrated video, and `/feedback` ID as release gates rather than product-code gaps.
+- Added a one-page judge testing path and refreshed the submission evidence package around the exact branch revision.
+
 ## 2026-07-14 - Seeded-first live-mode hardening
 
 - Made `WAYLO_DEMO_MODE` authoritative and defaulted every public interaction to a zero-OpenAI-call seeded path.
