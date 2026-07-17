@@ -118,7 +118,7 @@ Only normalized confirmed profile, plan, simulation, evidence-resolution, Academ
 
 V1 covers only the six pathways above. Program requirements and College of the Canyons course facts are connected to official source records. Exact institution-to-institution course articulations remain explicitly marked for ASSIST/counselor review where the curated dataset does not contain a verified agreement. Waylo does not extrapolate to unsupported schools or majors, predict admission, or guess unknown course offerings.
 
-See [data coverage](docs/DATA_COVERAGE.md), [architecture](docs/ARCHITECTURE.md), [evaluation](docs/EVALUATION_REPORT.md), [Codex collaboration](docs/CODEX_USAGE.md), [judge testing instructions](docs/JUDGE_TESTING_INSTRUCTIONS.md), [human validation protocol](docs/HUMAN_VALIDATION.md), and the [Build Week requirements register](docs/HACKATHON_REQUIREMENTS.md).
+See [data coverage](docs/DATA_COVERAGE.md), [architecture](docs/ARCHITECTURE.md), [evaluation](docs/EVALUATION_REPORT.md), [Codex collaboration](docs/CODEX_USAGE.md), [judge testing instructions](docs/JUDGE_TESTING_INSTRUCTIONS.md), [video production package](docs/VIDEO_PRODUCTION_PACKAGE.md), [final release runbook](docs/FINAL_RELEASE_RUNBOOK.md), [human validation protocol](docs/HUMAN_VALIDATION.md), and the [Build Week requirements register](docs/HACKATHON_REQUIREMENTS.md).
 
 ## Deployment
 

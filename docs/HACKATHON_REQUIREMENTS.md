@@ -7,9 +7,9 @@ Last checked: 2026-07-17 against the official OpenAI Build Week site and Devpost
 | Requirement | Waylo evidence | Status |
 | --- | --- | --- |
 | Submit by July 21, 2026 at 5:00 PM PDT | Date is repeated in the submission checklist | Confirmed |
-| Meaningfully use Codex and GPT-5.6 | `CODEX_USAGE.md`, protected GPT-5.6 provider integration, strict outputs/tools, Judge Mode, recorded seeded demonstration | Implemented; final narration pending |
-| Demo video under three minutes | `DEMO_SCRIPT.md` targets 2:20–2:40 | Recording pending |
-| Public YouTube video with audio | Final URL must play logged out | Pending user action |
+| Meaningfully use Codex and GPT-5.6 | `CODEX_USAGE.md`, protected GPT-5.6 provider integration, strict outputs/tools, Judge Mode, recorded seeded demonstration, and final narration | Implemented and demonstrated |
+| Demo video under three minutes | Reproducible 2:30.90 H.264/AAC render with complete product, Codex, and GPT-5.6 narration | Rendered and verified |
+| Public YouTube video with audio | Final MP4 and SRT are ready; final URL must play logged out | Upload and public-visibility confirmation remain user actions |
 | Working application URL, available free of restriction through judging | Consequence-first seeded Judge Tour is verified on the exact branch Preview | Product verified; durable public access remains a release gate because Vercel Authentication is currently enabled |
 | Repository access and MIT license | MIT license present; repository currently private | User must share private repository with `testing@devpost.com` and `build-week-event@openai.com`, or make it public, then verify access |
 | README with setup, sample-data explanation, and Codex/GPT-5.6 details | Root README and linked technical docs | Implemented; final URL pending |
@@ -40,4 +40,4 @@ The evidence map and honest internal grade live in `JUDGING_SCORECARD.md`.
 
 | Date/time | Pages checked | Change found | Impact and resolution |
 | --- | --- | --- | --- |
-| 2026-07-17 | OpenAI Build Week page; Devpost Overview, FAQ, Official Rules, and submission update | Official Rules explicitly require the working project to remain free of charge and without restriction through judging; criteria are equally weighted and technical implementation breaks ties | Added the durable public-access gate, explicit Git provenance, and judge testing instructions; no eligibility conflict found |
+| 2026-07-17 | OpenAI Build Week page; Devpost Overview, FAQ, Official Rules, and submission update | Official Rules explicitly require the working project to remain free of charge and without restriction through judging; criteria are equally weighted and technical implementation breaks ties | Added the durable public-access gate, explicit Git provenance, judge testing instructions, final media package, and fail-closed submission auditor; no eligibility conflict found |

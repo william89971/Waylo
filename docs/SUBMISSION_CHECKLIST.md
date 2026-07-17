@@ -34,6 +34,7 @@ Submission deadline: July 21, 2026 at 5:00 PM PDT.
 ## Demo and Devpost
 
 - [x] Under-three-minute script follows the four-stage judge flow.
+- [x] Reproducible narrated demo renders at 2:30.90 with H.264 video, normalized AAC audio, sentence-timed captions, a thumbnail, and six submission screenshots.
 - [x] Codex story includes one concrete boundary/candidate-loop/browser-testing example.
 - [x] Devpost draft accurately separates GPT-5.6 interpretation from deterministic validation.
 - [x] Recheck official Overview, FAQ, Rules, and updates; record the result in `HACKATHON_REQUIREMENTS.md`.

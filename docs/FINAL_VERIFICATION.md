@@ -30,6 +30,7 @@ The verified application commit is `92c72701fa1a6c850a2803c71ecfa1b717e3b861`. I
 | Raw upload/command persistence check | Pass; only normalized confirmed workspace data persists |
 | Seeded health contract | Pass: seeded mode on, demo mode seeded, AI not configured, no secret value returned |
 | Credential pattern scan | Pass; no credential value or private-key material found |
+| Submission media | Pass; 2:30.90 H.264/AAC demo, normalized narration, 19 caption cues, thumbnail, and six inspected product frames |
 | Human validation | Protocol ready; three participant sessions pending |
 
 ## Online Preview verification

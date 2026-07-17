@@ -1,5 +1,13 @@
 # Build Week Changelog
 
+## 2026-07-17 - Submission media and release package
+
+- Rewrote the Devpost draft around the exact Fall 2028 to Spring 2029 consequence, the GPT-5.6/deterministic boundary, and a concrete Codex collaboration example.
+- Added a reproducible five-scene browser-recording and narration pipeline that fails at the three-minute limit.
+- Rendered and inspected a 2:30.90 H.264/AAC demo with normalized narration, 19 sentence-timed caption cues, six gallery images, and a 1280×720 thumbnail.
+- Added an ethical participant-recruitment message, explicit comprehension-failure thresholds, and a final access/repository/video/session/submission runbook.
+- Kept public behavior seeded-first; no OpenAI request, Production promotion, repository visibility change, or access-control change occurred.
+
 ## 2026-07-17 - 100-point judge-readiness pass
 
 - Rebuilt the landing proof around the actual deterministic fixture so judges see Fall 2028 to Spring 2029 and all four moved milestones before the first click.

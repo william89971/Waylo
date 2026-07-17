@@ -84,6 +84,7 @@ test-results/
 blob-report/
 artifacts/qa/
 output/playwright/
+.submission-video/
 
 # Nuxt.js build / generate output
 .nuxt
