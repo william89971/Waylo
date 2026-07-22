@@ -1,12 +1,15 @@
-import Link from "next/link";
-import { ArrowRight, Check, Compass, FileSearch, ShieldCheck, Waypoints } from "lucide-react";
+import { redirect } from "next/navigation";
+import { OnboardingFlow } from "@/components/onboarding-flow";
+import { courses } from "@/lib/academic-data";
+import { getAuthenticatedUserId } from "@/lib/server/auth";
+import { studentRepository } from "@/lib/server/student-repository";
 
-const steps = [
-  { icon: FileSearch, title: "Start from where you are", copy: "Review a sample transcript or add your own normalized course history. Raw files are never kept in the workspace." },
-  { icon: Waypoints, title: "Choose a destination", copy: "Compare six deeply supported university-program pathways across Berkeley, UCLA, and UC San Diego." },
-  { icon: Compass, title: "Review your routes", copy: "See three validated strategies, prerequisite blockers, evidence, and the questions to take to a counselor." },
-];
+export const dynamic = "force-dynamic";
 
-export default function OnboardingPage() {
-  return <main className="landing"><nav className="landing-nav"><Link href="/" className="landing-brand">Waylo</Link><span className="mode-label"><span className="mode-dot" />Seeded example</span></nav><section style={{ maxWidth: 980, margin: "0 auto", padding: "55px 28px 90px" }}><header style={{ textAlign: "center", maxWidth: 670, margin: "0 auto 38px" }}><span className="tag teal">Plan with evidence</span><h1 style={{ fontSize: "clamp(38px, 6vw, 62px)", letterSpacing: "-2.5px", margin: "18px 0 12px" }}>Know where you are and what comes next.</h1><p className="page-subtitle" style={{ fontSize: 17 }}>Waylo turns course history and verified pathway data into a route you can review with your counselor.</p></header><div className="three-column">{steps.map(({ icon: Icon, title, copy }, index) => <section className="panel" style={{ padding: 24 }} key={title}><span className="status-icon" style={{ width: 40, height: 40, color: "var(--blue)", background: "var(--blue-soft)" }}><Icon size={21} /></span><h2 className="section-title" style={{ marginTop: 18 }}>{index + 1}. {title}</h2><p className="section-copy">{copy}</p></section>)}</div><div className="panel-soft" style={{ padding: 18, marginTop: 22 }}><div className="title-row"><div className="cluster"><ShieldCheck size={22} color="var(--teal)" /><div><strong>Planning aid, not an admission prediction</strong><div className="section-copy">Uncertain equivalencies stay visible and never silently satisfy a requirement.</div></div></div><span className="status confirmed"><span className="status-icon"><Check size={14} /></span>Local-first workspace</span></div></div><div style={{ textAlign: "center", marginTop: 30 }}><Link href="/profile" className="button primary">Review the sample profile <ArrowRight size={17} /></Link></div></section></main>;
+export default async function OnboardingPage() {
+  const clerkUserId = await getAuthenticatedUserId();
+  if (!clerkUserId) redirect("/sign-up");
+  const workspace = await studentRepository.load(clerkUserId);
+  if (workspace.profile.onboardingCompleted && workspace.activePlan) redirect("/app");
+  return <OnboardingFlow initial={workspace} catalog={courses} />;
 }

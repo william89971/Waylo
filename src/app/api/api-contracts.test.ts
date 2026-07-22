@@ -20,12 +20,14 @@ describe("API contracts", () => {
   const plan = planningEngine.buildPlan(seedProfile);
 
   it("reports configuration state without values", async () => {
-    delete process.env.OPENAI_API_KEY;
-    delete process.env.WAYLO_DEMO_MODE;
+    delete process.env.DATABASE_URL;
+    delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+    delete process.env.CLERK_SECRET_KEY;
     const response = await health(); const body = await response.json();
-    expect(body.aiConfigured).toBe(false);
-    expect(body.demoMode).toBe("seeded");
-    expect(JSON.stringify(body)).not.toContain("OPENAI_API_KEY");
+    expect(body.authentication).toBe("unconfigured");
+    expect(body.database).toBe("unconfigured");
+    expect(body.academicDataVersion).toBe("ucsd-data-2026-review-needed");
+    expect(JSON.stringify(body)).not.toContain("DATABASE_URL");
   });
 
   it("returns a validated seeded transcript extraction", async () => {

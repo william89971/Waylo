@@ -1,0 +1,1 @@
+export default function SettingsPage() { return <div className="production-page"><header className="production-page-header"><h1>Settings</h1><p>Account privacy controls will be added after the core Preview journey passes.</p></header></div>; }
