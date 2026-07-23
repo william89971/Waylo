@@ -3,29 +3,29 @@ import AxeBuilder from "@axe-core/playwright";
 
 test("student completes onboarding, saves a plan, and recovers it after signing in again", async ({ browser }, testInfo) => {
   test.setTimeout(180_000);
-  const testUser = `test-journey-${testInfo.project.name}`;
+  const testUser = `test-${testInfo.project.name}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
   const firstContext = await browser.newContext();
   const page = await firstContext.newPage();
 
   await page.goto(`/sign-up?testUser=${testUser}`);
   await page.getByRole("button", { name: "Create test account" }).click();
   await expect(page.getByRole("heading", { name: "What college do you attend?" })).toBeVisible({ timeout: 60_000 });
-  await page.getByRole("button", { name: /Continue/ }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible();
   await expect(page.getByText("UC San Diego")).toBeVisible();
-  await page.getByRole("button", { name: /Continue/ }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
   await page.getByLabel("Course").selectOption({ index: 0 });
   await page.getByLabel("Grade").fill("A");
   await page.getByRole("button", { name: "Add course" }).click();
   await expect(page.locator(".confirmed-course-list")).toContainText("A");
-  await page.getByRole("button", { name: /Continue/ }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "What should your plan account for?" })).toBeVisible();
   await page.getByLabel("Maximum units per semester").fill("15");
-  await page.getByRole("button", { name: /Generate my plan/ }).click();
+  await page.getByRole("button", { name: "Generate my plan", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Review your transfer plan" })).toBeVisible();
   await expect(page.getByText("Proposed — not saved")).toBeVisible();
