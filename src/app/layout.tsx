@@ -18,7 +18,11 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const content = isClerkConfigured() ? <ClerkProvider>{children}</ClerkProvider> : children;
+  const content = isClerkConfigured() ? (
+    <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up">
+      {children}
+    </ClerkProvider>
+  ) : children;
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>{content}</body>
