@@ -28,6 +28,32 @@ describe("PlanningEngine", () => {
     expect(plan.routes[0].terms.some((term) => term.courses.some((course) => course.courseId === "coc-compsci-111"))).toBe(true);
   });
 
+  it("does not backfill lower math prerequisites after verified advanced completion", () => {
+    const advancedMathProfile = {
+      ...seedProfile,
+      selectedPathwayId: "ucsd-data",
+      selectedPathwayIds: ["ucsd-data"],
+      courses: [
+        {
+          courseId: "coc-math-211",
+          code: "MATH 211",
+          title: "Calculus I",
+          units: 5,
+          grade: "A",
+          term: "Spring 2026",
+          status: "completed" as const,
+          matchStatus: "verified" as const,
+          sourceLabel: "Student-confirmed course entry",
+        },
+      ],
+    };
+    const plan = planningEngine.buildPlan(advancedMathProfile, "ucsd-data");
+    const plannedIds = plan.routes[0].terms.flatMap((term) => term.courses.map((course) => course.courseId));
+    expect(plannedIds).toContain("coc-math-212");
+    expect(plannedIds).not.toContain("coc-math-103");
+    expect(plannedIds).not.toContain("coc-math-104");
+  });
+
   it.each(programs.map((program) => [program.id]))("builds three validated strategies for %s", (pathwayId) => {
     const plan = planningEngine.buildPlan({ ...seedProfile, selectedPathwayId: pathwayId }, pathwayId);
     expect(plan.routes.map((route) => route.strategy)).toEqual(["fastest", "overlap", "balanced"]);

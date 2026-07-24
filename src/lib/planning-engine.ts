@@ -117,13 +117,22 @@ function unique<T>(values: T[]): T[] {
   return Array.from(new Set(values));
 }
 
-function baseRequiredCourseIds(pathwayId: string): string[] {
+function baseRequiredCourseIds(
+  pathwayId: string,
+  profile: StudentProfile,
+  reviewResolutions: EvidenceReviewResolution[] = [],
+): string[] {
   const program = programById.get(pathwayId);
   if (!program) return [];
   const requirements = program.requirements.flatMap((requirement) => requirement.courseIds.slice(0, requirement.minimumCount));
+  const completed = new Set(
+    profile.courses
+      .filter((course) => isCompletedWithReviewResolution(course, reviewResolutions))
+      .map((course) => course.courseId),
+  );
   const withPrerequisites = new Set<string>();
   const add = (id: string) => {
-    if (withPrerequisites.has(id)) return;
+    if (withPrerequisites.has(id) || completed.has(id)) return;
     courseById.get(id)?.prerequisites.forEach(add);
     withPrerequisites.add(id);
   };
@@ -131,8 +140,13 @@ function baseRequiredCourseIds(pathwayId: string): string[] {
   return [...withPrerequisites];
 }
 
-function requiredCourseIds(pathwayId: string, profile: StudentProfile, strategy: RouteStrategy): string[] {
-  const base = baseRequiredCourseIds(pathwayId);
+function requiredCourseIds(
+  pathwayId: string,
+  profile: StudentProfile,
+  strategy: RouteStrategy,
+  reviewResolutions: EvidenceReviewResolution[] = [],
+): string[] {
+  const base = baseRequiredCourseIds(pathwayId, profile, reviewResolutions);
   if (strategy !== "overlap") return base;
   const frequency = new Map<string, number>();
   for (const selectedPathwayId of profile.selectedPathwayIds) {
@@ -163,7 +177,7 @@ function schedule(
   variant: CandidateVariant,
 ): TermPlan[] {
   const completed = new Set(profile.courses.filter((course) => isCompletedWithReviewResolution(course, options.reviewResolutions)).map((course) => course.courseId));
-  const required = requiredCourseIds(pathwayId, profile, strategy).filter((courseId) => !completed.has(courseId));
+  const required = requiredCourseIds(pathwayId, profile, strategy, options.reviewResolutions).filter((courseId) => !completed.has(courseId));
   const unscheduled = new Set(required);
   const terms: TermPlan[] = [];
   const includeSummer = options.includeSummer ?? profile.summerEnrollment;
@@ -341,7 +355,7 @@ function buildCandidate(
   };
   candidate.overlapScore = routeOverlapScore(candidate, profile);
   candidate.issues = routeValidator.validate(candidate, profile, options.reviewResolutions, { maxUnits: options.maxUnits });
-  const missing = requiredCourseIds(pathwayId, profile, strategy).filter((id) => !completed.has(id) && !placed.has(id));
+  const missing = requiredCourseIds(pathwayId, profile, strategy, options.reviewResolutions).filter((id) => !completed.has(id) && !placed.has(id));
   if (missing.length > 0) {
     candidate.issues.push({ id: `missing-${strategy}-${variant.id}`, severity: "blocker", code: "unresolved_requirement", message: `${missing.length} required or prerequisite course${missing.length === 1 ? " is" : "s are"} not scheduled.`, affectedIds: missing, evidenceIds, nextAction: "Adjust the course deferral, unit limit, summer constraint, or transfer target." });
   }
