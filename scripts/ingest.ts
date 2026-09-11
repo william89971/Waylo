@@ -5,6 +5,7 @@ import {
   ingestPrivateArchetypes,
   ingestUscFixtures,
 } from "../src/lib/server/ingestion/normalize";
+import { promoteIngestedRules } from "../src/lib/server/ingestion/promote-release";
 
 function parseArgs(argv: string[]) {
   const provider = (argv.find((arg) => !arg.startsWith("-")) ?? "all") as "assist" | "usc" | "private" | "all";
@@ -32,7 +33,22 @@ async function main() {
     return;
   }
 
-  console.log(dryRun ? "Dry run only — no Neon writes performed." : "Write mode: fixture-normalized rules ready for draft release promotion.");
+  if (dryRun) {
+    console.log("Dry run only — no Neon writes performed.");
+    return;
+  }
+
+  for (const result of results) {
+    const promoted = await promoteIngestedRules({
+      releaseId: result.releaseId,
+      rules: result.rules,
+      activate: false,
+    });
+    console.log(
+      `Promoted draft release ${promoted.releaseId} with ${promoted.rules} upserted rules (activate=${promoted.activated}).`,
+    );
+  }
+  console.log("Write mode complete: fixture-normalized rules upserted into a draft academic release.");
 }
 
 void main();

@@ -143,7 +143,7 @@ export const institutions = pgTable("institutions", {
   recognizesIgetc: boolean("recognizes_igetc").notNull().default(false),
   ingestionTier: text("ingestion_tier").notNull().default("1"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [uniqueIndex("institutions_code_idx").on(table.code)]);
 
 export const catalogCourses = pgTable("catalog_courses", {
   id: text("id").primaryKey(),
@@ -155,7 +155,7 @@ export const catalogCourses = pgTable("catalog_courses", {
   offeredTerms: jsonb("offered_terms").$type<string[]>().notNull().default([]),
   labPairCourseId: text("lab_pair_course_id"),
   releaseId: text("release_id"),
-});
+}, (table) => [uniqueIndex("catalog_courses_code_release_idx").on(table.code, table.releaseId)]);
 
 export const targetMajors = pgTable("target_majors", {
   id: text("id").primaryKey(),

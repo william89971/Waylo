@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     if (!shouldUseLegacyUcsdPlanner(workspace)) {
-      const multi = generateMultiTargetProductionPlan(workspace);
+      const multi = await generateMultiTargetProductionPlan(workspace);
       if (input.action === "generate") {
         return Response.json(
           {

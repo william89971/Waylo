@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertTriangle, ArrowRight, LockKeyhole } from "lucide-react";
+import { CounselorPacket } from "@/components/counselor-packet";
 import { CourseBucketBadge, EvidenceStatus } from "@/components/evidence-status";
+import { ExportCounselorPacketButton } from "@/components/export-counselor-packet-button";
 import { SavePlanButton } from "@/components/save-plan-button";
 import { evidenceById, programById } from "@/lib/academic-data";
+import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
+import type { VerificationTier } from "@/lib/articulation/types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
 import {
   generateMultiTargetProductionPlan,
@@ -18,39 +22,78 @@ import { studentRepository } from "@/lib/server/student-repository";
 
 export const dynamic = "force-dynamic";
 
+function legacyTier(status?: string): VerificationTier {
+  return status === "verified" ? "VERIFIED_ASSIST" : "NEEDS_COUNSELOR_CONFIRMATION";
+}
+
 export default async function PlanPage({ searchParams }: { searchParams: Promise<{ new?: string }> }) {
   const clerkUserId = await getAuthenticatedUserId();
   if (!clerkUserId) redirect("/sign-in");
   const workspace = await studentRepository.load(clerkUserId);
   if (!workspace.profile.onboardingCompleted) redirect("/onboarding");
   const showProposal = (await searchParams).new === "1" || !workspace.activePlan;
-  const targets = listSelectableTargets();
+  const targets = await listSelectableTargets();
   const labelFor = (id: string) => targets.find((target) => target.id === id)?.displayName ?? id;
 
   if (!shouldUseLegacyUcsdPlanner(workspace)) {
-    const multi = generateMultiTargetProductionPlan(workspace);
+    const [multi, graph] = await Promise.all([
+      generateMultiTargetProductionPlan(workspace),
+      loadActiveArticulationGraph(),
+    ]);
+    const citations = multi.auditSummary.flatMap((audit) =>
+      audit.requirementStates.map((requirement) => {
+        const rule = graph.rules.find(
+          (item) =>
+            item.targetMajorId === audit.targetMajorId && item.requirementKey === requirement.requirementKey,
+        );
+        return {
+          targetLabel: labelFor(audit.targetMajorId),
+          requirementKey: requirement.requirementKey,
+          label: requirement.label,
+          verificationTier: requirement.verificationTier,
+          effectiveYear: rule?.effectiveYear ?? "—",
+          sourceType: rule?.sourceType ?? "—",
+          satisfied: requirement.satisfied,
+        };
+      }),
+    );
+    const scheduleRows = multi.schedule.terms.flatMap((term) =>
+      term.courses.map((course) => ({
+        termLabel: term.label,
+        code: course.code,
+        title: course.title,
+        semesterUnits: course.semesterUnits,
+        bucket: course.bucket,
+      })),
+    );
+
     return (
       <div className="production-page plan-page">
-        <header className="production-page-header">
-          <h1>{showProposal ? "Review your multi-target plan" : "Your multi-target plan"}</h1>
-          <p>
-            Primary: {labelFor(multi.primaryTargetId)}
-            {multi.secondaryTargetIds.length
-              ? ` · Secondary: ${multi.secondaryTargetIds.map(labelFor).join(", ")}`
-              : ""}
-          </p>
+        <header className="production-page-header plan-header-actions">
+          <div>
+            <h1>{showProposal ? "Review your multi-target plan" : "Your multi-target plan"}</h1>
+            <p>
+              Primary: {labelFor(multi.primaryTargetId)}
+              {multi.secondaryTargetIds.length
+                ? ` · Secondary: ${multi.secondaryTargetIds.map(labelFor).join(", ")}`
+                : ""}
+            </p>
+          </div>
+          <ExportCounselorPacketButton />
         </header>
         {showProposal ? (
-          <div className="proposal-banner">
+          <div className="proposal-banner no-print">
             <LockKeyhole />
             <div>
               <strong>Proposed — not saved</strong>
-              <span>Semester packing uses College of the Canyons units. Destination audits convert units only below.</span>
+              <span>
+                Semester packing uses College of the Canyons units. Destination audits convert units only below.
+              </span>
             </div>
           </div>
         ) : null}
         {!workspace.includeSecondaryDivergence ? (
-          <div className="review-banner">
+          <div className="review-banner no-print">
             <AlertTriangle />
             <div>
               <strong>Secondary divergence courses are omitted.</strong>
@@ -59,7 +102,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           </div>
         ) : null}
         {multi.divergencePoints.length ? (
-          <div className="review-banner">
+          <div className="review-banner no-print">
             <AlertTriangle />
             <div>
               <strong>Divergence trade-offs</strong>
@@ -71,7 +114,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             </div>
           </div>
         ) : null}
-        <section className="semester-timeline" aria-label="Semester-by-semester plan">
+        <section className="semester-timeline no-print" aria-label="Semester-by-semester plan">
           {multi.schedule.terms.map((term) => (
             <article className="semester-column" key={term.id}>
               <header>
@@ -100,7 +143,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             </article>
           ))}
         </section>
-        <section aria-label="Destination audit summaries">
+        <section className="no-print" aria-label="Destination audit summaries">
           <h2>Destination audits</h2>
           {multi.auditSummary.map((audit) => (
             <article key={audit.targetMajorId}>
@@ -112,7 +155,8 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               <ul>
                 {audit.requirementStates.map((requirement) => (
                   <li key={requirement.requirementKey}>
-                    {requirement.label}: {requirement.satisfied ? "satisfied" : `missing ${requirement.missingCourseCodes.join(", ")}`}
+                    {requirement.label}:{" "}
+                    {requirement.satisfied ? "satisfied" : `missing ${requirement.missingCourseCodes.join(", ")}`}
                     {" · "}
                     <EvidenceStatus tier={requirement.verificationTier} />
                   </li>
@@ -121,7 +165,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             </article>
           ))}
         </section>
-        <div className="plan-footer">
+        <div className="plan-footer no-print">
           <div>
             <strong>Total planned</strong>
             <span>{multi.totalSemesterUnits} COC semester units</span>
@@ -131,6 +175,17 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             {showProposal ? "Keep this proposal" : "Generate a fresh proposal"}
           </Link>
         </div>
+        <CounselorPacket
+          preferredName={workspace.profile.preferredName}
+          primaryLabel={labelFor(multi.primaryTargetId)}
+          secondaryLabels={multi.secondaryTargetIds.map(labelFor)}
+          scheduleRows={scheduleRows}
+          totalSemesterUnits={multi.totalSemesterUnits}
+          citations={citations}
+          academicDataVersion={MULTI_TARGET_DATA_RELEASE}
+          algorithmVersion={multi.algorithmVersion}
+          evaluatedAt={multi.evidenceGraphSnapshot.evaluatedAt}
+        />
       </div>
     );
   }
@@ -142,21 +197,53 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       <div className="production-page">
         <h1>We need more information</h1>
         <p>Waylo could not build a valid route from the confirmed courses.</p>
-        <Link href="/onboarding" className="production-button primary">Review your courses</Link>
+        <Link href="/onboarding" className="production-button primary">
+          Review your courses
+        </Link>
       </div>
     );
   }
+
   const program = programById.get("ucsd-data");
+  const legacyScheduleRows = route.terms.flatMap((term) =>
+    term.courses.map((course) => ({
+      termLabel: term.label,
+      code: course.code,
+      title: course.title,
+      semesterUnits: course.units,
+    })),
+  );
+  const legacyCitations = route.terms.flatMap((term) =>
+    term.courses.flatMap((course) =>
+      course.evidenceIds.map((evidenceId) => {
+        const item = evidenceById.get(evidenceId);
+        return {
+          targetLabel: `${program?.universityName ?? "UC San Diego"} ${program?.name ?? "Data Science"}`,
+          requirementKey: evidenceId,
+          label: item?.title ?? course.code,
+          verificationTier: legacyTier(item?.status),
+          effectiveYear: item?.effectiveYear ?? "—",
+          sourceType: item?.provenance ?? "legacy",
+          satisfied: true,
+        };
+      }),
+    ),
+  );
+  const totalUnits = route.terms.reduce((sum, term) => sum + term.totalUnits, 0);
+
   return (
     <div className="production-page plan-page">
-      <header className="production-page-header">
-        <h1>{showProposal ? "Review your transfer plan" : "Your transfer plan"}</h1>
-        <p>
-          {program?.universityName} {program?.name} {program?.degree} · {route.label}
-        </p>
+      <header className="production-page-header plan-header-actions">
+        <div>
+          <h1>{showProposal ? "Review your transfer plan" : "Your transfer plan"}</h1>
+          <p>
+            {program?.universityName} {program?.name} {program?.degree} · {route.label}
+          </p>
+        </div>
+        <ExportCounselorPacketButton />
       </header>
       {showProposal ? (
-        <div className="proposal-banner">
+        <div className="proposal-banner no-print">
           <LockKeyhole />
           <div>
             <strong>Proposed — not saved</strong>
@@ -165,16 +252,19 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         </div>
       ) : null}
       {productionEvidenceState() === "needs_review" ? (
-        <div className="review-banner">
+        <div className="review-banner no-print">
           <AlertTriangle />
           <div>
             <strong>This plan contains articulation items that need confirmation.</strong>
-            <span>You can save it as a planning route, but it is not an official degree audit or verified articulation agreement.</span>
+            <span>
+              You can save it as a planning route, but it is not an official degree audit or verified articulation
+              agreement.
+            </span>
           </div>
           <Link href="/app/evidence">Review evidence</Link>
         </div>
       ) : null}
-      <section className="semester-timeline" aria-label="Semester-by-semester plan">
+      <section className="semester-timeline no-print" aria-label="Semester-by-semester plan">
         {route.terms.map((term) => (
           <article className="semester-column" key={term.id}>
             <header>
@@ -200,7 +290,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           </article>
         ))}
       </section>
-      <div className="plan-footer">
+      <div className="plan-footer no-print">
         <div>
           <strong>Estimated transfer</strong>
           <span>{route.estimatedTransferTerm}</span>
@@ -214,13 +304,25 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           </Link>
         )}
       </div>
-      <section id="what-if" className="what-if-placeholder">
+      <section id="what-if" className="what-if-placeholder no-print">
         <h2>If your schedule changes</h2>
-        <p>The protected what-if workflow will preview timing and downstream course changes without overwriting this saved plan.</p>
+        <p>
+          The protected what-if workflow will preview timing and downstream course changes without overwriting this
+          saved plan.
+        </p>
         <button className="production-button" disabled>
           What-if planning arrives after Preview validation
         </button>
       </section>
+      <CounselorPacket
+        preferredName={workspace.profile.preferredName}
+        primaryLabel={`${program?.universityName ?? "UC San Diego"} ${program?.name ?? "Data Science"}`}
+        secondaryLabels={[]}
+        scheduleRows={legacyScheduleRows}
+        totalSemesterUnits={totalUnits}
+        citations={legacyCitations}
+        academicDataVersion={UCSD_DATA_RELEASE}
+      />
     </div>
   );
 }

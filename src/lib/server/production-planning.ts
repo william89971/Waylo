@@ -1,6 +1,6 @@
 import { evidence } from "@/lib/academic-data";
+import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
 import { computeMultiTargetPlan } from "@/lib/articulation/multi-target-plan";
-import { getSeedArticulationGraph } from "@/lib/articulation/graph";
 import { targetMajorId } from "@/lib/articulation/types";
 import { planningEngine } from "@/lib/planning-engine";
 import type { StudentProfile } from "@/lib/domain";
@@ -48,8 +48,8 @@ export function generateProductionPlan(workspace: StudentWorkspaceRecord) {
   });
 }
 
-export function generateMultiTargetProductionPlan(workspace: StudentWorkspaceRecord) {
-  const graph = getSeedArticulationGraph();
+export async function generateMultiTargetProductionPlan(workspace: StudentWorkspaceRecord) {
+  const graph = await loadActiveArticulationGraph();
   const primaryTargetId = workspace.primaryTargetId || DEFAULT_PRIMARY_TARGET_ID;
   const secondaryTargetIds = workspace.secondaryTargetIds ?? [];
   const history = workspace.courses.map((course) => ({
@@ -75,8 +75,8 @@ export function productionEvidenceState() {
   return applicable.some((item) => item.status !== "verified") ? "needs_review" as const : "verified" as const;
 }
 
-export function listSelectableTargets(): SelectableTarget[] {
-  const graph = getSeedArticulationGraph();
+export async function listSelectableTargets(): Promise<SelectableTarget[]> {
+  const graph = await loadActiveArticulationGraph();
   return graph.targetMajors.map((major) => {
     const institution = graph.institutions.find((item) => item.id === major.institutionId);
     return {

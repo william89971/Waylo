@@ -15,6 +15,13 @@
       "when": 1784708000000,
       "tag": "0001_multi_target_articulation",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784710000000,
+      "tag": "0002_catalog_unique_indexes",
+      "breakpoints": true
     }
   ]
 }

@@ -12,5 +12,7 @@ export default async function OnboardingPage() {
   if (!clerkUserId) redirect("/sign-up");
   const workspace = await studentRepository.load(clerkUserId);
   if (workspace.profile.onboardingCompleted && workspace.activePlan) redirect("/app");
-  return <OnboardingFlow initial={workspace} catalog={courses} targets={listSelectableTargets()} />;
+  return (
+    <OnboardingFlow initial={workspace} catalog={courses} targets={await listSelectableTargets()} />
+  );
 }
