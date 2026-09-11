@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { RouteCandidateSchema } from "@/lib/domain";
+import type { MultiTargetPlanResult } from "@/lib/articulation/types";
 
 export const OnboardingProfileSchema = z.object({
   preferredName: z.string().trim().min(1).max(80).default("Student"),
@@ -22,6 +23,12 @@ export const PlanningPreferencesInputSchema = z.object({
   targetTerm: z.string().regex(/^(Fall|Spring|Summer) \d{4}$/).nullable().default(null),
 });
 
+export const TransferTargetsInputSchema = z.object({
+  primaryTargetId: z.string().min(1),
+  secondaryTargetIds: z.array(z.string().min(1)).max(3).default([]),
+  includeSecondaryDivergence: z.boolean().default(true),
+});
+
 export const PlanActionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("generate") }),
   z.object({ action: z.literal("save"), strategy: z.enum(["fastest", "overlap", "balanced"]) }),
@@ -35,11 +42,15 @@ export const SavedPlanSchema = z.object({
   academicDataVersion: z.string(),
   evidenceState: z.enum(["verified", "needs_review"]),
   createdAt: z.string(),
+  primaryTargetId: z.string().optional(),
+  secondaryTargetIds: z.array(z.string()).optional(),
+  multiTargetPlan: z.custom<MultiTargetPlanResult>().optional(),
 });
 
 export type OnboardingProfile = z.infer<typeof OnboardingProfileSchema>;
 export type ProductionCourseInput = z.infer<typeof ProductionCourseInputSchema>;
 export type PlanningPreferencesInput = z.infer<typeof PlanningPreferencesInputSchema>;
+export type TransferTargetsInput = z.infer<typeof TransferTargetsInputSchema>;
 export type SavedPlan = z.infer<typeof SavedPlanSchema>;
 
 export interface ProductionCourse extends ProductionCourseInput {
@@ -55,7 +66,23 @@ export interface StudentWorkspaceRecord {
   profile: OnboardingProfile;
   courses: ProductionCourse[];
   pathwayId: "ucsd-data";
+  primaryTargetId: string;
+  secondaryTargetIds: string[];
+  includeSecondaryDivergence: boolean;
   coverageTier: "reviewed";
   preferences: PlanningPreferencesInput;
   activePlan?: SavedPlan;
+}
+
+export interface SelectableTarget {
+  id: string;
+  institutionId: string;
+  institutionName: string;
+  major: string;
+  displayName: string;
+  degree: string;
+  coverageTier: string;
+  recognizesIgetc: boolean;
+  ingestionTier: "1" | "2";
+  constraintNotes: string[];
 }

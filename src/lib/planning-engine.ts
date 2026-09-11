@@ -117,22 +117,25 @@ function unique<T>(values: T[]): T[] {
   return Array.from(new Set(values));
 }
 
-function baseRequiredCourseIds(pathwayId: string): string[] {
+function baseRequiredCourseIds(pathwayId: string, completedCourseIds: ReadonlySet<string> = new Set()): string[] {
   const program = programById.get(pathwayId);
   if (!program) return [];
   const requirements = program.requirements.flatMap((requirement) => requirement.courseIds.slice(0, requirement.minimumCount));
+  // Do not backfill prerequisites of already-satisfied requirements into the open required set.
+  const unmetRequirements = requirements.filter((courseId) => !completedCourseIds.has(courseId));
   const withPrerequisites = new Set<string>();
   const add = (id: string) => {
-    if (withPrerequisites.has(id)) return;
+    if (withPrerequisites.has(id) || completedCourseIds.has(id)) return;
     courseById.get(id)?.prerequisites.forEach(add);
-    withPrerequisites.add(id);
+    if (!completedCourseIds.has(id)) withPrerequisites.add(id);
   };
-  requirements.forEach(add);
+  unmetRequirements.forEach(add);
   return [...withPrerequisites];
 }
 
 function requiredCourseIds(pathwayId: string, profile: StudentProfile, strategy: RouteStrategy): string[] {
-  const base = baseRequiredCourseIds(pathwayId);
+  const completed = new Set(profile.courses.filter((course) => isVerifiedCompleted(course)).map((course) => course.courseId));
+  const base = baseRequiredCourseIds(pathwayId, completed);
   if (strategy !== "overlap") return base;
   const frequency = new Map<string, number>();
   for (const selectedPathwayId of profile.selectedPathwayIds) {

@@ -15,6 +15,22 @@ Provenance is `official`, `assist`, `human_curated_demo`, or `ai_extracted`. Ver
 - `RequirementGroup`: `all`, `any`, `choose`, or `units` rule with minimum grade and alternatives.
 - `PrerequisiteExpression`: recursive `course`, `all`, or `any` expression.
 
+## Multi-target articulation tables
+
+- `institutions`: unit system, IGETC recognition, ingestion tier (`1|2`).
+- `catalog_courses`: COC nodes in semester units only, optional lecture/lab pairing.
+- `target_majors`: institution × major with coverage tier and constraint notes.
+- `course_prerequisites`: COC DAG edges scoped to a release.
+- `articulation_rules`: `destination_requirement_key` + JSONB `fulfillment_expression` (no flat `origin_course_id`), `verification_tier`, source metadata.
+- `ingestion_runs` / `ingestion_raw_payloads`: Tier-1 ingest audit trail.
+- `academic_data_releases`: `draft|active|retired` plus algorithm compatibility.
+- `transfer_goals`: `primary_target_id`, `secondary_target_ids` (max 3), `include_secondary_divergence`.
+- `plans`: `schedule` (COC semester) vs `audit_summary` (target-converted), plus evidence snapshot and divergence points.
+
+`ArticulationExpression` = `COURSE` | `AND` | `OR` | `SERIES_COMPLETE`.  
+`CourseBucket` = `core_overlap` | `primary_mandate` | `secondary_divergence`.  
+Legacy evidence statuses map into `VerificationTier` for backward compatibility.
+
 ## Student and workspace types
 
 - `StudentCourse`: normalized course, grade, term, completion state, extraction confidence, review state.

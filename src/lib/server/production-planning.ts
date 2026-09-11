@@ -1,10 +1,16 @@
 import { evidence } from "@/lib/academic-data";
+import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
+import { computeMultiTargetPlan } from "@/lib/articulation/multi-target-plan";
+import { targetMajorId } from "@/lib/articulation/types";
 import { planningEngine } from "@/lib/planning-engine";
 import type { StudentProfile } from "@/lib/domain";
-import type { StudentWorkspaceRecord } from "@/lib/production-types";
+import type { SelectableTarget, StudentWorkspaceRecord } from "@/lib/production-types";
 
 export const WAYLO_ALGORITHM_VERSION = "planning-engine-v1";
 export const UCSD_DATA_RELEASE = "ucsd-data-2026-review-needed";
+export const MULTI_TARGET_DATA_RELEASE = "seed-articulation-2025-26.v1";
+
+export const DEFAULT_PRIMARY_TARGET_ID = targetMajorId("uc_san_diego", "data_science");
 
 export function toStudentProfile(workspace: StudentWorkspaceRecord): StudentProfile {
   return {
@@ -42,7 +48,54 @@ export function generateProductionPlan(workspace: StudentWorkspaceRecord) {
   });
 }
 
+export async function generateMultiTargetProductionPlan(workspace: StudentWorkspaceRecord) {
+  const graph = await loadActiveArticulationGraph();
+  const primaryTargetId = workspace.primaryTargetId || DEFAULT_PRIMARY_TARGET_ID;
+  const secondaryTargetIds = workspace.secondaryTargetIds ?? [];
+  const history = workspace.courses.map((course) => ({
+    courseId: course.catalogCourseId,
+    code: graph.courseById.get(course.catalogCourseId)?.code
+      ?? course.code.replace(/\s+/g, "-").toUpperCase(),
+    completed: course.status === "completed",
+  }));
+
+  return computeMultiTargetPlan({
+    history,
+    primaryTargetId,
+    secondaryTargetIds,
+    maxUnitsPerTerm: workspace.preferences.maxUnits,
+    includeSecondaryDivergence: workspace.includeSecondaryDivergence,
+    includeSummer: workspace.preferences.summerEnrollment,
+    graph,
+  });
+}
+
 export function productionEvidenceState() {
   const applicable = evidence.filter((item) => item.pathwayId === "ucsd-data" || item.institutionId === "coc");
   return applicable.some((item) => item.status !== "verified") ? "needs_review" as const : "verified" as const;
+}
+
+export async function listSelectableTargets(): Promise<SelectableTarget[]> {
+  const graph = await loadActiveArticulationGraph();
+  return graph.targetMajors.map((major) => {
+    const institution = graph.institutions.find((item) => item.id === major.institutionId);
+    return {
+      id: major.id,
+      institutionId: major.institutionId,
+      institutionName: institution?.name ?? major.institutionId,
+      major: major.major,
+      displayName: major.displayName,
+      degree: major.degree,
+      coverageTier: major.coverageTier,
+      recognizesIgetc: institution?.recognizesIgetc ?? false,
+      ingestionTier: institution?.ingestionTier ?? "2",
+      constraintNotes: major.constraintNotes,
+    };
+  });
+}
+
+/** Prefer the legacy UCSD planner when only the reviewed UCSD Data Science target is selected. */
+export function shouldUseLegacyUcsdPlanner(workspace: StudentWorkspaceRecord): boolean {
+  const primary = workspace.primaryTargetId || DEFAULT_PRIMARY_TARGET_ID;
+  return primary === DEFAULT_PRIMARY_TARGET_ID && (workspace.secondaryTargetIds?.length ?? 0) === 0;
 }

@@ -1,0 +1,45 @@
+{
+  "source": "assist",
+  "agreementYear": "2025-26",
+  "sendingInstitution": "College of the Canyons",
+  "receivingInstitution": "University of California, San Diego",
+  "major": "Data Science",
+  "rows": [
+    {
+      "requirementKey": "calc-1",
+      "label": "Calculus I",
+      "expression": { "type": "COURSE", "courseCode": "MATH-211" },
+      "verificationTier": "VERIFIED_ASSIST"
+    },
+    {
+      "requirementKey": "calc-2",
+      "label": "Calculus II",
+      "expression": { "type": "COURSE", "courseCode": "MATH-212" },
+      "verificationTier": "VERIFIED_ASSIST"
+    },
+    {
+      "requirementKey": "calc-3",
+      "label": "Calculus III",
+      "expression": { "type": "COURSE", "courseCode": "MATH-213" },
+      "verificationTier": "VERIFIED_ASSIST"
+    },
+    {
+      "requirementKey": "linear",
+      "label": "Linear Algebra",
+      "expression": { "type": "COURSE", "courseCode": "MATH-214" },
+      "verificationTier": "VERIFIED_ASSIST"
+    },
+    {
+      "requirementKey": "programming",
+      "label": "Introductory programming + lab",
+      "expression": {
+        "type": "AND",
+        "clauses": [
+          { "type": "COURSE", "courseCode": "CMPSCI-111" },
+          { "type": "COURSE", "courseCode": "CMPSCI-111L" }
+        ]
+      },
+      "verificationTier": "VERIFIED_ASSIST"
+    }
+  ]
+}

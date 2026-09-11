@@ -46,3 +46,16 @@ The route validator establishes that a candidate is internally valid against the
 - Exact College of the Canyons equivalencies for UCLA's calculus and programming preparation remain explicit ASSIST-review items.
 - UC San Diego Cognitive Science uses the general B.S. route; specializations are outside V1.
 - Unknown or unsupported requirements remain counselor-review items rather than being guessed.
+
+## Multi-target articulation coverage
+
+Neon is the runtime source of truth for articulation releases. Plan generation loads the active release into an immutable in-memory graph, then runs pure TypeScript planning.
+
+| Tier | Targets | Mechanism | Verification |
+| --- | --- | --- | --- |
+| Tier 1 | UCB, UCLA, UCSD (ASSIST); USC Transfer Planning Guide | Fixture-first providers + optional live ingest with `--dry-run` | `VERIFIED_ASSIST` / `VERIFIED_INSTITUTIONAL_GUIDE` |
+| Tier 2 | Stanford, Cornell, Harvard | Checked-in foundational competency archetypes only — **no scrapers** | `PLANNING_SUGGESTION` / `HISTORICAL_PRECEDENT` |
+
+Boolean `fulfillment_expression` trees (`COURSE` / `AND` / `OR` / `SERIES_COMPLETE`) replace flat origin-course links. Incomplete series never satisfy a requirement. Schedule packing stays in College of the Canyons semester units; destination audits convert with `1 semester = 1.5 quarter` only at the audit layer.
+
+CI never calls ASSIST or USC live endpoints; golden fixtures under `tests/fixtures/assist` and `tests/fixtures/usc` are the contract.

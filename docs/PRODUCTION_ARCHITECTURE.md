@@ -34,3 +34,20 @@ processed in request memory and discarded after returning a review draft unless
 the student separately gives explicit retention consent. Unconfirmed drafts,
 filenames, transcript text, prompts, and model responses must not be written to
 Postgres, logs, analytics, Redis, or error reporting.
+
+## Multi-target articulation engine
+
+At plan generation the server loads the active academic-data release into an
+immutable graph (`load`/`getSeedArticulationGraph`), then runs
+`computeMultiTargetPlan`:
+
+1. Evaluate Boolean fulfillment expressions against academic history.
+2. Expand unsatisfied clauses into candidate COC courses.
+3. Score with primary-biased set-cover weights and series-completion bonuses.
+4. Classify each course as Core Overlap, Primary Mandate, or Secondary Divergence.
+5. Topo-schedule into COC semester terms under `maxUnitsPerTerm`.
+6. Write `schedule` (semester) and `audit_summary` (target-native units).
+
+The UCSD Data Science-only path keeps the legacy production planner as a
+regression baseline. AI may explain evidence snapshots but never invents,
+mutates, or validates sequences.

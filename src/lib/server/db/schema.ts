@@ -43,6 +43,9 @@ export const transferGoals = pgTable("transfer_goals", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   pathwayId: text("pathway_id").notNull().default("ucsd-data"),
+  primaryTargetId: text("primary_target_id").notNull().default("uc_san_diego:data_science"),
+  secondaryTargetIds: jsonb("secondary_target_ids").$type<string[]>().notNull().default([]),
+  includeSecondaryDivergence: boolean("include_secondary_divergence").notNull().default(true),
   coverageTier: text("coverage_tier").notNull().default("reviewed"),
   targetTerm: text("target_term"),
   active: boolean("active").notNull().default(true),
@@ -72,6 +75,12 @@ export const plans = pgTable("plans", {
   academicDataVersion: text("academic_data_version").notNull(),
   evidenceState: text("evidence_state").notNull(),
   assumptions: jsonb("assumptions").$type<string[]>().notNull().default([]),
+  primaryTargetId: text("primary_target_id"),
+  secondaryTargetIds: jsonb("secondary_target_ids").$type<string[]>().notNull().default([]),
+  schedule: jsonb("schedule").$type<Record<string, unknown>>(),
+  auditSummary: jsonb("audit_summary").$type<Record<string, unknown>[]>(),
+  evidenceGraphSnapshot: jsonb("evidence_graph_snapshot").$type<Record<string, unknown>>(),
+  divergencePoints: jsonb("divergence_points").$type<Record<string, unknown>[]>(),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [index("plans_user_id_idx").on(table.userId), uniqueIndex("plans_user_version_idx").on(table.userId, table.version)]);
@@ -115,10 +124,89 @@ export const evidenceSources = pgTable("evidence_sources", {
 
 export const academicDataReleases = pgTable("academic_data_releases", {
   id: text("id").primaryKey(),
-  pathwayId: text("pathway_id").notNull(),
+  pathwayId: text("pathway_id"),
   effectiveYear: text("effective_year").notNull(),
   retrievedAt: text("retrieved_at").notNull(),
   status: text("status").notNull(),
+  scope: text("scope").notNull().default("global"),
+  algorithmCompatibleVersion: text("algorithm_compatible_version").notNull().default("multi-target-csp-v1"),
   sourceIds: jsonb("source_ids").$type<string[]>().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Multi-target articulation catalog (Neon runtime source of truth). */
+export const institutions = pgTable("institutions", {
+  id: text("id").primaryKey(),
+  code: text("code").notNull(),
+  name: text("name").notNull(),
+  unitSystem: text("unit_system").notNull(),
+  recognizesIgetc: boolean("recognizes_igetc").notNull().default(false),
+  ingestionTier: text("ingestion_tier").notNull().default("1"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [uniqueIndex("institutions_code_idx").on(table.code)]);
+
+export const catalogCourses = pgTable("catalog_courses", {
+  id: text("id").primaryKey(),
+  code: text("code").notNull(),
+  title: text("title").notNull(),
+  semesterUnits: real("semester_units").notNull(),
+  category: text("category").notNull(),
+  prerequisites: jsonb("prerequisites").$type<string[]>().notNull().default([]),
+  offeredTerms: jsonb("offered_terms").$type<string[]>().notNull().default([]),
+  labPairCourseId: text("lab_pair_course_id"),
+  releaseId: text("release_id"),
+}, (table) => [uniqueIndex("catalog_courses_code_release_idx").on(table.code, table.releaseId)]);
+
+export const targetMajors = pgTable("target_majors", {
+  id: text("id").primaryKey(),
+  institutionId: text("institution_id").notNull().references(() => institutions.id),
+  major: text("major").notNull(),
+  displayName: text("display_name").notNull(),
+  degree: text("degree").notNull(),
+  coverageTier: text("coverage_tier").notNull(),
+  constraintNotes: jsonb("constraint_notes").$type<string[]>().notNull().default([]),
+  releaseId: text("release_id"),
+});
+
+export const coursePrerequisites = pgTable("course_prerequisites", {
+  id: text("id").primaryKey(),
+  fromCourseId: text("from_course_id").notNull(),
+  toCourseId: text("to_course_id").notNull(),
+  minGrade: text("min_grade").notNull().default("C"),
+  releaseId: text("release_id"),
+});
+
+export const articulationRules = pgTable("articulation_rules", {
+  id: text("id").primaryKey(),
+  targetMajorId: text("target_major_id").notNull(),
+  requirementKey: text("requirement_key").notNull(),
+  label: text("label").notNull(),
+  fulfillmentExpression: jsonb("fulfillment_expression").$type<Record<string, unknown>>().notNull(),
+  verificationTier: text("verification_tier").notNull(),
+  sourceType: text("source_type").notNull(),
+  sourceUrl: text("source_url").notNull(),
+  effectiveYear: text("effective_year").notNull(),
+  notes: text("notes").notNull().default(""),
+  releaseId: text("release_id"),
+});
+
+export const ingestionRuns = pgTable("ingestion_runs", {
+  id: text("id").primaryKey(),
+  provider: text("provider").notNull(),
+  status: text("status").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+  releaseId: text("release_id"),
+  counts: jsonb("counts").$type<Record<string, number>>().notNull().default({}),
+  errorSummary: text("error_summary"),
+  dryRun: boolean("dry_run").notNull().default(false),
+});
+
+export const ingestionRawPayloads = pgTable("ingestion_raw_payloads", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull().references(() => ingestionRuns.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  contentHash: text("content_hash").notNull(),
+  body: jsonb("body").$type<Record<string, unknown>>().notNull(),
+  retrievedAt: timestamp("retrieved_at", { withTimezone: true }).notNull().defaultNow(),
 });
