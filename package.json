@@ -17,7 +17,12 @@
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "ingest": "tsx scripts/ingest.ts",
+    "ingest:assist": "tsx scripts/ingest.ts assist --dry-run",
+    "ingest:usc": "tsx scripts/ingest.ts usc --dry-run",
+    "ingest:private": "tsx scripts/ingest.ts private --dry-run",
+    "ingest:all": "tsx scripts/ingest.ts all --dry-run"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -54,6 +59,7 @@
     "eslint-config-next": "16.2.10",
     "jsdom": "29.1.1",
     "tailwindcss": "4.3.2",
+    "tsx": "^4.23.13",
     "typescript": "5.9.3",
     "vitest": "4.1.10"
   }

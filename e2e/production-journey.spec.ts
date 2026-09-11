@@ -13,7 +13,7 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible();
-  await expect(page.getByText("UC San Diego")).toBeVisible();
+  await expect(page.getByText("UC San Diego").first()).toBeVisible();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
@@ -39,7 +39,7 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.getByText("Your plan is saved"), "save confirmation should be visible").toBeVisible();
   await expect(page.locator(".saved-meta")).toContainText("version 1");
-  await page.screenshot({ path: `../work/visuals/production-journey-${testInfo.project.name}.png`, fullPage: true });
+  await page.screenshot({ path: `work/visuals/production-journey-${testInfo.project.name}.png`, fullPage: true });
 
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/sign-in/);
@@ -56,10 +56,16 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
 
 test("production journey is accessible and has no mobile overflow", async ({ page }, testInfo) => {
   await page.goto("/sign-up");
-  const dimensions = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
+  const dimensions = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  }));
   expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
   const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? "")), `${testInfo.project.name} axe results`).toEqual([]);
+  expect(
+    results.violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? "")),
+    `${testInfo.project.name} axe results`,
+  ).toEqual([]);
 });
 
 test("server ownership prevents one test user from reading another user workspace", async ({ request }) => {
@@ -72,4 +78,42 @@ test("server ownership prevents one test user from reading another user workspac
   expect(firstBody.workspace.userId).not.toBe(secondBody.workspace.userId);
   expect(firstBody.workspace.courses).toEqual([]);
   expect(secondBody.workspace.courses).toEqual([]);
+});
+
+test("UCB Economics primary with USC Business secondary shows divergence badges", async ({ browser }, testInfo) => {
+  test.setTimeout(180_000);
+  // test-auth only accepts ids matching /^test-[a-z0-9-]{1,64}$/
+  const testUser = `test-mt-${testInfo.project.name}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await page.goto(`/sign-up?testUser=${testUser}`);
+  await page.getByRole("button", { name: "Create test account" }).click();
+  await expect(page.getByRole("heading", { name: "What college do you attend?" })).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible();
+  await page.getByRole("button", { name: /UC Berkeley/ }).filter({ hasText: /Economics/ }).click();
+  const uscSecondary = page
+    .locator(".selection-row")
+    .filter({ hasText: "University of Southern California" })
+    .filter({ hasText: /Business/ });
+  await uscSecondary.getByLabel("Include as secondary").check();
+  await expect(page.getByText(/Include secondary major prep/i)).toBeVisible();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
+  await page.getByLabel("Course").selectOption({ index: 0 });
+  await page.getByLabel("Grade").fill("A");
+  await page.getByRole("button", { name: "Add course" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "What should your plan account for?" })).toBeVisible();
+  await page.getByRole("button", { name: "Generate my plan", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: /multi-target plan/i })).toBeVisible();
+  await expect(page.getByText(/Core Overlap|Primary Mandate|Secondary Divergence/).first()).toBeVisible();
+  await expect(page.getByText(/semester units/i).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Destination audits" })).toBeVisible();
+  await context.close();
 });

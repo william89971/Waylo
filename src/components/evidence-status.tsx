@@ -1,7 +1,54 @@
-import { AlertTriangle, CheckCircle2, Compass } from "lucide-react";
+import { BookOpenCheck, CheckCircle2, Compass, ShieldAlert } from "lucide-react";
+import type { CourseBucket, VerificationTier } from "@/lib/articulation/types";
 
-export function EvidenceStatus({ state }: { state: "verified" | "suggestion" | "review" }) {
-  if (state === "verified") return <span className="evidence-state verified"><CheckCircle2 />Verified COC course</span>;
-  if (state === "review") return <span className="evidence-state review"><AlertTriangle />ASSIST confirmation needed</span>;
-  return <span className="evidence-state suggestion"><Compass />Planning suggestion</span>;
+type LegacyState = "verified" | "suggestion" | "review";
+
+function resolveTier(state?: LegacyState, tier?: VerificationTier): VerificationTier {
+  if (tier) return tier;
+  if (state === "verified") return "VERIFIED_ASSIST";
+  if (state === "review") return "NEEDS_COUNSELOR_CONFIRMATION";
+  return "PLANNING_SUGGESTION";
+}
+
+export function EvidenceStatus({
+  state,
+  tier,
+}: {
+  state?: LegacyState;
+  tier?: VerificationTier;
+}) {
+  const resolved = resolveTier(state, tier);
+
+  if (resolved === "VERIFIED_ASSIST") {
+    return <span className="evidence-state verified" title="Official active ASSIST agreement"><CheckCircle2 />Verified ASSIST</span>;
+  }
+  if (resolved === "VERIFIED_INSTITUTIONAL_GUIDE") {
+    return <span className="evidence-state verified" title="Institutional transfer planning guide"><BookOpenCheck />Institutional guide</span>;
+  }
+  if (resolved === "HISTORICAL_PRECEDENT") {
+    return <span className="evidence-state suggestion" title="Documented syllabus or departmental precedent"><Compass />Historical precedent</span>;
+  }
+  if (resolved === "PLANNING_SUGGESTION") {
+    return <span className="evidence-state suggestion" title="Recommended pathway sequence"><Compass />Planning suggestion</span>;
+  }
+  return <span className="evidence-state review" title="Ambiguous, split, or unarticulated — counselor confirmation required"><ShieldAlert />Needs counselor confirmation</span>;
+}
+
+export function CourseBucketBadge({
+  bucket,
+  fulfills,
+}: {
+  bucket: CourseBucket;
+  fulfills: string[];
+}) {
+  const label =
+    bucket === "core_overlap" ? "Core Overlap"
+      : bucket === "primary_mandate" ? "Primary Mandate"
+        : "Secondary Divergence";
+  return (
+    <span className={`course-bucket ${bucket}`}>
+      <strong>{label}</strong>
+      {fulfills.length ? <small>Fulfills: {fulfills.join(", ")}</small> : null}
+    </span>
+  );
 }

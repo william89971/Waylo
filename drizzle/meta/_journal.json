@@ -8,6 +8,13 @@
       "when": 1784707073007,
       "tag": "0000_mixed_warbird",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784708000000,
+      "tag": "0001_multi_target_articulation",
+      "breakpoints": true
     }
   ]
 }

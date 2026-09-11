@@ -124,6 +124,12 @@ a { color: var(--p-blue); }
 .evidence-state.verified { color: var(--p-teal); }
 .evidence-state.review { color: var(--p-amber); }
 .evidence-state.suggestion { color: var(--p-blue); }
+.course-bucket { display: grid; gap: 2px; margin-top: 6px; padding: 6px 8px; border-radius: 6px; background: #f3f6f9; font-size: 11px; }
+.course-bucket strong { font-size: 11px; letter-spacing: .01em; }
+.course-bucket small { color: var(--p-muted); }
+.course-bucket.core_overlap { background: #e8f5f1; color: #1f6b5a; }
+.course-bucket.primary_mandate { background: #eef3fb; color: #2a4d7a; }
+.course-bucket.secondary_divergence { background: #f8f1e8; color: #7a4d1f; }
 .course-total { min-height: 55px; display: flex; justify-content: space-between; align-items: center; padding: 13px 52px; background: #fbfcfd; font-size: 13px; }
 .dashboard-actions { display: flex; gap: 10px; margin-top: 24px; }
 .what-if-row { margin-top: 70px; padding: 19px; border: 1px solid var(--p-border); border-radius: var(--p-radius); display: flex; justify-content: space-between; align-items: center; gap: 22px; }

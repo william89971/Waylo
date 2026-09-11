@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { neon } from "@neondatabase/serverless";
 import { courseById } from "@/lib/academic-data";
+import type { MultiTargetPlanResult } from "@/lib/articulation/types";
 import type { RouteCandidate } from "@/lib/domain";
 import type { OnboardingProfile, PlanningPreferencesInput, ProductionCourse, ProductionCourseInput, SavedPlan, StudentWorkspaceRecord } from "@/lib/production-types";
 import { ApiError } from "@/lib/server/api-errors";
@@ -36,6 +37,9 @@ function localWorkspace(clerkUserId: string): LocalRecord {
     profile: { ...DEFAULT_PROFILE },
     courses: [],
     pathwayId: "ucsd-data",
+    primaryTargetId: "uc_san_diego:data_science",
+    secondaryTargetIds: [],
+    includeSecondaryDivergence: true,
     coverageTier: "reviewed",
     preferences: { ...DEFAULT_PREFERENCES },
   };
@@ -51,7 +55,7 @@ async function ensureDatabaseUser(clerkUserId: string) {
   if (!user) throw new ApiError("user_creation_failed", "Waylo could not create the student account.", 500, true);
   await Promise.all([
     db.insert(studentProfiles).values({ userId: user.id }).onConflictDoNothing({ target: studentProfiles.userId }),
-    db.insert(transferGoals).values({ userId: user.id, pathwayId: "ucsd-data", coverageTier: "reviewed" }).onConflictDoNothing({ target: transferGoals.userId }),
+    db.insert(transferGoals).values({ userId: user.id, pathwayId: "ucsd-data", primaryTargetId: "uc_san_diego:data_science", secondaryTargetIds: [], includeSecondaryDivergence: true, coverageTier: "reviewed" }).onConflictDoNothing({ target: transferGoals.userId }),
     db.insert(planningPreferences).values({ userId: user.id }).onConflictDoNothing({ target: planningPreferences.userId }),
   ]);
   return user;
@@ -140,6 +144,9 @@ export const studentRepository = {
         matchStatus: course.matchStatus as ProductionCourse["matchStatus"],
       })),
       pathwayId: (goal?.pathwayId ?? "ucsd-data") as "ucsd-data",
+      primaryTargetId: goal?.primaryTargetId ?? "uc_san_diego:data_science",
+      secondaryTargetIds: goal?.secondaryTargetIds ?? [],
+      includeSecondaryDivergence: goal?.includeSecondaryDivergence ?? true,
       coverageTier: "reviewed",
       preferences: {
         maxUnits: preferences?.maxUnits ?? 15,
@@ -226,11 +233,39 @@ export const studentRepository = {
     await db.delete(studentCourses).where(and(eq(studentCourses.id, courseId), eq(studentCourses.userId, user.id)));
   },
 
+  async updateTargets(clerkUserId: string, targets: { primaryTargetId: string; secondaryTargetIds: string[]; includeSecondaryDivergence: boolean }) {
+    const db = getDatabase();
+    if (!db) {
+      const current = localWorkspace(clerkUserId);
+      current.primaryTargetId = targets.primaryTargetId;
+      current.secondaryTargetIds = targets.secondaryTargetIds.slice(0, 3);
+      current.includeSecondaryDivergence = targets.includeSecondaryDivergence;
+      return this.load(clerkUserId);
+    }
+    const user = await ensureDatabaseUser(clerkUserId);
+    if (!user) throw new ApiError("database_unavailable", "Student storage is unavailable.", 503, true);
+    await db.update(transferGoals).set({
+      primaryTargetId: targets.primaryTargetId,
+      secondaryTargetIds: targets.secondaryTargetIds.slice(0, 3),
+      includeSecondaryDivergence: targets.includeSecondaryDivergence,
+      updatedAt: new Date(),
+    }).where(eq(transferGoals.userId, user.id));
+    return this.load(clerkUserId);
+  },
+
   async savePlan(clerkUserId: string, route: RouteCandidate, algorithmVersion: string, academicDataVersion: string, evidenceState: "verified" | "needs_review") {
     const db = getDatabase();
     if (!db) {
       const current = localWorkspace(clerkUserId);
-      const saved: SavedPlan = { id: randomUUID(), version: (current.activePlan?.version ?? 0) + 1, route: structuredClone(route), algorithmVersion, academicDataVersion, evidenceState, createdAt: new Date().toISOString() };
+      const saved: SavedPlan = {
+        id: randomUUID(),
+        version: (current.activePlan?.version ?? 0) + 1,
+        route: structuredClone(route),
+        algorithmVersion,
+        academicDataVersion,
+        evidenceState,
+        createdAt: new Date().toISOString(),
+      };
       current.activePlan = saved;
       return structuredClone(saved);
     }
@@ -252,4 +287,103 @@ export const studentRepository = {
     await sql.transaction(queries);
     return loadSavedPlan(user.id) as Promise<SavedPlan>;
   },
+
+  async saveMultiTargetPlan(
+    clerkUserId: string,
+    multi: MultiTargetPlanResult,
+    algorithmVersion: string,
+    academicDataVersion: string,
+    evidenceState: "verified" | "needs_review",
+  ) {
+    const route = multiTargetToRouteCandidate(multi);
+    const db = getDatabase();
+    if (!db) {
+      const current = localWorkspace(clerkUserId);
+      const saved: SavedPlan = {
+        id: randomUUID(),
+        version: (current.activePlan?.version ?? 0) + 1,
+        route: structuredClone(route),
+        algorithmVersion,
+        academicDataVersion,
+        evidenceState,
+        createdAt: new Date().toISOString(),
+        primaryTargetId: multi.primaryTargetId,
+        secondaryTargetIds: multi.secondaryTargetIds,
+        multiTargetPlan: structuredClone(multi),
+      };
+      current.activePlan = saved;
+      return structuredClone(saved);
+    }
+    const user = await ensureDatabaseUser(clerkUserId);
+    if (!user) throw new ApiError("database_unavailable", "Student storage is unavailable.", 503, true);
+    const [latest] = await db.select({ version: plans.version }).from(plans).where(eq(plans.userId, user.id)).orderBy(desc(plans.version)).limit(1);
+    const version = (latest?.version ?? 0) + 1;
+    const planId = randomUUID();
+    const termRows = route.terms.map((term, position) => ({ id: randomUUID(), term, position }));
+    const sql = neon(process.env.DATABASE_URL!);
+    const queries = [
+      sql`update plans set active = false where user_id = ${user.id}`,
+      sql`insert into plans (
+        id, user_id, version, pathway_id, strategy, label, estimated_transfer_term, total_planned_units, requirement_coverage,
+        algorithm_version, academic_data_version, evidence_state, assumptions, primary_target_id, secondary_target_ids,
+        schedule, audit_summary, evidence_graph_snapshot, divergence_points, active
+      ) values (
+        ${planId}, ${user.id}, ${version}, ${route.pathwayId}, ${route.strategy}, ${route.label}, ${route.estimatedTransferTerm},
+        ${route.totalPlannedUnits}, ${route.requirementCoverage}, ${algorithmVersion}, ${academicDataVersion}, ${evidenceState},
+        ${JSON.stringify(route.assumptions)}::jsonb, ${multi.primaryTargetId}, ${JSON.stringify(multi.secondaryTargetIds)}::jsonb,
+        ${JSON.stringify(multi.schedule)}::jsonb, ${JSON.stringify(multi.auditSummary)}::jsonb,
+        ${JSON.stringify(multi.evidenceGraphSnapshot)}::jsonb, ${JSON.stringify(multi.divergencePoints)}::jsonb, true
+      )`,
+      ...termRows.flatMap(({ id, term, position }) => [
+        sql`insert into plan_terms (id, plan_id, term_key, label, season, year, position, total_units) values (${id}, ${planId}, ${term.id}, ${term.label}, ${term.season}, ${term.year}, ${position}, ${term.totalUnits})`,
+        ...term.courses.map((course, coursePosition) => sql`insert into plan_courses (id, plan_term_id, catalog_course_id, code, title, units, category, status, evidence_ids, position) values (${randomUUID()}, ${id}, ${course.courseId}, ${course.code}, ${course.title}, ${course.units}, ${course.category}, ${course.status}, ${JSON.stringify(course.evidenceIds)}::jsonb, ${coursePosition})`),
+      ]),
+    ];
+    await sql.transaction(queries);
+    const saved = await loadSavedPlan(user.id) as SavedPlan;
+    return {
+      ...saved,
+      primaryTargetId: multi.primaryTargetId,
+      secondaryTargetIds: multi.secondaryTargetIds,
+      multiTargetPlan: multi,
+    };
+  },
 };
+
+function multiTargetToRouteCandidate(multi: MultiTargetPlanResult): RouteCandidate {
+  return {
+    id: randomUUID(),
+    pathwayId: multi.primaryTargetId,
+    strategy: "overlap",
+    label: "Multi-target articulation plan",
+    description: "Deterministic multi-target schedule using College of the Canyons semester units.",
+    terms: multi.schedule.terms.map((term) => ({
+      id: term.id,
+      label: term.label,
+      season: term.season,
+      year: term.year,
+      totalUnits: term.totalSemesterUnits,
+      courses: term.courses.map((course) => ({
+        courseId: course.courseId,
+        code: course.code,
+        title: course.title,
+        units: course.semesterUnits,
+        category: course.bucket,
+        status: "planned" as const,
+        evidenceIds: [],
+      })),
+    })),
+    estimatedTransferTerm: multi.schedule.terms.at(-1)?.label ?? "Undetermined",
+    totalPlannedUnits: multi.totalSemesterUnits,
+    requirementCoverage: multi.auditSummary.filter((item) => item.juniorStandingMet).length / Math.max(multi.auditSummary.length, 1),
+    overlapScore: multi.schedule.terms.flatMap((term) => term.courses).filter((course) => course.bucket === "core_overlap").length
+      / Math.max(multi.schedule.terms.flatMap((term) => term.courses).length, 1),
+    issues: [],
+    evidenceIds: multi.evidenceGraphSnapshot.ruleIds,
+    assumptions: [
+      "Schedule units are College of the Canyons semester units.",
+      "Destination audits convert units only at the audit layer.",
+    ],
+    valid: true,
+  };
+}

@@ -1,11 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertTriangle, ArrowRight, LockKeyhole } from "lucide-react";
-import { EvidenceStatus } from "@/components/evidence-status";
+import { CourseBucketBadge, EvidenceStatus } from "@/components/evidence-status";
 import { SavePlanButton } from "@/components/save-plan-button";
 import { evidenceById, programById } from "@/lib/academic-data";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
-import { generateProductionPlan, productionEvidenceState, UCSD_DATA_RELEASE } from "@/lib/server/production-planning";
+import {
+  generateMultiTargetProductionPlan,
+  generateProductionPlan,
+  listSelectableTargets,
+  productionEvidenceState,
+  shouldUseLegacyUcsdPlanner,
+  MULTI_TARGET_DATA_RELEASE,
+  UCSD_DATA_RELEASE,
+} from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
 
 export const dynamic = "force-dynamic";
@@ -16,23 +24,203 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
   const workspace = await studentRepository.load(clerkUserId);
   if (!workspace.profile.onboardingCompleted) redirect("/onboarding");
   const showProposal = (await searchParams).new === "1" || !workspace.activePlan;
+  const targets = listSelectableTargets();
+  const labelFor = (id: string) => targets.find((target) => target.id === id)?.displayName ?? id;
+
+  if (!shouldUseLegacyUcsdPlanner(workspace)) {
+    const multi = generateMultiTargetProductionPlan(workspace);
+    return (
+      <div className="production-page plan-page">
+        <header className="production-page-header">
+          <h1>{showProposal ? "Review your multi-target plan" : "Your multi-target plan"}</h1>
+          <p>
+            Primary: {labelFor(multi.primaryTargetId)}
+            {multi.secondaryTargetIds.length
+              ? ` · Secondary: ${multi.secondaryTargetIds.map(labelFor).join(", ")}`
+              : ""}
+          </p>
+        </header>
+        {showProposal ? (
+          <div className="proposal-banner">
+            <LockKeyhole />
+            <div>
+              <strong>Proposed — not saved</strong>
+              <span>Semester packing uses College of the Canyons units. Destination audits convert units only below.</span>
+            </div>
+          </div>
+        ) : null}
+        {!workspace.includeSecondaryDivergence ? (
+          <div className="review-banner">
+            <AlertTriangle />
+            <div>
+              <strong>Secondary divergence courses are omitted.</strong>
+              <span>Enable secondary major prep to include secondary-only requirements in the schedule.</span>
+            </div>
+          </div>
+        ) : null}
+        {multi.divergencePoints.length ? (
+          <div className="review-banner">
+            <AlertTriangle />
+            <div>
+              <strong>Divergence trade-offs</strong>
+              <ul>
+                {multi.divergencePoints.map((point) => (
+                  <li key={point.id}>{point.message}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        ) : null}
+        <section className="semester-timeline" aria-label="Semester-by-semester plan">
+          {multi.schedule.terms.map((term) => (
+            <article className="semester-column" key={term.id}>
+              <header>
+                <strong>{term.label}</strong>
+                <span>{term.totalSemesterUnits} semester units</span>
+              </header>
+              <div>
+                {term.courses.map((course) => (
+                  <section className="plan-course" key={course.courseId}>
+                    <strong>{course.code}</strong>
+                    <span>{course.title}</span>
+                    <small>{course.semesterUnits} units</small>
+                    <CourseBucketBadge bucket={course.bucket} fulfills={course.fulfillsTargetIds.map(labelFor)} />
+                    <EvidenceStatus tier={course.verificationTier} />
+                    {course.excessElectiveForTargets.length ? (
+                      <small>Excess elective for: {course.excessElectiveForTargets.map(labelFor).join(", ")}</small>
+                    ) : null}
+                  </section>
+                ))}
+                {term.conflicts.map((conflict, index) => (
+                  <small key={`${term.id}-conflict-${index}`} role="status">
+                    {conflict.message} Trade-off courses: {conflict.tradeoffCourseIds.join(", ")}
+                  </small>
+                ))}
+              </div>
+            </article>
+          ))}
+        </section>
+        <section aria-label="Destination audit summaries">
+          <h2>Destination audits</h2>
+          {multi.auditSummary.map((audit) => (
+            <article key={audit.targetMajorId}>
+              <strong>{labelFor(audit.targetMajorId)}</strong>
+              <span>
+                {audit.articulatedUnits} / {audit.juniorStandingUnits} {audit.unitSystem} units
+                {audit.juniorStandingMet ? " · junior standing met" : " · junior standing in progress"}
+              </span>
+              <ul>
+                {audit.requirementStates.map((requirement) => (
+                  <li key={requirement.requirementKey}>
+                    {requirement.label}: {requirement.satisfied ? "satisfied" : `missing ${requirement.missingCourseCodes.join(", ")}`}
+                    {" · "}
+                    <EvidenceStatus tier={requirement.verificationTier} />
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </section>
+        <div className="plan-footer">
+          <div>
+            <strong>Total planned</strong>
+            <span>{multi.totalSemesterUnits} COC semester units</span>
+            <small>Academic data: {MULTI_TARGET_DATA_RELEASE}</small>
+          </div>
+          <Link href={showProposal ? "/app/plan" : "/app/plan?new=1"} className="production-button primary">
+            {showProposal ? "Keep this proposal" : "Generate a fresh proposal"}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const result = generateProductionPlan(workspace);
   const route = showProposal ? result.routes[0] : workspace.activePlan?.route ?? result.routes[0];
-  if (!route) return <div className="production-page"><h1>We need more information</h1><p>Waylo could not build a valid route from the confirmed courses.</p><Link href="/onboarding" className="production-button primary">Review your courses</Link></div>;
+  if (!route) {
+    return (
+      <div className="production-page">
+        <h1>We need more information</h1>
+        <p>Waylo could not build a valid route from the confirmed courses.</p>
+        <Link href="/onboarding" className="production-button primary">Review your courses</Link>
+      </div>
+    );
+  }
   const program = programById.get("ucsd-data");
   return (
     <div className="production-page plan-page">
-      <header className="production-page-header"><h1>{showProposal ? "Review your transfer plan" : "Your transfer plan"}</h1><p>{program?.universityName} {program?.name} {program?.degree} · {route.label}</p></header>
-      {showProposal ? <div className="proposal-banner"><LockKeyhole /><div><strong>Proposed — not saved</strong><span>Review the semester sequence and evidence before saving this plan.</span></div></div> : null}
-      {productionEvidenceState() === "needs_review" ? <div className="review-banner"><AlertTriangle /><div><strong>This plan contains articulation items that need confirmation.</strong><span>You can save it as a planning route, but it is not an official degree audit or verified articulation agreement.</span></div><Link href="/app/evidence">Review evidence</Link></div> : null}
+      <header className="production-page-header">
+        <h1>{showProposal ? "Review your transfer plan" : "Your transfer plan"}</h1>
+        <p>
+          {program?.universityName} {program?.name} {program?.degree} · {route.label}
+        </p>
+      </header>
+      {showProposal ? (
+        <div className="proposal-banner">
+          <LockKeyhole />
+          <div>
+            <strong>Proposed — not saved</strong>
+            <span>Review the semester sequence and evidence before saving this plan.</span>
+          </div>
+        </div>
+      ) : null}
+      {productionEvidenceState() === "needs_review" ? (
+        <div className="review-banner">
+          <AlertTriangle />
+          <div>
+            <strong>This plan contains articulation items that need confirmation.</strong>
+            <span>You can save it as a planning route, but it is not an official degree audit or verified articulation agreement.</span>
+          </div>
+          <Link href="/app/evidence">Review evidence</Link>
+        </div>
+      ) : null}
       <section className="semester-timeline" aria-label="Semester-by-semester plan">
-        {route.terms.map((term) => <article className="semester-column" key={term.id}><header><strong>{term.label}</strong><span>{term.totalUnits} units planned</span></header><div>{term.courses.map((course) => {
-          const needsReview = course.evidenceIds.some((id) => evidenceById.get(id)?.status !== "verified");
-          return <section className={`plan-course ${needsReview ? "needs-review" : ""}`} key={course.courseId}><strong>{course.code}</strong><span>{course.title}</span><small>{course.units} units</small><EvidenceStatus state={needsReview ? "review" : "suggestion"} /><Link href={`/app/evidence?course=${course.courseId}`}>View source <ArrowRight /></Link></section>;
-        })}</div></article>)}
+        {route.terms.map((term) => (
+          <article className="semester-column" key={term.id}>
+            <header>
+              <strong>{term.label}</strong>
+              <span>{term.totalUnits} units planned</span>
+            </header>
+            <div>
+              {term.courses.map((course) => {
+                const needsReview = course.evidenceIds.some((id) => evidenceById.get(id)?.status !== "verified");
+                return (
+                  <section className={`plan-course ${needsReview ? "needs-review" : ""}`} key={course.courseId}>
+                    <strong>{course.code}</strong>
+                    <span>{course.title}</span>
+                    <small>{course.units} units</small>
+                    <EvidenceStatus state={needsReview ? "review" : "suggestion"} />
+                    <Link href={`/app/evidence?course=${course.courseId}`}>
+                      View source <ArrowRight />
+                    </Link>
+                  </section>
+                );
+              })}
+            </div>
+          </article>
+        ))}
       </section>
-      <div className="plan-footer"><div><strong>Estimated transfer</strong><span>{route.estimatedTransferTerm}</span><small>Academic data: {UCSD_DATA_RELEASE}</small></div>{showProposal ? <SavePlanButton strategy={route.strategy} /> : <Link href="/app/plan?new=1" className="production-button">Generate a fresh proposal</Link>}</div>
-      <section id="what-if" className="what-if-placeholder"><h2>If your schedule changes</h2><p>The protected what-if workflow will preview timing and downstream course changes without overwriting this saved plan.</p><button className="production-button" disabled>What-if planning arrives after Preview validation</button></section>
+      <div className="plan-footer">
+        <div>
+          <strong>Estimated transfer</strong>
+          <span>{route.estimatedTransferTerm}</span>
+          <small>Academic data: {UCSD_DATA_RELEASE}</small>
+        </div>
+        {showProposal ? (
+          <SavePlanButton strategy={route.strategy} />
+        ) : (
+          <Link href="/app/plan?new=1" className="production-button">
+            Generate a fresh proposal
+          </Link>
+        )}
+      </div>
+      <section id="what-if" className="what-if-placeholder">
+        <h2>If your schedule changes</h2>
+        <p>The protected what-if workflow will preview timing and downstream course changes without overwriting this saved plan.</p>
+        <button className="production-button" disabled>
+          What-if planning arrives after Preview validation
+        </button>
+      </section>
     </div>
   );
 }

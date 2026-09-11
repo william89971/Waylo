@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { OnboardingProfileSchema, PlanningPreferencesInputSchema } from "@/lib/production-types";
+import {
+  OnboardingProfileSchema,
+  PlanningPreferencesInputSchema,
+  TransferTargetsInputSchema,
+} from "@/lib/production-types";
 import { apiFailure } from "@/lib/server/api-errors";
 import { parseJson } from "@/lib/server/api-request";
 import { requireAuthenticatedUserId } from "@/lib/server/auth";
@@ -10,6 +14,7 @@ export const dynamic = "force-dynamic";
 const UpdateSchema = z.discriminatedUnion("section", [
   z.object({ section: z.literal("profile"), profile: OnboardingProfileSchema }),
   z.object({ section: z.literal("preferences"), preferences: PlanningPreferencesInputSchema }),
+  z.object({ section: z.literal("targets"), targets: TransferTargetsInputSchema }),
 ]);
 
 export async function GET() {
@@ -25,9 +30,10 @@ export async function PATCH(request: Request) {
   try {
     const clerkUserId = await requireAuthenticatedUserId();
     const input = await parseJson(request, UpdateSchema);
-    const workspace = input.section === "profile"
-      ? await studentRepository.updateProfile(clerkUserId, input.profile)
-      : await studentRepository.updatePreferences(clerkUserId, input.preferences);
+    const workspace =
+      input.section === "profile" ? await studentRepository.updateProfile(clerkUserId, input.profile)
+      : input.section === "preferences" ? await studentRepository.updatePreferences(clerkUserId, input.preferences)
+      : await studentRepository.updateTargets(clerkUserId, input.targets);
     return Response.json({ workspace }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return apiFailure(error);

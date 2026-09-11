@@ -1,0 +1,52 @@
+{
+  "source": "usc_tpg",
+  "agreementYear": "2025-26",
+  "sendingInstitution": "College of the Canyons",
+  "receivingInstitution": "University of Southern California",
+  "major": "Business Administration",
+  "rows": [
+    {
+      "requirementKey": "calc",
+      "label": "Calculus / quantitative",
+      "expression": {
+        "type": "OR",
+        "clauses": [
+          { "type": "COURSE", "courseCode": "MATH-211" },
+          { "type": "COURSE", "courseCode": "MATH-140" }
+        ]
+      },
+      "verificationTier": "VERIFIED_INSTITUTIONAL_GUIDE"
+    },
+    {
+      "requirementKey": "macro",
+      "label": "Macroeconomics",
+      "expression": { "type": "COURSE", "courseCode": "ECON-201" },
+      "verificationTier": "VERIFIED_INSTITUTIONAL_GUIDE"
+    },
+    {
+      "requirementKey": "micro",
+      "label": "Microeconomics",
+      "expression": { "type": "COURSE", "courseCode": "ECON-202" },
+      "verificationTier": "VERIFIED_INSTITUTIONAL_GUIDE"
+    },
+    {
+      "requirementKey": "accounting",
+      "label": "Financial Accounting",
+      "expression": { "type": "COURSE", "courseCode": "BUS-201" },
+      "verificationTier": "VERIFIED_INSTITUTIONAL_GUIDE"
+    },
+    {
+      "requirementKey": "writing",
+      "label": "Writing",
+      "expression": { "type": "COURSE", "courseCode": "ENGL-101" },
+      "verificationTier": "VERIFIED_INSTITUTIONAL_GUIDE"
+    },
+    {
+      "requirementKey": "foreign-language",
+      "label": "Foreign language / diversity",
+      "expression": { "type": "COURSE", "courseCode": "NEEDS-COUNSELOR" },
+      "verificationTier": "NEEDS_COUNSELOR_CONFIRMATION",
+      "notes": "IGETC does not fulfill USC FL or diversity."
+    }
+  ]
+}

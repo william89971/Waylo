@@ -1,0 +1,55 @@
+{
+  "source": "assist",
+  "agreementYear": "2025-26",
+  "sendingInstitution": "College of the Canyons",
+  "receivingInstitution": "University of California, Berkeley",
+  "major": "Economics",
+  "rows": [
+    {
+      "requirementKey": "calc-1",
+      "label": "Calculus I",
+      "expression": { "type": "COURSE", "courseCode": "MATH-211" },
+      "verificationTier": "VERIFIED_ASSIST"
+    },
+    {
+      "requirementKey": "calc-2",
+      "label": "Calculus II",
+      "expression": { "type": "COURSE", "courseCode": "MATH-212" },
+      "verificationTier": "VERIFIED_ASSIST"
+    },
+    {
+      "requirementKey": "macro",
+      "label": "Macroeconomics",
+      "expression": { "type": "COURSE", "courseCode": "ECON-201" },
+      "verificationTier": "VERIFIED_ASSIST"
+    },
+    {
+      "requirementKey": "micro",
+      "label": "Microeconomics",
+      "expression": { "type": "COURSE", "courseCode": "ECON-202" },
+      "verificationTier": "VERIFIED_ASSIST"
+    },
+    {
+      "requirementKey": "stats",
+      "label": "Statistics",
+      "expression": {
+        "type": "OR",
+        "clauses": [
+          { "type": "COURSE", "courseCode": "MATH-140" },
+          { "type": "COURSE", "courseCode": "PSYCH-104" }
+        ]
+      },
+      "verificationTier": "VERIFIED_ASSIST"
+    },
+    {
+      "requirementKey": "writing",
+      "label": "English composition sequence",
+      "expression": {
+        "type": "SERIES_COMPLETE",
+        "seriesId": "engl-comp",
+        "courses": ["ENGL-101", "ENGL-103"]
+      },
+      "verificationTier": "VERIFIED_ASSIST"
+    }
+  ]
+}
