@@ -1,0 +1,80 @@
+import { expect, test, type Page } from "@playwright/test";
+
+async function onboardMultiTargetPlan(page: Page, testUser: string) {
+  await page.goto(`/sign-up?testUser=${testUser}`);
+  await page.getByRole("button", { name: "Create test account" }).click();
+  await expect(page.getByRole("heading", { name: "What college do you attend?" })).toBeVisible({
+    timeout: 60_000,
+  });
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible();
+  await page.getByRole("button", { name: /UC Berkeley/ }).filter({ hasText: /Economics/ }).click();
+  const uscSecondary = page
+    .locator(".selection-row")
+    .filter({ hasText: "University of Southern California" })
+    .filter({ hasText: /Business/ });
+  await uscSecondary.getByLabel("Include as secondary").check();
+  await expect(page.getByText(/Include secondary major prep/i)).toBeVisible();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
+  await page.getByLabel("Course").selectOption({ index: 0 });
+  await page.getByLabel("Grade").fill("A");
+  await page.getByRole("button", { name: "Add course" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "What should your plan account for?" })).toBeVisible();
+  await page.getByRole("button", { name: "Generate my plan", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: /multi-target plan/i })).toBeVisible();
+  await expect(page.getByTestId("articulation-matrix")).toBeVisible();
+}
+
+test.describe("multi-target articulation matrix and evidence drawer", () => {
+  test("matrix rows use mono tabular course codes and open the evidence drawer", async ({
+    browser,
+  }, testInfo) => {
+    test.setTimeout(180_000);
+    const testUser = `test-mx-${testInfo.project.name}-${Date.now().toString(36)}-${Math.random()
+      .toString(36)
+      .slice(2, 6)}`;
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    await onboardMultiTargetPlan(page, testUser);
+
+    const courseCode = page
+      .locator('[data-testid="articulation-matrix"] th[scope="row"] .font-mono.tabular-nums')
+      .filter({ hasText: "MATH-211" })
+      .first();
+    await expect(courseCode).toBeVisible();
+    await expect(courseCode).toHaveClass(/font-mono/);
+    await expect(courseCode).toHaveClass(/tabular-nums/);
+
+    const row = page.locator('[data-testid="articulation-matrix"] tr[data-course-code="MATH-211"]');
+    await expect(row).toBeVisible();
+    await row.click();
+
+    const drawer = page.getByTestId("evidence-drawer");
+    await expect(drawer).toHaveAttribute("data-state", "open");
+    await expect(drawer).toBeVisible();
+    await expect(drawer).toContainText("MATH-211");
+    await expect(drawer.getByText("VERIFIED_ASSIST").first()).toBeVisible();
+    await expect(drawer.getByText("TARGET INSTITUTION").first()).toBeVisible();
+    await expect(drawer.getByText("DESTINATION REQUIREMENT").first()).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(drawer).toHaveAttribute("data-state", "closed");
+
+    await row.click();
+    await expect(drawer).toHaveAttribute("data-state", "open");
+    // Click the left-edge gutter so the backdrop receives the event even on narrow viewports.
+    await page.getByRole("button", { name: "Dismiss evidence drawer" }).click({
+      position: { x: 8, y: 120 },
+    });
+    await expect(drawer).toHaveAttribute("data-state", "closed");
+
+    await context.close();
+  });
+});

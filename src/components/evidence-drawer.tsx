@@ -90,10 +90,11 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
   return (
     <div
       className={cn(
-        "fixed inset-0 z-50",
+        "fixed inset-0 z-50 no-print",
         open ? "pointer-events-auto" : "pointer-events-none",
       )}
       aria-hidden={!open}
+      data-testid="evidence-drawer-root" data-state={open ? "open" : "closed"}
     >
       <button
         type="button"
@@ -109,10 +110,12 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
         role="dialog"
         aria-modal="true"
         aria-label={evidence ? `Evidence for ${evidence.courseCode}` : "Course evidence"}
+        data-testid="evidence-drawer" data-state={open ? "open" : "closed"}
         className={cn(
-          "absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-border/40 bg-background shadow-none",
+          "absolute inset-y-0 right-0 flex w-[min(100%-1.5rem,28rem)] max-w-md flex-col",
           "transition-transform duration-200 ease-out",
           open ? "translate-x-0" : "translate-x-full",
+          !open && "invisible",
         )}
       >
         <header className="flex items-start justify-between gap-3 border-b border-border/40 px-5 py-4">
@@ -178,11 +181,11 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                   ) : (
                     <dl>
                       <LedgerRow
-                        label="Target institution"
+                        label="TARGET INSTITUTION"
                         value={campus.campusLabel}
                       />
                       <LedgerRow
-                        label="Destination requirement"
+                        label="DESTINATION REQUIREMENT"
                         value={
                           campus.destinationRequirement ? (
                             <span className="font-mono text-[12px] tabular-nums">

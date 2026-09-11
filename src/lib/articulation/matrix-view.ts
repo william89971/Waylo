@@ -83,10 +83,11 @@ export function buildMatrixRows(
           graph.rulesByTargetMajorId.get(campusId) ?? [],
           course.code,
         );
+        const tier = rule?.verificationTier ?? course.verificationTier;
         cells[campusId] = {
-          status: cellStatus(course.verificationTier),
+          status: cellStatus(tier),
           equivalency: compactEquivalency(rule),
-          verificationTier: course.verificationTier,
+          verificationTier: tier,
         };
       }
       rows.push({
@@ -129,7 +130,7 @@ function campusEntryForCourse(
     isPrimary,
     required: true,
     destinationRequirement: rule?.label ?? rule?.requirementKey,
-    verificationTier: course.verificationTier,
+    verificationTier: rule?.verificationTier ?? course.verificationTier,
     sourceType: rule?.sourceType,
     sourceUrl: rule?.sourceUrl,
     agreementYear: rule?.effectiveYear,

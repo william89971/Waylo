@@ -126,8 +126,8 @@ export function CounselorPacket({
         {evaluatedAt ? ` · Evaluated: ${evaluatedAt}` : ""}
       </p>
       <p className="counselor-disclaimer">
-        Planning aid generated via Waylo. Not an official transcript or degree audit. Subject to counselor
-        verification.
+        Planning aid generated via Waylo. Not an official transcript, articulation agreement, or admission guarantee.
+        Requires College of the Canyons counselor validation.
       </p>
     </section>
   );

@@ -75,7 +75,7 @@ export function MultiCampusMatrix({
   onSelectCourse,
 }: MultiCampusMatrixProps) {
   return (
-    <div className="w-full overflow-x-auto border border-border/40 bg-background">
+    <div className="w-full overflow-x-auto border border-border/40 bg-background" data-testid="articulation-matrix">
       <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
         <caption className="sr-only">
           Multi-campus articulation matrix. Rows are planned courses; columns are target campuses.
@@ -122,6 +122,7 @@ export function MultiCampusMatrix({
             return (
               <tr
                 key={`${row.termLabel}-${row.courseCode}`}
+                data-course-code={row.courseCode}
                 tabIndex={0}
                 aria-selected={selected}
                 onClick={() => onSelectCourse(row.courseCode)}

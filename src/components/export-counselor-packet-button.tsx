@@ -9,10 +9,10 @@ export function ExportCounselorPacketButton() {
       type="button"
       className="production-button no-print"
       onClick={() => window.print()}
-      aria-label="Export counselor packet"
+      aria-label="Export Counselor Audit"
     >
       <Printer size={16} aria-hidden />
-      Export Counselor Packet
+      Export Counselor Audit
     </button>
   );
 }

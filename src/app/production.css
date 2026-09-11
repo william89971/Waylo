@@ -325,6 +325,11 @@ a { color: var(--p-blue); }
 }
 
 @media print {
+  @page {
+    size: letter;
+    margin: 0.6in;
+  }
+
   .no-print,
   .production-sidebar,
   .production-mobile-nav,
@@ -333,7 +338,8 @@ a { color: var(--p-blue); }
   .plan-footer,
   .proposal-banner,
   .review-banner,
-  .what-if-placeholder {
+  .what-if-placeholder,
+  [data-testid="evidence-drawer-root"] {
     display: none !important;
   }
 
@@ -351,10 +357,33 @@ a { color: var(--p-blue); }
     margin-top: 0;
     padding-top: 0;
     border-top: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  .counselor-table {
+    width: 100%;
+    table-layout: fixed;
+    word-break: break-word;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .counselor-table th,
+  .counselor-table td {
+    border-color: #c9d1dc !important;
   }
 
   .counselor-table th {
-    background: #fff !important;
+    background: #f7f9fc !important;
+  }
+
+  .counselor-disclaimer {
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color-adjust: exact;
   }
 
   a {

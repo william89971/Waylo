@@ -112,8 +112,16 @@ test("UCB Economics primary with USC Business secondary shows divergence badges"
   await page.getByRole("button", { name: "Generate my plan", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: /multi-target plan/i })).toBeVisible();
-  await expect(page.getByText(/Core Overlap|Primary Mandate|Secondary Divergence/).first()).toBeVisible();
-  await expect(page.getByText(/semester units/i).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Articulation matrix" })).toBeVisible();
+  await expect(page.getByTestId("articulation-matrix")).toBeVisible();
+  const mathCode = page.locator('[data-testid="articulation-matrix"] .font-mono.tabular-nums', {
+    hasText: "MATH-211",
+  });
+  await expect(mathCode.first()).toBeVisible();
+  await expect(mathCode.first()).toHaveClass(/font-mono/);
+  await expect(mathCode.first()).toHaveClass(/tabular-nums/);
   await expect(page.getByRole("heading", { name: "Destination audits" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Export Counselor Audit" })).toBeVisible();
   await context.close();
 });
+
