@@ -2,11 +2,17 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertTriangle, ArrowRight, LockKeyhole } from "lucide-react";
 import { CounselorPacket } from "@/components/counselor-packet";
-import { CourseBucketBadge, EvidenceStatus } from "@/components/evidence-status";
+import { EvidenceStatus } from "@/components/evidence-status";
 import { ExportCounselorPacketButton } from "@/components/export-counselor-packet-button";
+import { PlanMatrixWorkspace } from "@/components/plan-matrix-workspace";
 import { SavePlanButton } from "@/components/save-plan-button";
 import { evidenceById, programById } from "@/lib/academic-data";
 import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
+import {
+  buildEvidenceByCourseCode,
+  buildMatrixCampuses,
+  buildMatrixRows,
+} from "@/lib/articulation/matrix-view";
 import type { VerificationTier } from "@/lib/articulation/types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
 import {
@@ -66,6 +72,9 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         bucket: course.bucket,
       })),
     );
+    const matrixCampuses = buildMatrixCampuses(multi, graph);
+    const matrixRows = buildMatrixRows(multi, graph);
+    const evidenceByCourseCode = buildEvidenceByCourseCode(multi, graph);
 
     return (
       <div className="production-page plan-page">
@@ -114,34 +123,35 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             </div>
           </div>
         ) : null}
-        <section className="semester-timeline no-print" aria-label="Semester-by-semester plan">
-          {multi.schedule.terms.map((term) => (
-            <article className="semester-column" key={term.id}>
-              <header>
-                <strong>{term.label}</strong>
-                <span>{term.totalSemesterUnits} semester units</span>
-              </header>
-              <div>
-                {term.courses.map((course) => (
-                  <section className="plan-course" key={course.courseId}>
-                    <strong>{course.code}</strong>
-                    <span>{course.title}</span>
-                    <small>{course.semesterUnits} units</small>
-                    <CourseBucketBadge bucket={course.bucket} fulfills={course.fulfillsTargetIds.map(labelFor)} />
-                    <EvidenceStatus tier={course.verificationTier} />
-                    {course.excessElectiveForTargets.length ? (
-                      <small>Excess elective for: {course.excessElectiveForTargets.map(labelFor).join(", ")}</small>
-                    ) : null}
-                  </section>
-                ))}
-                {term.conflicts.map((conflict, index) => (
-                  <small key={`${term.id}-conflict-${index}`} role="status">
-                    {conflict.message} Trade-off courses: {conflict.tradeoffCourseIds.join(", ")}
-                  </small>
-                ))}
-              </div>
-            </article>
-          ))}
+        <section className="no-print space-y-3" aria-label="Multi-campus articulation matrix">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 className="text-base font-medium tracking-tight text-slate-900">Articulation matrix</h2>
+              <p className="text-sm text-slate-600">
+                Click a course row to open verification evidence. Primary campus marked PRI.
+              </p>
+            </div>
+            <p className="font-mono text-[11px] tabular-nums text-slate-500">
+              {multi.totalSemesterUnits.toFixed(1)} COC units · {matrixRows.length} courses
+            </p>
+          </div>
+          <PlanMatrixWorkspace
+            campuses={matrixCampuses}
+            rows={matrixRows}
+            evidenceByCourseCode={evidenceByCourseCode}
+          />
+          {multi.schedule.terms.some((term) => term.conflicts.length > 0) ? (
+            <ul className="space-y-1 text-sm text-amber-800" role="status">
+              {multi.schedule.terms.flatMap((term) =>
+                term.conflicts.map((conflict, index) => (
+                  <li key={`${term.id}-conflict-${index}`}>
+                    {term.label}: {conflict.message} Trade-off courses:{" "}
+                    {conflict.tradeoffCourseIds.join(", ")}
+                  </li>
+                )),
+              )}
+            </ul>
+          ) : null}
         </section>
         <section className="no-print" aria-label="Destination audit summaries">
           <h2>Destination audits</h2>
