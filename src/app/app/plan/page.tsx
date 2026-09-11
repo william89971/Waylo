@@ -219,7 +219,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         const item = evidenceById.get(evidenceId);
         return {
           targetLabel: `${program?.universityName ?? "UC San Diego"} ${program?.name ?? "Data Science"}`,
-          requirementKey: evidenceId,
+          requirementKey: `${evidenceId}:${course.code}`,
           label: item?.title ?? course.code,
           verificationTier: legacyTier(item?.status),
           effectiveYear: item?.effectiveYear ?? "—",

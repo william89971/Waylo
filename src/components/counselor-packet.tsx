@@ -74,8 +74,8 @@ export function CounselorPacket({
           </tr>
         </thead>
         <tbody>
-          {scheduleRows.map((row) => (
-            <tr key={`${row.termLabel}-${row.code}`}>
+          {scheduleRows.map((row, index) => (
+            <tr key={`${row.termLabel}-${row.code}-${index}`}>
               <td>{row.termLabel}</td>
               <td>{row.code}</td>
               <td>{row.title}</td>
@@ -106,8 +106,8 @@ export function CounselorPacket({
           </tr>
         </thead>
         <tbody>
-          {citations.map((citation) => (
-            <tr key={`${citation.targetLabel}-${citation.requirementKey}`}>
+          {citations.map((citation, index) => (
+            <tr key={`${citation.targetLabel}-${citation.requirementKey}-${index}`}>
               <td>{citation.targetLabel}</td>
               <td>{citation.requirementKey}</td>
               <td>{citation.label}</td>
@@ -126,8 +126,8 @@ export function CounselorPacket({
         {evaluatedAt ? ` · Evaluated: ${evaluatedAt}` : ""}
       </p>
       <p className="counselor-disclaimer">
-        Planning aid generated via Waylo. Not an official transcript or degree audit. Subject to
-        counselor verification.
+        Planning aid generated via Waylo. Not an official transcript or degree audit. Subject to counselor
+        verification.
       </p>
     </section>
   );

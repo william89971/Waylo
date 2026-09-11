@@ -254,7 +254,19 @@ a { color: var(--p-blue); }
   gap: 16px;
 }
 
+.plan-footer {
+  position: relative;
+  z-index: 2;
+}
+
+.semester-timeline {
+  position: relative;
+  z-index: 0;
+}
+
+/* Screen: keep the interactive plan uncluttered; packet renders for print. */
 .counselor-packet {
+  display: none;
   margin-top: 48px;
   padding-top: 28px;
   border-top: 1px solid var(--p-border);
@@ -335,6 +347,7 @@ a { color: var(--p-blue); }
   }
 
   .counselor-packet {
+    display: block;
     margin-top: 0;
     padding-top: 0;
     border-top: 0;
