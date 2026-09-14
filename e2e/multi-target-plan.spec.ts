@@ -9,10 +9,12 @@ async function onboardMultiTargetPlan(page: Page, testUser: string) {
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible();
-  await page.getByRole("button", { name: /UC Berkeley/ }).filter({ hasText: /Economics/ }).click();
+  await page.getByTestId("university-list").getByRole("button", { name: /UC Berkeley/ }).click();
+  await page.getByTestId("primary-target-list").getByRole("button", { name: /Economics/ }).click();
+  await page.getByTestId("university-list").getByRole("button", { name: /University of Southern California/ }).click();
   const uscSecondary = page
+    .getByTestId("primary-target-list")
     .locator(".selection-row")
-    .filter({ hasText: "University of Southern California" })
     .filter({ hasText: /Business/ });
   await uscSecondary.getByLabel("Include as secondary").check();
   await expect(page.getByText(/Include secondary major prep/i)).toBeVisible();

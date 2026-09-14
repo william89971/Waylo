@@ -45,7 +45,28 @@ export function OnboardingFlow({
   const [primaryTargetId, setPrimaryTargetId] = useState(initial.primaryTargetId);
   const [secondaryTargetIds, setSecondaryTargetIds] = useState<string[]>(initial.secondaryTargetIds ?? []);
   const [includeSecondaryDivergence, setIncludeSecondaryDivergence] = useState(initial.includeSecondaryDivergence ?? true);
+  const institutions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const target of targets) {
+      if (!seen.has(target.institutionId)) seen.set(target.institutionId, target.institutionName);
+    }
+    return [...seen.entries()].map(([id, name]) => ({ id, name }));
+  }, [targets]);
+  const [selectedInstitutionIds, setSelectedInstitutionIds] = useState<string[]>(() => {
+    const ids = new Set<string>();
+    const primary = targets.find((target) => target.id === initial.primaryTargetId);
+    if (primary) ids.add(primary.institutionId);
+    for (const secondaryId of initial.secondaryTargetIds ?? []) {
+      const secondary = targets.find((target) => target.id === secondaryId);
+      if (secondary) ids.add(secondary.institutionId);
+    }
+    return [...ids];
+  });
   const progress = useMemo(() => `${Math.round((step / 4) * 100)}%`, [step]);
+  const majorsForSelectedInstitutions = useMemo(
+    () => targets.filter((target) => selectedInstitutionIds.includes(target.institutionId)),
+    [targets, selectedInstitutionIds],
+  );
   const selectedTargets = useMemo(
     () => targets.filter((target) => target.id === primaryTargetId || secondaryTargetIds.includes(target.id)),
     [targets, primaryTargetId, secondaryTargetIds],
@@ -97,6 +118,20 @@ export function OnboardingFlow({
     } finally {
       setWorking(false);
     }
+  };
+
+  const toggleInstitution = (institutionId: string) => {
+    setSelectedInstitutionIds((current) => {
+      const next = current.includes(institutionId)
+        ? current.filter((id) => id !== institutionId)
+        : [...current, institutionId];
+      const allowed = new Set(
+        targets.filter((target) => next.includes(target.institutionId)).map((target) => target.id),
+      );
+      setPrimaryTargetId((primary) => (primary && allowed.has(primary) ? primary : ""));
+      setSecondaryTargetIds((secondaries) => secondaries.filter((id) => allowed.has(id)));
+      return next;
+    });
   };
 
   const toggleSecondary = (targetId: string) => {
@@ -216,52 +251,81 @@ export function OnboardingFlow({
         {step === 2 ? (
           <div className="onboarding-question">
             <h1>Where do you want to transfer?</h1>
-            <p>Pick one primary target and up to three secondary majors. Schedules stay in College of the Canyons semester units.</p>
-            <div className="selection-group" data-testid="primary-target-list">
-              {targets.map((target) => {
-                const isPrimary = primaryTargetId === target.id;
-                const isSecondary = secondaryTargetIds.includes(target.id);
+            <p>Choose one or more universities first. Then pick a primary major and up to three secondary majors from those schools.</p>
+
+            <h2 className="onboarding-subheading">Universities</h2>
+            <div className="selection-group" data-testid="university-list">
+              {institutions.map((institution) => {
+                const selected = selectedInstitutionIds.includes(institution.id);
                 return (
-                  <div
-                    key={target.id}
-                    className={`selection-row ${isPrimary ? "selected" : ""}`}
-                    style={{ flexDirection: "column", alignItems: "stretch", gap: "0.55rem" }}
+                  <button
+                    key={institution.id}
+                    type="button"
+                    className={`selection-row ${selected ? "selected" : ""}`}
+                    aria-pressed={selected}
+                    onClick={() => toggleInstitution(institution.id)}
                   >
-                    <button
-                      type="button"
-                      className="selection-row"
-                      style={{ border: "none", padding: 0, background: "transparent", boxShadow: "none" }}
-                      onClick={() => {
-                        setPrimaryTargetId(target.id);
-                        setSecondaryTargetIds((current) => current.filter((id) => id !== target.id));
-                      }}
-                    >
-                      <span>
-                        <strong>{target.institutionName}</strong>
-                        <small>
-                          {target.displayName} · {target.degree} · Tier {target.ingestionTier}
-                          {target.coverageTier === "reviewed" || target.coverageTier === "full"
-                            ? " · reviewed pathway"
-                            : " · planning archetype"}
-                        </small>
-                      </span>
-                      {isPrimary ? <Check /> : null}
-                    </button>
-                    {!isPrimary ? (
-                      <label className="checkbox-row" style={{ margin: 0 }}>
-                        <input
-                          type="checkbox"
-                          checked={isSecondary}
-                          disabled={!isSecondary && secondaryTargetIds.length >= 3}
-                          onChange={() => toggleSecondary(target.id)}
-                        />
-                        Include as secondary
-                      </label>
-                    ) : null}
-                  </div>
+                    <span>
+                      <strong>{institution.name}</strong>
+                      <small>{selected ? "Selected" : "Tap to include"}</small>
+                    </span>
+                    {selected ? <Check /> : null}
+                  </button>
                 );
               })}
             </div>
+
+            <h2 className="onboarding-subheading">Majors</h2>
+            {selectedInstitutionIds.length === 0 ? (
+              <p className="onboarding-hint">Select at least one university to see available majors.</p>
+            ) : (
+              <div className="selection-group" data-testid="primary-target-list">
+                {majorsForSelectedInstitutions.map((target) => {
+                  const isPrimary = primaryTargetId === target.id;
+                  const isSecondary = secondaryTargetIds.includes(target.id);
+                  return (
+                    <div
+                      key={target.id}
+                      className={`selection-row ${isPrimary ? "selected" : ""}`}
+                      style={{ flexDirection: "column", alignItems: "stretch", gap: "0.55rem" }}
+                    >
+                      <button
+                        type="button"
+                        className="selection-row"
+                        style={{ border: "none", padding: 0, background: "transparent", boxShadow: "none" }}
+                        onClick={() => {
+                          setPrimaryTargetId(target.id);
+                          setSecondaryTargetIds((current) => current.filter((id) => id !== target.id));
+                        }}
+                      >
+                        <span>
+                          <strong>{target.institutionName}</strong>
+                          <small>
+                            {target.displayName} · {target.degree} · Tier {target.ingestionTier}
+                            {target.coverageTier === "reviewed" || target.coverageTier === "full"
+                              ? " · reviewed pathway"
+                              : " · planning archetype"}
+                          </small>
+                        </span>
+                        {isPrimary ? <Check /> : null}
+                      </button>
+                      {!isPrimary ? (
+                        <label className="checkbox-row" style={{ margin: 0 }}>
+                          <input
+                            type="checkbox"
+                            checked={isSecondary}
+                            disabled={!isSecondary && secondaryTargetIds.length >= 3}
+                            onChange={() => toggleSecondary(target.id)}
+                          />
+                          Include as secondary
+                        </label>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {secondaryTargetIds.length > 0 ? (
               <label className="checkbox-row" style={{ marginTop: "1rem" }}>
                 <input
@@ -283,7 +347,7 @@ export function OnboardingFlow({
               </button>
               <button
                 className="production-button primary"
-                disabled={!hydrated || working || !primaryTargetId}
+                disabled={!hydrated || working || !primaryTargetId || selectedInstitutionIds.length === 0}
                 onClick={() => void saveTargetsAndContinue()}
               >
                 Continue <ChevronRight size={17} />
