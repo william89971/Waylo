@@ -70,6 +70,9 @@ a { color: var(--p-blue); }
 .onboarding-question { max-width: 760px; margin: 46px auto 0; }
 .onboarding-question h1 { margin: 0 0 9px; font-size: 34px; letter-spacing: -.04em; line-height: 1.15; }
 .onboarding-question > p { color: var(--p-muted); margin: 0 0 27px; line-height: 1.55; }
+.onboarding-subheading { margin: 28px 0 12px; font-size: 15px; font-weight: 700; letter-spacing: -.01em; color: var(--p-ink); }
+.onboarding-hint { margin: 0 0 18px; color: var(--p-muted); font-size: 14px; line-height: 1.5; }
+
 .selection-group { border: 1px solid var(--p-border); border-radius: var(--p-radius); overflow: hidden; }
 .selection-row { width: 100%; min-height: 66px; padding: 14px 18px; border: 1px solid var(--p-border); background: white; color: var(--p-ink); display: flex; align-items: center; justify-content: space-between; text-align: left; cursor: pointer; }
 .selection-group .selection-row { border-width: 0 0 1px; }
