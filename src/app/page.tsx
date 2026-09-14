@@ -10,8 +10,9 @@ export default function LandingPage() {
       </nav>
       <section className="production-hero">
         <div>
+          <p className="hero-eyebrow">College of the Canyons → UC / CSU / private transfer planning</p>
           <h1>Know what to take next semester.</h1>
-          <p>Upload or enter your College of the Canyons academic history, choose a transfer major, and get an evidence-backed semester-by-semester plan.</p>
+          <p>Enter your College of the Canyons history, choose universities and majors, and get an evidence-backed semester plan you can take to a counselor.</p>
           <div className="production-hero-actions"><Link href="/sign-up" className="production-button primary">Build your transfer plan <ArrowRight size={17} /></Link><Link href="/sign-in" className="production-button">Return to your plan</Link></div>
           <p className="production-disclaimer">Waylo is a planning aid. Confirm uncertain articulations in ASSIST or with a counselor before enrollment decisions.</p>
         </div>

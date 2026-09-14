@@ -22,9 +22,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const reviewCount = sourceIds.filter((id) => evidenceById.get(id)?.status !== "verified").length;
   const saved = (await searchParams).saved === "1";
   return (
-    <div className="production-page dashboard-page">
+    <div className="production-page dashboard-page fade-in">
       {saved ? <div className="success-banner"><FileCheck2 />Your plan is saved. It will be here when you return.</div> : null}
-      <header className="production-page-header"><h1>What to take next semester</h1><p>{nextTerm?.label ?? "Next term"} · {program?.universityName} {program?.name} {program?.degree}</p></header>
+      <header className="production-page-header">
+        <h1>What to take next semester</h1>
+        <p>{nextTerm?.label ?? "Next term"} · {program?.universityName} {program?.name} {program?.degree}</p>
+      </header>
       <div className="dashboard-layout">
         <section className="recommended-semester">
           <div className="section-heading"><div><h2>Recommended semester</h2><p>{route.label} · deterministic prerequisite validation complete</p></div></div>

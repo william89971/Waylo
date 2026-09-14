@@ -19,8 +19,22 @@ export function LocalAuthCard({ mode }: { mode: "sign-in" | "sign-up" }) {
       <h1>{mode === "sign-up" ? "Create your Waylo account" : "Welcome back"}</h1>
       <p>Local test authentication is enabled. Production uses secure passwordless email and Google sign-in through Clerk.</p>
       <button className="production-button primary" onClick={() => void submit()} disabled={working}>
-        {working ? "Opening Waylo…" : mode === "sign-up" ? "Create test account" : "Continue as test student"}
+        {working ? (
+          <span className="button-loading">
+            <span className="spinner" aria-hidden="true" />
+            Opening Waylo…
+          </span>
+        ) : mode === "sign-up" ? (
+          "Create test account"
+        ) : (
+          "Continue as test student"
+        )}
       </button>
+      <p className="auth-reassurance">
+        {mode === "sign-up"
+          ? "Takes under a minute. You can review every course before anything is saved."
+          : "Your saved plan will be waiting exactly where you left it."}
+      </p>
     </div>
   );
 }

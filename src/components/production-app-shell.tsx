@@ -27,7 +27,12 @@ export function ProductionAppShell({ children, clerkConfigured }: { children: Re
       <aside className="production-sidebar">
         <Link href="/app" className="production-brand">Waylo</Link>
         <nav aria-label="Student navigation">
-          {nav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={pathname === href ? "active" : ""}><Icon size={18} aria-hidden="true" />{label}</Link>)}
+          {nav.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href} className={pathname === href || (href !== "/app" && pathname.startsWith(href)) ? "active" : ""}>
+              <Icon size={18} aria-hidden="true" />
+              {label}
+            </Link>
+          ))}
         </nav>
         <div className="production-account">{clerkConfigured ? <UserButton /> : <LocalSignOut />}</div>
       </aside>

@@ -1,4 +1,14 @@
 :root {
+  --p-ease: cubic-bezier(.2, .8, .2, 1);
+  --p-duration: 180ms;
+  --p-space-1: 4px;
+  --p-space-2: 8px;
+  --p-space-3: 12px;
+  --p-space-4: 16px;
+  --p-space-5: 24px;
+  --p-space-6: 32px;
+  --p-focus: 0 0 0 3px rgb(18 91 215 / 28%);
+
   --p-white: #ffffff;
   --p-background: #f8fafc;
   --p-ink: #111b2e;
@@ -38,6 +48,14 @@ a { color: var(--p-blue); }
 .production-landing-nav { height: 76px; max-width: 1180px; margin: auto; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--p-border); }
 .production-nav-actions, .production-hero-actions { display: flex; gap: 12px; align-items: center; }
 .production-hero { max-width: 1120px; margin: auto; min-height: calc(100vh - 76px); padding: 100px 28px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(360px, .85fr); align-items: center; gap: 90px; }
+.hero-eyebrow {
+  margin: 0 0 14px;
+  color: var(--p-blue);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
 .production-hero h1 { margin: 0; max-width: 680px; font-size: clamp(46px, 7vw, 74px); letter-spacing: -.055em; line-height: .98; }
 .production-hero > div:first-child > p:not(.production-disclaimer) { max-width: 640px; margin: 28px 0; color: var(--p-muted); font-size: 20px; line-height: 1.55; }
 .production-disclaimer { margin: 24px 0 0; color: var(--p-muted); font-size: 13px; line-height: 1.5; }
@@ -92,8 +110,9 @@ a { color: var(--p-blue); }
 .confirmed-course-list small { color: var(--p-muted); }
 .confirmed-course-list button { min-width: 44px; min-height: 44px; border: 0; background: transparent; color: var(--p-muted); cursor: pointer; }
 .preference-form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-.preference-form .checkbox-row { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; color: var(--p-ink); font-size: 14px; }
-.preference-form .checkbox-row input { width: 18px; min-height: 18px; }
+.checkbox-row { display: flex; align-items: center; gap: 10px; color: var(--p-ink); font-size: 14px; cursor: pointer; }
+.checkbox-row input { width: 18px; min-height: 18px; accent-color: var(--p-blue); }
+.preference-form .checkbox-row { grid-column: 1 / -1; }
 .privacy-note { margin-top: 24px; padding: 16px; border: 1px solid #a9c6f4; background: var(--p-blue-soft); border-radius: 8px; display: flex; gap: 12px; color: #24436c; }
 .privacy-note span { display: grid; gap: 4px; }
 
@@ -393,4 +412,146 @@ a { color: var(--p-blue); }
     color: inherit;
     text-decoration: none;
   }
+}
+
+
+/* —— Psychology-informed interaction system —— */
+.fade-in {
+  animation: waylo-fade-up var(--p-duration, 180ms) var(--p-ease, ease) both;
+}
+@keyframes waylo-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fade-in { animation: none; }
+}
+
+.button-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgb(255 255 255 / 35%);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: waylo-spin .7s linear infinite;
+}
+@keyframes waylo-spin { to { transform: rotate(360deg); } }
+
+.empty-state {
+  display: grid;
+  gap: 6px;
+  padding: 22px 18px;
+  border: 1px dashed var(--p-border);
+  border-radius: var(--p-radius, 10px);
+  background: #fbfcfd;
+  color: var(--p-muted);
+}
+.empty-state strong { color: var(--p-ink); font-size: 14px; }
+.empty-state p { margin: 0; font-size: 13px; line-height: 1.5; }
+
+.skeleton {
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eef2f6 0%, #f7f9fb 50%, #eef2f6 100%);
+  background-size: 200% 100%;
+  animation: waylo-shimmer 1.2s ease-in-out infinite;
+}
+@keyframes waylo-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.campus-major-stack {
+  display: grid;
+  gap: 16px;
+}
+.campus-major-card {
+  border: 1px solid var(--p-border);
+  border-radius: var(--p-radius, 10px);
+  overflow: hidden;
+  background: white;
+  transition: border-color var(--p-duration, 180ms) var(--p-ease, ease), box-shadow var(--p-duration, 180ms) var(--p-ease, ease);
+}
+.campus-major-card.is-primary {
+  border-color: #77a7f3;
+  box-shadow: 0 0 0 1px rgb(18 91 215 / 12%);
+}
+.campus-major-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--p-border);
+  background: #fbfcfd;
+}
+.campus-major-header h3 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: -.02em;
+}
+.campus-major-header p {
+  margin: 4px 0 0;
+  color: var(--p-muted);
+  font-size: 13px;
+}
+.primary-campus-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px;
+  color: var(--p-ink);
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.primary-campus-control input {
+  width: 18px;
+  min-height: 18px;
+  accent-color: var(--p-blue);
+}
+.campus-major-card .selection-group {
+  border: 0;
+  border-radius: 0;
+}
+.selection-row[role="radio"][aria-checked="true"],
+.selection-row.selected {
+  border-color: #77a7f3;
+  background: var(--p-blue-soft, #eef5ff);
+}
+
+.auth-card .reassurance,
+.auth-reassurance {
+  margin-top: 18px;
+  color: var(--p-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.success-banner,
+.page-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #9ed4ca;
+  background: #eef9f6;
+  color: #075e55;
+  font-size: 14px;
+}
+
+.production-page-header h1,
+.production-page-header h1 {
+  letter-spacing: -.04em;
+}
+.production-button.primary {
+  min-width: 148px;
 }
