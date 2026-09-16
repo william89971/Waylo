@@ -77,7 +77,7 @@ describe("admissions strategy", () => {
     ).toBeNull();
   });
 
-  it("frames grades, impact, and counselor questions without admission claims", () => {
+  it("frames coursework first and activities as guidance, not an admissions formula", () => {
     const strategy = buildAdmissionsStrategy(workspace(), targets, {
       hasValidPlan: true,
       plannedCourseCodes: ["MATH-211", "COMP SCI 111"],
@@ -89,18 +89,23 @@ describe("admissions strategy", () => {
       strategy!.activities.body,
       strategy!.counselor.items.join(" "),
       strategy!.teaser,
+      strategy!.disclaimer,
     ].join(" ");
     expect(text).toMatch(/Economics at UC Berkeley/);
     expect(text).toMatch(/MATH-211/);
     expect(text).toMatch(/missing a grade/);
     expect(text).toMatch(/initiative/);
-    expect(text).toMatch(/do not join a group just to become president of something/i);
-    expect(text).toMatch(/generic officer title/);
+    expect(text).toMatch(/coherent personal story/);
+    expect(text).toMatch(/officer titles/);
+    expect(text).toMatch(/does not predict or guarantee admission/i);
+    expect(text).not.toMatch(/stronger story than/i);
+    expect(text).not.toMatch(/become president/i);
+    expect(text).not.toMatch(/read the transcript first/i);
     expect(strategy!.counselor.items.some((item) => item.includes("Confirm this note"))).toBe(true);
     expect(strategy!.disclaimer).toMatch(/not verified articulation/i);
-    expect(strategy!.disclaimer).toMatch(/does not estimate admission chances/i);
+    expect(strategy!.disclaimer).toMatch(/not an admission prediction/i);
     for (const chunk of [strategy!.grades.body, strategy!.activities.body, strategy!.teaser]) {
-      expect(chunk.toLowerCase()).not.toMatch(/\b(likely|competitive|guaranteed|chance|odds)\b/);
+      expect(chunk.toLowerCase()).not.toMatch(/\b(likely|competitive|guaranteed|odds)\b/);
     }
   });
 

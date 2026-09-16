@@ -54,17 +54,31 @@ export function buildAdmissionsStrategy(
   const constraintQuestions = chosen
     .flatMap((target) => target.constraintNotes.map((note) => ({ target, note })))
     .slice(0, 2);
+  const hasArchetype = chosen.some((target) => target.coverageTier === "archetype");
+  const hasReviewedAssist = chosen.some(
+    (target) => target.coverageTier === "reviewed" || target.coverageTier === "full",
+  );
 
   const gradeBits: string[] = [
-    `For ${goal}, strong grades in the courses on this plan are the foundation. Selective campuses read the transcript first.`,
+    `For transfer planning toward ${goal}, start with the coursework and grades on this schedule. Waylo does not rank applicants or assign a GPA cutoff.`,
   ];
   if (rigorCodes.length) {
     gradeBits.push(
-      `This schedule includes demanding prep such as ${rigorCodes.slice(0, 3).join(", ")}. Challenging, appropriate coursework matters more than stacking easier units.`,
+      `This schedule includes sequenced prep such as ${rigorCodes.slice(0, 3).join(", ")}. Take the next required course at the level the major needs, rather than extra electives that do not move a requirement forward.`,
     );
   } else {
     gradeBits.push(
       "Take the next required prep course at a level that matches the major, not extra electives that do not move the requirement forward.",
+    );
+  }
+  if (hasReviewedAssist) {
+    gradeBits.push(
+      "For campuses with reviewed ASSIST agreements in Waylo, confirm the current agreement with a counselor before you enroll.",
+    );
+  }
+  if (hasArchetype) {
+    gradeBits.push(
+      "At least one selected campus is a planning estimate here, not a reviewed ASSIST pathway. Confirm required prep with that university or a counselor.",
     );
   }
   if (missingGrades) {
@@ -74,8 +88,8 @@ export function buildAdmissionsStrategy(
   }
 
   const activityBody = [
-    `Waylo does not store clubs or jobs. For ${goal}, activities help when they show initiative, responsibility, or measurable impact — not a longer list of memberships.`,
-    "Building something, leading a project, solving a problem, or developing a clear theme around your interests is a stronger story than joining five clubs or holding a generic officer title. Do not join a group just to become president of something.",
+    `Waylo does not store clubs, jobs, or activities. For planning around ${goal}, a useful way to think about activities is depth, initiative, responsibility, impact, and a coherent personal story — rather than a long list of memberships or officer titles.`,
+    "That is guidance for how to spend limited time, not a formula for how an admissions office will rank one activity against another. A title, leadership role, GPA, or any activity does not predict or guarantee admission.",
   ].join(" ");
 
   const counselorItems: string[] = [];
@@ -87,7 +101,7 @@ export function buildAdmissionsStrategy(
   for (const { target, note } of constraintQuestions) {
     counselorItems.push(`Confirm this note for ${target.institutionName} ${target.displayName}: ${note}`);
   }
-  if (chosen.some((target) => target.coverageTier === "archetype")) {
+  if (hasArchetype) {
     counselorItems.push(
       "One or more selected campuses use a planning estimate, not a reviewed ASSIST pathway. Confirm required prep directly with that university or a counselor.",
     );
@@ -105,11 +119,11 @@ export function buildAdmissionsStrategy(
 
   return {
     grades: {
-      title: "Grades and coursework come first",
+      title: "Coursework and grades come first",
       body: gradeBits.join(" "),
     },
     activities: {
-      title: "Activities are about impact, not titles",
+      title: "Activities: depth over a long list",
       body: activityBody,
     },
     counselor: {
@@ -117,7 +131,7 @@ export function buildAdmissionsStrategy(
       items: counselorItems.slice(0, 4),
     },
     disclaimer:
-      "Admissions strategy — not verified articulation or an admission prediction. Waylo does not estimate admission chances or replace a College of the Canyons counselor.",
-    teaser: `For ${goal}, grades and the right coursework come first. Activities matter when they show real impact, not extra titles.`,
+      "Planning guidance — not verified articulation and not an admission prediction. Waylo does not estimate how an office will decide, and it does not replace a College of the Canyons counselor. A title, leadership role, GPA, or activity does not predict or guarantee admission.",
+    teaser: `For ${goal}, coursework and grades on this plan come first. Activities are worth thinking about as depth and a coherent story, not extra titles.`,
   };
 }

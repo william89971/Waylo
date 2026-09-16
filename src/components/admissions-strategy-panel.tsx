@@ -3,7 +3,6 @@ import type { AdmissionsStrategy } from "@/lib/admissions-strategy";
 export function AdmissionsStrategyPanel({ strategy }: { strategy: AdmissionsStrategy }) {
   return (
     <section id="admissions-strategy" className="strategy-section no-print" aria-labelledby="admissions-strategy-title">
-      <p className="strategy-kicker">Strategy, not articulation</p>
       <h2 id="admissions-strategy-title">Admissions strategy — not verified articulation</h2>
       <article className="strategy-block">
         <h3>{strategy.grades.title}</h3>
