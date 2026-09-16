@@ -39,6 +39,12 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.getByText("Your plan is saved"), "save confirmation should be visible").toBeVisible();
   await expect(page.locator(".saved-meta")).toContainText("version 1");
+  await expect(page.getByRole("link", { name: "Read the strategy note" })).toBeVisible();
+  await page.getByRole("link", { name: "Read the strategy note" }).click();
+  await expect(page.locator("#admissions-strategy")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Admissions strategy — not verified articulation" })).toBeVisible();
+  await expect(page.locator("#admissions-strategy")).not.toContainText(/admission guarantee/i);
+  await expect(page.locator("#admissions-strategy")).not.toContainText(/\b(likely|competitive|guaranteed)\b/i);
   await page.screenshot({ path: `work/visuals/production-journey-${testInfo.project.name}.png`, fullPage: true });
 
   await page.getByRole("button", { name: "Sign out" }).click();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   EvidenceDrawer,
   type CourseEvidencePayload,
@@ -25,6 +25,19 @@ export function PlanMatrixWorkspace({
   const [selectedCourseCode, setSelectedCourseCode] = useState<string | null>(null);
   const evidence = selectedCourseCode ? evidenceByCourseCode[selectedCourseCode] ?? null : null;
 
+  const closeDrawer = useCallback(() => {
+    const code = selectedCourseCode;
+    setSelectedCourseCode(null);
+    if (!code) return;
+    requestAnimationFrame(() => {
+      document
+        .querySelector<HTMLElement>(
+          `[data-testid="articulation-matrix"] tr[data-course-code="${CSS.escape(code)}"]`,
+        )
+        ?.focus();
+    });
+  }, [selectedCourseCode]);
+
   return (
     <>
       <MultiCampusMatrix
@@ -36,7 +49,7 @@ export function PlanMatrixWorkspace({
       <EvidenceDrawer
         open={selectedCourseCode !== null}
         evidence={evidence}
-        onClose={() => setSelectedCourseCode(null)}
+        onClose={closeDrawer}
       />
     </>
   );

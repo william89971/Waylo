@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertTriangle, ArrowRight, LockKeyhole } from "lucide-react";
+import { AdmissionsStrategyPanel } from "@/components/admissions-strategy-panel";
 import { CounselorPacket } from "@/components/counselor-packet";
 import { EvidenceStatus } from "@/components/evidence-status";
 import { ExportCounselorPacketButton } from "@/components/export-counselor-packet-button";
 import { PlanMatrixWorkspace } from "@/components/plan-matrix-workspace";
 import { SavePlanButton } from "@/components/save-plan-button";
 import { evidenceById, programById } from "@/lib/academic-data";
+import { buildAdmissionsStrategy } from "@/lib/admissions-strategy";
 import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
 import {
   buildEvidenceByCourseCode,
@@ -75,6 +77,19 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
     const matrixCampuses = buildMatrixCampuses(multi, graph);
     const matrixRows = buildMatrixRows(multi, graph);
     const evidenceByCourseCode = buildEvidenceByCourseCode(multi, graph);
+    const strategy = buildAdmissionsStrategy(workspace, targets, {
+      hasValidPlan: true,
+      plannedCourseCodes: multi.schedule.terms.flatMap((term) => term.courses.map((course) => course.code)),
+      reviewItemCount: multi.auditSummary.reduce(
+        (count, audit) =>
+          count +
+          audit.requirementStates.filter(
+            (requirement) =>
+              !requirement.satisfied || requirement.verificationTier === "NEEDS_COUNSELOR_CONFIRMATION",
+          ).length,
+        0,
+      ),
+    });
 
     return (
       <div className="production-page plan-page">
@@ -128,7 +143,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             <div>
               <h2>Articulation matrix</h2>
               <p>
-                Each row is a planned College of the Canyons course. Select a row to see why it is verified or still needs review. PRI is your first-choice campus.
+                Each row is a planned College of the Canyons course. Select a row to see why it is verified or still needs review. First choice is your primary campus.
               </p>
             </div>
             <p className="matrix-totals">
@@ -187,15 +202,20 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             </article>
           ))}
         </section>
+        {strategy ? <AdmissionsStrategyPanel strategy={strategy} /> : null}
         <div className="plan-footer no-print">
           <div>
             <strong>Total planned</strong>
             <span>{multi.totalSemesterUnits} COC semester units</span>
             <small>Academic data: {MULTI_TARGET_DATA_RELEASE}</small>
           </div>
-          <Link href={showProposal ? "/app/plan" : "/app/plan?new=1"} className="production-button primary">
-            {showProposal ? "Keep this proposal" : "Generate a fresh proposal"}
-          </Link>
+          {showProposal ? (
+            <SavePlanButton strategy="overlap" />
+          ) : (
+            <Link href="/app/plan?new=1" className="production-button">
+              Generate a fresh proposal
+            </Link>
+          )}
         </div>
         <CounselorPacket
           preferredName={workspace.profile.preferredName}
@@ -207,6 +227,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           academicDataVersion={MULTI_TARGET_DATA_RELEASE}
           algorithmVersion={multi.algorithmVersion}
           evaluatedAt={multi.evidenceGraphSnapshot.evaluatedAt}
+          strategy={strategy}
         />
       </div>
     );
@@ -254,6 +275,13 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
     ),
   );
   const totalUnits = route.terms.reduce((sum, term) => sum + term.totalUnits, 0);
+  const strategy = buildAdmissionsStrategy(workspace, targets, {
+    hasValidPlan: true,
+    plannedCourseCodes: route.terms.flatMap((term) => term.courses.map((course) => course.code)),
+    reviewItemCount: [...new Set(route.terms.flatMap((term) => term.courses.flatMap((course) => course.evidenceIds)))].filter(
+      (id) => evidenceById.get(id)?.status !== "verified",
+    ).length,
+  });
 
   return (
     <div className="production-page plan-page">
@@ -261,7 +289,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         <div>
           <h1>{showProposal ? "Review your transfer plan" : "Your transfer plan"}</h1>
           <p>
-            {program?.universityName} {program?.name} {program?.degree} · {route.label}
+            {labelFor(workspace.primaryTargetId)} · {route.label}
           </p>
         </div>
         <ExportCounselorPacketButton />
@@ -333,6 +361,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           </Link>
         )}
       </div>
+      {strategy ? <AdmissionsStrategyPanel strategy={strategy} /> : null}
       <section id="what-if" className="what-if-placeholder no-print">
         <h2>If your schedule changes</h2>
         <p>
@@ -345,12 +374,13 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       </section>
       <CounselorPacket
         preferredName={workspace.profile.preferredName}
-        primaryLabel={`${program?.universityName ?? "UC San Diego"} ${program?.name ?? "Data Science"}`}
+        primaryLabel={labelFor(workspace.primaryTargetId)}
         secondaryLabels={[]}
         scheduleRows={legacyScheduleRows}
         totalSemesterUnits={totalUnits}
         citations={legacyCitations}
         academicDataVersion={UCSD_DATA_RELEASE}
+        strategy={strategy}
       />
     </div>
   );

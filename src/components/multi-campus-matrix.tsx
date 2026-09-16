@@ -111,7 +111,7 @@ export function MultiCampusMatrix({
                 <span className="inline-flex items-baseline gap-1.5">
                   <span className={cn(campus.isPrimary && "text-slate-900")}>{campus.label}</span>
                   {campus.isPrimary ? (
-                    <span className="font-mono text-[9px] tracking-wider text-slate-400">PRI</span>
+                    <span className="text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">First choice</span>
                   ) : null}
                 </span>
               </th>

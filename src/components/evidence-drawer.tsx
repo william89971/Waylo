@@ -156,11 +156,11 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
           {evidence ? (
             <div className="space-y-6">
               <div className={cn("border px-3 py-2.5", tierTone(headlineTier))}>
-                <p className="font-mono text-[11px] font-medium uppercase tracking-[0.12em]">
-                  {headlineTier ? TIER_COPY[headlineTier] : "NO PRIMARY ARTICULATION"}
-                </p>
-                <p className="mt-1 text-[13px] font-normal normal-case tracking-normal">
+                <p className="text-[14px] font-medium leading-snug tracking-normal normal-case">
                   {headlineTier ? TIER_EXPLAIN[headlineTier] : "This course is not required by the first-choice campus."}
+                </p>
+                <p className="mt-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.12em]">
+                  {headlineTier ? TIER_COPY[headlineTier] : "NO PRIMARY ARTICULATION"}
                 </p>
               </div>
 
@@ -180,7 +180,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                   <div className="flex items-baseline justify-between gap-2 border-b border-border/40 pb-2">
                     <h3 className="text-[13px] font-medium text-slate-900">{campus.campusLabel}</h3>
                     {campus.isPrimary ? (
-                      <span className="font-mono text-[9px] tracking-wider text-slate-400">PRI · First choice</span>
+                      <span className="text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">First choice</span>
                     ) : null}
                   </div>
 

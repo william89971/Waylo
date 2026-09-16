@@ -7,7 +7,7 @@ import { UserButton } from "@clerk/nextjs";
 
 const nav = [
   { href: "/app", label: "Dashboard", icon: Home },
-  { href: "/app/courses", label: "Courses", icon: BookOpen },
+  { href: "/app/courses", label: "Your courses", icon: BookOpen },
   { href: "/app/plan", label: "Transfer plan", icon: CalendarDays },
   { href: "/app/requirements", label: "Requirements", icon: GraduationCap },
   { href: "/app/evidence", label: "Evidence", icon: FileCheck2 },
@@ -44,7 +44,7 @@ export function ProductionAppShell({ children, clerkConfigured }: { children: Re
       <main id="main-content" className="production-main">{children}</main>
       <nav className="production-mobile-nav" aria-label="Mobile navigation">
         {nav.filter((item) => item.href !== "/app/requirements" && item.href !== "/app/settings").slice(0, 4).map(({ href, label, icon: Icon }) => {
-          const shortLabel = label === "Dashboard" ? "Home" : label === "Transfer plan" ? "Plan" : label;
+          const shortLabel = label === "Dashboard" ? "Home" : label === "Transfer plan" ? "Plan" : label === "Your courses" ? "Courses" : label;
           return (
             <Link key={href} href={href} className={pathname === href ? "active" : ""} aria-current={pathname === href ? "page" : undefined}>
               <Icon size={20} aria-hidden="true" />
