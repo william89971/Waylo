@@ -9,10 +9,24 @@ import type { ProductionCourse, SelectableTarget, StudentWorkspaceRecord } from 
 const STEP_LABELS = ["Academic history", "Transfer goal", "Completed courses", "Preferences"];
 
 async function jsonRequest(url: string, init: RequestInit) {
-  const response = await fetch(url, { ...init, headers: { "Content-Type": "application/json", ...(init.headers ?? {}) } });
+  const response = await fetch(url, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...(init.headers ?? {}) },
+  });
   const body = response.status === 204 ? null : await response.json();
   if (!response.ok) throw new Error(body?.error?.message ?? "Waylo could not save that change.");
   return body;
+}
+
+function buildInitialMajorMap(targets: SelectableTarget[], initial: StudentWorkspaceRecord) {
+  const map: Record<string, string> = {};
+  const primary = targets.find((target) => target.id === initial.primaryTargetId);
+  if (primary) map[primary.institutionId] = primary.id;
+  for (const secondaryId of initial.secondaryTargetIds ?? []) {
+    const secondary = targets.find((target) => target.id === secondaryId);
+    if (secondary) map[secondary.institutionId] = secondary.id;
+  }
+  return map;
 }
 
 export function OnboardingFlow({
@@ -34,17 +48,16 @@ export function OnboardingFlow({
   const [step, setStep] = useState(initial.profile.onboardingCompleted ? 4 : initial.profile.onboardingStep);
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState(catalog[0]?.id ?? "");
+  const [selectedCourseId, setSelectedCourseId] = useState(catalog[0]?.id ?? "");
   const [term, setTerm] = useState("Fall 2026");
   const [grade, setGrade] = useState("");
   const [status, setStatus] = useState<"completed" | "in_progress">("completed");
   const [maxUnits, setMaxUnits] = useState(initial.preferences.maxUnits);
-  const [summer, setSummer] = useState(initial.preferences.summerEnrollment);
-  const [workHours, setWorkHours] = useState(initial.preferences.weeklyWorkHours);
+  const [summerEnrollment, setSummerEnrollment] = useState(initial.preferences.summerEnrollment);
+  const [weeklyWorkHours, setWeeklyWorkHours] = useState(initial.preferences.weeklyWorkHours);
   const [targetTerm, setTargetTerm] = useState(initial.preferences.targetTerm ?? "");
-  const [primaryTargetId, setPrimaryTargetId] = useState(initial.primaryTargetId);
-  const [secondaryTargetIds, setSecondaryTargetIds] = useState<string[]>(initial.secondaryTargetIds ?? []);
   const [includeSecondaryDivergence, setIncludeSecondaryDivergence] = useState(initial.includeSecondaryDivergence ?? true);
+
   const institutions = useMemo(() => {
     const seen = new Map<string, string>();
     for (const target of targets) {
@@ -52,6 +65,7 @@ export function OnboardingFlow({
     }
     return [...seen.entries()].map(([id, name]) => ({ id, name }));
   }, [targets]);
+
   const [selectedInstitutionIds, setSelectedInstitutionIds] = useState<string[]>(() => {
     const ids = new Set<string>();
     const primary = targets.find((target) => target.id === initial.primaryTargetId);
@@ -62,16 +76,35 @@ export function OnboardingFlow({
     }
     return [...ids];
   });
+  const [majorByInstitution, setMajorByInstitution] = useState<Record<string, string>>(() =>
+    buildInitialMajorMap(targets, initial),
+  );
+  const [primaryInstitutionId, setPrimaryInstitutionId] = useState(() => {
+    const primary = targets.find((target) => target.id === initial.primaryTargetId);
+    return primary?.institutionId ?? "";
+  });
+
   const progress = useMemo(() => `${Math.round((step / 4) * 100)}%`, [step]);
-  const majorsForSelectedInstitutions = useMemo(
-    () => targets.filter((target) => selectedInstitutionIds.includes(target.institutionId)),
-    [targets, selectedInstitutionIds],
+  const primaryTargetId = primaryInstitutionId ? (majorByInstitution[primaryInstitutionId] ?? "") : "";
+  const secondaryTargetIds = useMemo(
+    () =>
+      selectedInstitutionIds
+        .filter((institutionId) => institutionId !== primaryInstitutionId)
+        .map((institutionId) => majorByInstitution[institutionId])
+        .filter(Boolean)
+        .slice(0, 3),
+    [selectedInstitutionIds, primaryInstitutionId, majorByInstitution],
   );
   const selectedTargets = useMemo(
     () => targets.filter((target) => target.id === primaryTargetId || secondaryTargetIds.includes(target.id)),
     [targets, primaryTargetId, secondaryTargetIds],
   );
   const needsIgetcWarning = selectedTargets.some((target) => !target.recognizesIgetc);
+  const majorsComplete =
+    selectedInstitutionIds.length > 0 &&
+    Boolean(primaryInstitutionId && primaryTargetId) &&
+    selectedInstitutionIds.every((institutionId) => Boolean(majorByInstitution[institutionId]));
+
   const saveProfile = async (nextStep: number, completed = false) => {
     setWorking(true);
     setError("");
@@ -122,25 +155,26 @@ export function OnboardingFlow({
 
   const toggleInstitution = (institutionId: string) => {
     setSelectedInstitutionIds((current) => {
-      const next = current.includes(institutionId)
-        ? current.filter((id) => id !== institutionId)
-        : [...current, institutionId];
-      const allowed = new Set(
-        targets.filter((target) => next.includes(target.institutionId)).map((target) => target.id),
-      );
-      setPrimaryTargetId((primary) => (primary && allowed.has(primary) ? primary : ""));
-      setSecondaryTargetIds((secondaries) => secondaries.filter((id) => allowed.has(id)));
+      const removing = current.includes(institutionId);
+      const next = removing ? current.filter((id) => id !== institutionId) : [...current, institutionId];
+      setMajorByInstitution((majors) => {
+        if (!removing) return majors;
+        const copy = { ...majors };
+        delete copy[institutionId];
+        return copy;
+      });
+      setPrimaryInstitutionId((primary) => {
+        if (!removing) return primary || institutionId;
+        if (primary === institutionId) return next[0] ?? "";
+        return next.includes(primary) ? primary : next[0] ?? "";
+      });
       return next;
     });
   };
 
-  const toggleSecondary = (targetId: string) => {
-    if (targetId === primaryTargetId) return;
-    setSecondaryTargetIds((current) => {
-      if (current.includes(targetId)) return current.filter((id) => id !== targetId);
-      if (current.length >= 3) return current;
-      return [...current, targetId];
-    });
+  const selectMajorForInstitution = (institutionId: string, targetId: string) => {
+    setMajorByInstitution((current) => ({ ...current, [institutionId]: targetId }));
+    setPrimaryInstitutionId((primary) => primary || institutionId);
   };
 
   const addCourse = async () => {
@@ -149,7 +183,7 @@ export function OnboardingFlow({
     try {
       const body = await jsonRequest("/api/me/courses", {
         method: "POST",
-        body: JSON.stringify({ catalogCourseId: selectedCourse, grade: grade || null, term, status }),
+        body: JSON.stringify({ catalogCourseId: selectedCourseId, grade: grade || null, term, status }),
       });
       const course = body.course as ProductionCourse;
       setWorkspace((current) => ({
@@ -185,7 +219,12 @@ export function OnboardingFlow({
         method: "PATCH",
         body: JSON.stringify({
           section: "preferences",
-          preferences: { maxUnits, summerEnrollment: summer, weeklyWorkHours: workHours, targetTerm: targetTerm || null },
+          preferences: {
+            maxUnits,
+            summerEnrollment,
+            weeklyWorkHours,
+            targetTerm: targetTerm || null,
+          },
         }),
       });
       await jsonRequest("/api/me", {
@@ -210,12 +249,12 @@ export function OnboardingFlow({
         <span>Save and exit</span>
       </header>
       <section className="onboarding-panel">
-        <div className="onboarding-progress">
+        <div className="onboarding-progress" aria-label="Onboarding progress">
           <div>
             <strong>Step {step} of 4</strong>
             <span>{STEP_LABELS[step - 1]}</span>
           </div>
-          <div className="progress-track">
+          <div className="progress-track" aria-hidden="true">
             <span style={{ width: progress }} />
           </div>
           <ol>
@@ -227,13 +266,17 @@ export function OnboardingFlow({
             ))}
           </ol>
         </div>
-        {error ? <div className="production-error" role="alert">{error}</div> : null}
+        {error ? (
+          <div className="production-error" role="alert">
+            {error}
+          </div>
+        ) : null}
 
         {step === 1 ? (
-          <div className="onboarding-question">
+          <div className="onboarding-question fade-in">
             <h1>What college do you attend?</h1>
             <p>Waylo’s first release is built specifically for College of the Canyons students.</p>
-            <button className="selection-row selected">
+            <button className="selection-row selected" type="button">
               <span>
                 <strong>College of the Canyons</strong>
                 <small>Santa Clarita, California</small>
@@ -241,7 +284,11 @@ export function OnboardingFlow({
               <Check />
             </button>
             <div className="onboarding-actions">
-              <button className="production-button primary" disabled={!hydrated || working} onClick={() => void saveProfile(2)}>
+              <button
+                className="production-button primary"
+                disabled={!hydrated || working}
+                onClick={() => void saveProfile(2)}
+              >
                 Continue <ChevronRight size={17} />
               </button>
             </div>
@@ -249,11 +296,14 @@ export function OnboardingFlow({
         ) : null}
 
         {step === 2 ? (
-          <div className="onboarding-question">
+          <div className="onboarding-question fade-in">
             <h1>Where do you want to transfer?</h1>
-            <p>Choose one or more universities first. Then pick a primary major and up to three secondary majors from those schools.</p>
+            <p>
+              Pick your universities first. Then choose exactly one major for each school, and mark which campus is
+              primary.
+            </p>
 
-            <h2 className="onboarding-subheading">Universities</h2>
+            <h2 className="onboarding-subheading">1. Universities</h2>
             <div className="selection-group" data-testid="university-list">
               {institutions.map((institution) => {
                 const selected = selectedInstitutionIds.includes(institution.id);
@@ -275,52 +325,68 @@ export function OnboardingFlow({
               })}
             </div>
 
-            <h2 className="onboarding-subheading">Majors</h2>
+            <h2 className="onboarding-subheading">2. Majors</h2>
             {selectedInstitutionIds.length === 0 ? (
-              <p className="onboarding-hint">Select at least one university to see available majors.</p>
+              <p className="onboarding-hint">Select at least one university to choose majors.</p>
             ) : (
-              <div className="selection-group" data-testid="primary-target-list">
-                {majorsForSelectedInstitutions.map((target) => {
-                  const isPrimary = primaryTargetId === target.id;
-                  const isSecondary = secondaryTargetIds.includes(target.id);
+              <div className="campus-major-stack" data-testid="primary-target-list">
+                {selectedInstitutionIds.map((institutionId) => {
+                  const institution = institutions.find((item) => item.id === institutionId);
+                  const campusMajors = targets.filter((target) => target.institutionId === institutionId);
+                  const selectedMajorId = majorByInstitution[institutionId] ?? "";
+                  const isPrimaryCampus = primaryInstitutionId === institutionId;
                   return (
-                    <div
-                      key={target.id}
-                      className={`selection-row ${isPrimary ? "selected" : ""}`}
-                      style={{ flexDirection: "column", alignItems: "stretch", gap: "0.55rem" }}
+                    <section
+                      key={institutionId}
+                      className={`campus-major-card ${isPrimaryCampus ? "is-primary" : ""}`}
+                      data-testid={`campus-majors-${institutionId}`}
                     >
-                      <button
-                        type="button"
-                        className="selection-row"
-                        style={{ border: "none", padding: 0, background: "transparent", boxShadow: "none" }}
-                        onClick={() => {
-                          setPrimaryTargetId(target.id);
-                          setSecondaryTargetIds((current) => current.filter((id) => id !== target.id));
-                        }}
-                      >
-                        <span>
-                          <strong>{target.institutionName}</strong>
-                          <small>
-                            {target.displayName} · {target.degree} · Tier {target.ingestionTier}
-                            {target.coverageTier === "reviewed" || target.coverageTier === "full"
-                              ? " · reviewed pathway"
-                              : " · planning archetype"}
-                          </small>
-                        </span>
-                        {isPrimary ? <Check /> : null}
-                      </button>
-                      {!isPrimary ? (
-                        <label className="checkbox-row" style={{ margin: 0 }}>
+                      <header className="campus-major-header">
+                        <div>
+                          <h3>{institution?.name ?? institutionId}</h3>
+                          <p>Choose one major for this campus.</p>
+                        </div>
+                        <label className="primary-campus-control">
                           <input
-                            type="checkbox"
-                            checked={isSecondary}
-                            disabled={!isSecondary && secondaryTargetIds.length >= 3}
-                            onChange={() => toggleSecondary(target.id)}
+                            type="radio"
+                            name="primary-campus"
+                            checked={isPrimaryCampus}
+                            onChange={() => setPrimaryInstitutionId(institutionId)}
                           />
-                          Include as secondary
+                          Primary school
                         </label>
-                      ) : null}
-                    </div>
+                      </header>
+                      <div
+                        className="selection-group"
+                        role="radiogroup"
+                        aria-label={`Major at ${institution?.name ?? institutionId}`}
+                      >
+                        {campusMajors.map((target) => {
+                          const selected = selectedMajorId === target.id;
+                          return (
+                            <button
+                              key={target.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={selected}
+                              className={`selection-row ${selected ? "selected" : ""}`}
+                              onClick={() => selectMajorForInstitution(institutionId, target.id)}
+                            >
+                              <span>
+                                <strong>{target.displayName}</strong>
+                                <small>
+                                  {target.degree} · Tier {target.ingestionTier}
+                                  {target.coverageTier === "reviewed" || target.coverageTier === "full"
+                                    ? " · reviewed pathway"
+                                    : " · planning archetype"}
+                                </small>
+                              </span>
+                              {selected ? <Check /> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
                   );
                 })}
               </div>
@@ -338,7 +404,8 @@ export function OnboardingFlow({
             ) : null}
             {needsIgetcWarning ? (
               <div className="production-error" role="status" style={{ marginTop: "1rem" }}>
-                One or more selected private universities do not recognize IGETC. California GE packaging will not exempt university breadth.
+                One or more selected private universities do not recognize IGETC. California GE packaging will not
+                exempt university breadth.
               </div>
             ) : null}
             <div className="onboarding-actions">
@@ -347,7 +414,7 @@ export function OnboardingFlow({
               </button>
               <button
                 className="production-button primary"
-                disabled={!hydrated || working || !primaryTargetId || selectedInstitutionIds.length === 0}
+                disabled={!hydrated || working || !majorsComplete}
                 onClick={() => void saveTargetsAndContinue()}
               >
                 Continue <ChevronRight size={17} />
@@ -357,13 +424,13 @@ export function OnboardingFlow({
         ) : null}
 
         {step === 3 ? (
-          <div className="onboarding-question course-question">
+          <div className="onboarding-question course-question fade-in">
             <h1>What have you completed?</h1>
             <p>Add completed or in-progress College of the Canyons courses. You can review every entry before planning.</p>
             <div className="course-entry-grid">
               <label>
                 Course
-                <select value={selectedCourse} onChange={(event) => setSelectedCourse(event.target.value)}>
+                <select value={selectedCourseId} onChange={(event) => setSelectedCourseId(event.target.value)}>
                   {catalog.map((course) => (
                     <option value={course.id} key={course.id}>
                       {course.code} · {course.title}
@@ -386,7 +453,11 @@ export function OnboardingFlow({
                 Grade
                 <input value={grade} onChange={(event) => setGrade(event.target.value)} placeholder="Optional" />
               </label>
-              <button className="production-button primary" onClick={() => void addCourse()} disabled={working || !selectedCourse}>
+              <button
+                className="production-button primary"
+                onClick={() => void addCourse()}
+                disabled={working || !selectedCourseId}
+              >
                 <Plus size={17} /> Add course
               </button>
             </div>
@@ -407,7 +478,10 @@ export function OnboardingFlow({
                   </div>
                 ))
               ) : (
-                <p>No courses added yet.</p>
+                <div className="empty-state">
+                  <strong>No courses yet</strong>
+                  <p>Add at least one completed or in-progress course to continue.</p>
+                </div>
               )}
             </div>
             <div className="onboarding-actions">
@@ -426,24 +500,44 @@ export function OnboardingFlow({
         ) : null}
 
         {step === 4 ? (
-          <div className="onboarding-question">
+          <div className="onboarding-question fade-in">
             <h1>What should your plan account for?</h1>
             <p>These preferences shape the schedule. They never waive a prerequisite or requirement.</p>
             <div className="preference-form">
               <label>
                 Maximum units per semester
-                <input type="number" min="6" max="20" value={maxUnits} onChange={(event) => setMaxUnits(Number(event.target.value))} />
+                <input
+                  type="number"
+                  min="6"
+                  max="20"
+                  value={maxUnits}
+                  onChange={(event) => setMaxUnits(Number(event.target.value))}
+                />
               </label>
               <label>
                 Weekly work hours
-                <input type="number" min="0" max="80" value={workHours} onChange={(event) => setWorkHours(Number(event.target.value))} />
+                <input
+                  type="number"
+                  min="0"
+                  max="80"
+                  value={weeklyWorkHours}
+                  onChange={(event) => setWeeklyWorkHours(Number(event.target.value))}
+                />
               </label>
               <label>
                 Preferred transfer term
-                <input value={targetTerm} placeholder="Optional · Spring 2029" onChange={(event) => setTargetTerm(event.target.value)} />
+                <input
+                  value={targetTerm}
+                  placeholder="Optional · Spring 2029"
+                  onChange={(event) => setTargetTerm(event.target.value)}
+                />
               </label>
               <label className="checkbox-row">
-                <input type="checkbox" checked={summer} onChange={(event) => setSummer(event.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={summerEnrollment}
+                  onChange={(event) => setSummerEnrollment(event.target.checked)}
+                />
                 Include summer courses
               </label>
             </div>
@@ -459,7 +553,16 @@ export function OnboardingFlow({
                 Back
               </button>
               <button className="production-button primary" disabled={working} onClick={() => void finish()}>
-                {working ? "Building your plan…" : "Generate my plan"} <ChevronRight size={17} />
+                {working ? (
+                  <span className="button-loading">
+                    <span className="spinner" aria-hidden="true" />
+                    Building your plan…
+                  </span>
+                ) : (
+                  <>
+                    Generate my plan <ChevronRight size={17} />
+                  </>
+                )}
               </button>
             </div>
           </div>

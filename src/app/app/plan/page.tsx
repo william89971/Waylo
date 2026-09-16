@@ -77,7 +77,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
     const evidenceByCourseCode = buildEvidenceByCourseCode(multi, graph);
 
     return (
-      <div className="production-page plan-page">
+      <div className="production-page plan-page fade-in">
         <header className="production-page-header plan-header-actions">
           <div>
             <h1>{showProposal ? "Review your multi-target plan" : "Your multi-target plan"}</h1>
@@ -242,7 +242,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
   const totalUnits = route.terms.reduce((sum, term) => sum + term.totalUnits, 0);
 
   return (
-    <div className="production-page plan-page">
+    <div className="production-page plan-page fade-in">
       <header className="production-page-header plan-header-actions">
         <div>
           <h1>{showProposal ? "Review your transfer plan" : "Your transfer plan"}</h1>

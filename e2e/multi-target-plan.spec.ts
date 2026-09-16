@@ -9,14 +9,16 @@ async function onboardMultiTargetPlan(page: Page, testUser: string) {
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible();
+  // Clear the default UCSD selection so this journey is UCB primary + USC secondary only.
+  const ucsd = page.getByTestId("university-list").getByRole("button", { name: /UC San Diego/ });
+  if (await ucsd.getAttribute("aria-pressed") === "true") {
+    await ucsd.click();
+  }
   await page.getByTestId("university-list").getByRole("button", { name: /UC Berkeley/ }).click();
-  await page.getByTestId("primary-target-list").getByRole("button", { name: /Economics/ }).click();
+  await page.getByTestId("campus-majors-uc_berkeley").getByRole("radio", { name: /Economics/ }).click();
+  await page.getByTestId("campus-majors-uc_berkeley").getByLabel("Primary school").check();
   await page.getByTestId("university-list").getByRole("button", { name: /University of Southern California/ }).click();
-  const uscSecondary = page
-    .getByTestId("primary-target-list")
-    .locator(".selection-row")
-    .filter({ hasText: /Business/ });
-  await uscSecondary.getByLabel("Include as secondary").check();
+  await page.getByTestId("campus-majors-usc").getByRole("radio", { name: /Business/ }).click();
   await expect(page.getByText(/Include secondary major prep/i)).toBeVisible();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
