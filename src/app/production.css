@@ -414,71 +414,17 @@ a { color: var(--p-blue); }
   }
 }
 
-
-/* —— Psychology-informed interaction system —— */
-.fade-in {
-  animation: waylo-fade-up var(--p-duration, 180ms) var(--p-ease, ease) both;
-}
-@keyframes waylo-fade-up {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .fade-in { animation: none; }
-}
-
-.button-loading {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgb(255 255 255 / 35%);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: waylo-spin .7s linear infinite;
-}
-@keyframes waylo-spin { to { transform: rotate(360deg); } }
-
-.empty-state {
-  display: grid;
-  gap: 6px;
-  padding: 22px 18px;
-  border: 1px dashed var(--p-border);
-  border-radius: var(--p-radius, 10px);
-  background: #fbfcfd;
-  color: var(--p-muted);
-}
-.empty-state strong { color: var(--p-ink); font-size: 14px; }
-.empty-state p { margin: 0; font-size: 13px; line-height: 1.5; }
-
-.skeleton {
-  border-radius: 8px;
-  background: linear-gradient(90deg, #eef2f6 0%, #f7f9fb 50%, #eef2f6 100%);
-  background-size: 200% 100%;
-  animation: waylo-shimmer 1.2s ease-in-out infinite;
-}
-@keyframes waylo-shimmer {
-  0% { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
-}
-
 .campus-major-stack {
   display: grid;
   gap: 16px;
 }
 .campus-major-card {
   border: 1px solid var(--p-border);
-  border-radius: var(--p-radius, 10px);
   overflow: hidden;
   background: white;
-  transition: border-color var(--p-duration, 180ms) var(--p-ease, ease), box-shadow var(--p-duration, 180ms) var(--p-ease, ease);
 }
 .campus-major-card.is-primary {
-  border-color: #77a7f3;
-  box-shadow: 0 0 0 1px rgb(18 91 215 / 12%);
+  border-color: var(--p-ink);
 }
 .campus-major-header {
   display: flex;
@@ -526,32 +472,209 @@ a { color: var(--p-blue); }
   background: var(--p-blue-soft, #eef5ff);
 }
 
-.auth-card .reassurance,
-.auth-reassurance {
-  margin-top: 18px;
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 44px;
+  margin: 0;
+  color: var(--p-ink);
+  font-size: 14px;
+  cursor: pointer;
+}
+.checkbox-row input {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  margin-top: 2px;
+  flex: none;
+}
+.checkbox-row span {
+  display: grid;
+  gap: 3px;
+}
+.checkbox-row small {
   color: var(--p-muted);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.backup-prep {
+  margin-top: 16px;
+  padding-top: 4px;
+}
+.auth-back {
+  justify-content: center;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.matrix-section {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 36px;
+}
+.matrix-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.matrix-heading h2 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: -.02em;
+}
+.matrix-heading p {
+  margin: 6px 0 0;
+  max-width: 640px;
+  color: var(--p-muted);
+  font-size: 14px;
   line-height: 1.5;
 }
+.matrix-totals {
+  margin: 0;
+  color: var(--p-muted);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.status-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--p-muted);
+  font-size: 12px;
+}
+.status-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.status-legend li::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.status-legend .verified { color: var(--p-teal); }
+.status-legend .review { color: var(--p-amber); }
+.status-legend .unrequired { color: #8a96a7; }
+.scroll-hint {
+  display: none;
+  margin: 0;
+  color: var(--p-muted);
+  font-size: 12px;
+}
 
-.success-banner,
-.page-status {
+.audit-section {
+  margin-top: 8px;
+  border-top: 1px solid var(--p-border);
+  padding-top: 28px;
+}
+.audit-section .section-heading h2 { font-size: 16px; }
+.audit-block {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--p-border);
+}
+.audit-block:last-child { border-bottom: 0; }
+.audit-block header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 8px;
+}
+.audit-block header span {
+  color: var(--p-muted);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.audit-block ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.audit-block li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-height: 44px;
+  padding: 8px 0;
+  border-top: 1px solid rgb(217 224 233 / 55%);
+  font-size: 13px;
+}
+
+.production-loading {
+  min-height: 40vh;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
-  padding: 12px 14px;
+  gap: 14px;
+}
+.production-loading-mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
-  border: 1px solid #9ed4ca;
-  background: #eef9f6;
-  color: #075e55;
-  font-size: 14px;
+  background: var(--p-ink);
+  color: white;
+  font-size: 15px;
+  font-weight: 760;
+}
+.production-loading div { display: grid; gap: 3px; }
+.production-loading span { color: var(--p-muted); font-size: 13px; }
+
+.confirmed-course-list strong,
+.course-identity strong,
+.plan-course > strong {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.counselor-table td:nth-child(2) {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+#requirements,
+#what-if {
+  scroll-margin-top: 24px;
 }
 
-.production-page-header h1,
-.production-page-header h1 {
-  letter-spacing: -.04em;
+@media (max-width: 720px) {
+  .onboarding-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 6;
+    margin-top: 24px;
+    padding: 12px 0 max(16px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--p-border);
+    background: white;
+  }
+  .plan-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .plan-header-actions .production-button {
+    width: 100%;
+  }
+  .scroll-hint { display: block; }
+  .audit-block li { align-items: flex-start; flex-direction: column; }
+  #requirements,
+  #what-if {
+    scroll-margin-top: 76px;
+  }
+  .checkbox-row,
+  .selection-row,
+  .confirmed-course-list > div {
+    scroll-margin-bottom: 88px;
+  }
 }
-.production-button.primary {
-  min-width: 148px;
-}
+

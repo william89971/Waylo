@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 export function LocalAuthCard({ mode }: { mode: "sign-in" | "sign-up" }) {
@@ -16,25 +17,16 @@ export function LocalAuthCard({ mode }: { mode: "sign-in" | "sign-up" }) {
   return (
     <div className="auth-card">
       <div className="brand-word production-brand">Waylo</div>
-      <h1>{mode === "sign-up" ? "Create your Waylo account" : "Welcome back"}</h1>
-      <p>Local test authentication is enabled. Production uses secure passwordless email and Google sign-in through Clerk.</p>
-      <button className="production-button primary" onClick={() => void submit()} disabled={working}>
-        {working ? (
-          <span className="button-loading">
-            <span className="spinner" aria-hidden="true" />
-            Opening Waylo…
-          </span>
-        ) : mode === "sign-up" ? (
-          "Create test account"
-        ) : (
-          "Continue as test student"
-        )}
-      </button>
-      <p className="auth-reassurance">
-        {mode === "sign-up"
-          ? "Takes under a minute. You can review every course before anything is saved."
-          : "Your saved plan will be waiting exactly where you left it."}
+      <h1>{mode === "sign-up" ? "Sign up" : "Sign in"}</h1>
+      <p>
+        Local test authentication is enabled. Production uses secure passwordless email and Google sign-in through Clerk.
       </p>
+      <button className="production-button primary" onClick={() => void submit()} disabled={working}>
+        {working ? "Opening…" : mode === "sign-up" ? "Create test account" : "Continue as test student"}
+      </button>
+      <Link href="/" className="production-text-link auth-back">
+        Back to Waylo
+      </Link>
     </div>
   );
 }

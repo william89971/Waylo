@@ -35,7 +35,7 @@ function StatusGlyph({ cell }: { cell: MatrixCampusCell }) {
   if (cell.status === "unrequired") {
     return (
       <span className="inline-flex items-center gap-1.5 text-slate-400" title="Not required for this target">
-        <Minus className="size-3.5 shrink-0" aria-hidden />
+        <Minus className="size-4 shrink-0" aria-hidden />
         <span className="sr-only">Not required</span>
       </span>
     );
@@ -44,10 +44,11 @@ function StatusGlyph({ cell }: { cell: MatrixCampusCell }) {
   if (cell.status === "review") {
     return (
       <span
-        className="inline-flex items-center gap-1.5 text-amber-600"
+        className="inline-flex items-center gap-1.5 text-amber-700"
         title={cell.verificationTier ?? "Needs counselor review"}
       >
-        <AlertCircle className="size-3.5 shrink-0" aria-hidden />
+        <AlertCircle className="size-4 shrink-0" aria-hidden />
+        <span className="sr-only">Needs counselor review</span>
         {cell.equivalency ? (
           <span className="font-mono text-[11px] tabular-nums tracking-tight">{cell.equivalency}</span>
         ) : null}
@@ -60,7 +61,8 @@ function StatusGlyph({ cell }: { cell: MatrixCampusCell }) {
       className="inline-flex items-center gap-1.5 text-emerald-700"
       title={cell.verificationTier ?? "Verified"}
     >
-      <Check className="size-3.5 shrink-0" strokeWidth={2.5} aria-hidden />
+      <Check className="size-4 shrink-0" strokeWidth={2.5} aria-hidden />
+      <span className="sr-only">Verified</span>
       {cell.equivalency ? (
         <span className="font-mono text-[11px] tabular-nums tracking-tight">{cell.equivalency}</span>
       ) : null}
@@ -78,25 +80,25 @@ export function MultiCampusMatrix({
     <div className="w-full overflow-x-auto border border-border/40 bg-background" data-testid="articulation-matrix">
       <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
         <caption className="sr-only">
-          Multi-campus articulation matrix. Rows are planned courses; columns are target campuses.
+          Multi-campus articulation matrix. Rows are planned courses; columns are target campuses. Select a row to open evidence.
         </caption>
         <thead>
           <tr className="border-b border-border/40">
             <th
               scope="col"
-              className="sticky left-0 z-10 bg-background px-3 py-2.5 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500"
+              className="sticky left-0 z-10 bg-background px-3 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500"
             >
               Course
             </th>
             <th
               scope="col"
-              className="px-2 py-2.5 text-right text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500"
+              className="px-2 py-3 text-right text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500"
             >
               Units
             </th>
             <th
               scope="col"
-              className="px-2 py-2.5 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500"
+              className="px-2 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500"
             >
               Term
             </th>
@@ -104,7 +106,7 @@ export function MultiCampusMatrix({
               <th
                 key={campus.targetMajorId}
                 scope="col"
-                className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500"
+                className="px-3 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500"
               >
                 <span className="inline-flex items-baseline gap-1.5">
                   <span className={cn(campus.isPrimary && "text-slate-900")}>{campus.label}</span>
@@ -133,14 +135,18 @@ export function MultiCampusMatrix({
                   }
                 }}
                 className={cn(
-                  "cursor-pointer border-b border-border/40 outline-none transition-colors duration-150",
+                  "group cursor-pointer border-b border-border/40 outline-none",
                   "hover:bg-muted/30 focus-visible:bg-muted/40",
-                  selected && "bg-muted/40",
+                  selected && "bg-muted/40 shadow-[inset_3px_0_0_0_#125bd7]",
                 )}
               >
                 <th
                   scope="row"
-                  className="sticky left-0 z-10 bg-background px-3 py-2.5 text-left font-normal group-hover:bg-muted/30"
+                  className={cn(
+                    "sticky left-0 z-10 px-3 py-3.5 text-left font-normal",
+                    selected ? "bg-muted/40" : "bg-background",
+                    "group-hover:bg-muted/30 group-focus-visible:bg-muted/40",
+                  )}
                 >
                   <div className="flex min-w-[10rem] flex-col gap-0.5">
                     <span className="font-mono text-[12px] font-medium tabular-nums tracking-tight text-slate-900">
@@ -149,16 +155,16 @@ export function MultiCampusMatrix({
                     <span className="max-w-[14rem] truncate text-[11px] text-slate-500">{row.title}</span>
                   </div>
                 </th>
-                <td className="px-2 py-2.5 text-right font-mono text-[12px] tabular-nums text-slate-700">
+                <td className="px-2 py-3.5 text-right font-mono text-[12px] tabular-nums text-slate-700">
                   {row.semesterUnits.toFixed(1)}
                 </td>
-                <td className="px-2 py-2.5 font-mono text-[11px] tabular-nums text-slate-500">
+                <td className="px-2 py-3.5 font-mono text-[11px] tabular-nums text-slate-500">
                   {row.termLabel}
                 </td>
                 {campuses.map((campus) => {
                   const cell = row.cells[campus.targetMajorId] ?? { status: "unrequired" as const };
                   return (
-                    <td key={campus.targetMajorId} className="px-3 py-2.5">
+                    <td key={campus.targetMajorId} className="px-3 py-3.5">
                       <StatusGlyph cell={cell} />
                     </td>
                   );

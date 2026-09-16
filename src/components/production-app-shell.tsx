@@ -15,7 +15,7 @@ const nav = [
 ];
 
 function LocalSignOut() {
-  return <button className="local-sign-out" onClick={async () => { await fetch("/api/test-auth", { method: "DELETE" }); window.location.assign("/sign-in"); }}><LogOut size={17} /> Sign out</button>;
+  return <button type="button" className="local-sign-out" onClick={async () => { await fetch("/api/test-auth", { method: "DELETE" }); window.location.assign("/sign-in"); }}><LogOut size={17} aria-hidden="true" /> Sign out</button>;
 }
 
 export function ProductionAppShell({ children, clerkConfigured }: { children: React.ReactNode; clerkConfigured: boolean }) {
@@ -28,7 +28,12 @@ export function ProductionAppShell({ children, clerkConfigured }: { children: Re
         <Link href="/app" className="production-brand">Waylo</Link>
         <nav aria-label="Student navigation">
           {nav.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href} className={pathname === href || (href !== "/app" && pathname.startsWith(href)) ? "active" : ""}>
+            <Link
+              key={href}
+              href={href}
+              className={pathname === href || (href !== "/app" && pathname.startsWith(href)) ? "active" : ""}
+              aria-current={pathname === href ? "page" : undefined}
+            >
               <Icon size={18} aria-hidden="true" />
               {label}
             </Link>
@@ -38,7 +43,15 @@ export function ProductionAppShell({ children, clerkConfigured }: { children: Re
       </aside>
       <main id="main-content" className="production-main">{children}</main>
       <nav className="production-mobile-nav" aria-label="Mobile navigation">
-        {nav.slice(0, 4).map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={pathname === href ? "active" : ""}><Icon size={20} /><span>{label === "Dashboard" ? "Home" : label.replace("Transfer ", "")}</span></Link>)}
+        {nav.filter((item) => item.href !== "/app/requirements" && item.href !== "/app/settings").slice(0, 4).map(({ href, label, icon: Icon }) => {
+          const shortLabel = label === "Dashboard" ? "Home" : label === "Transfer plan" ? "Plan" : label;
+          return (
+            <Link key={href} href={href} className={pathname === href ? "active" : ""} aria-current={pathname === href ? "page" : undefined}>
+              <Icon size={20} aria-hidden="true" />
+              <span>{shortLabel}</span>
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );

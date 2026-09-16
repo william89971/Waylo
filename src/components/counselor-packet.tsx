@@ -50,6 +50,7 @@ export function CounselorPacket({
       <header className="counselor-packet-header">
         <strong>Waylo Counselor Packet</strong>
         <span>Student: {preferredName || "Student"}</span>
+        <span>College of the Canyons transfer plan</span>
       </header>
 
       <div className="counselor-targets">

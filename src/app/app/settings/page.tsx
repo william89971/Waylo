@@ -1,14 +1,16 @@
+import Link from "next/link";
+
 export default function SettingsPage() {
   return (
-    <div className="production-page fade-in">
+    <div className="production-page">
       <header className="production-page-header">
         <h1>Settings</h1>
-        <p>Account and privacy controls will appear here after the Preview journey is stable.</p>
+        <p>No account settings yet.</p>
       </header>
-      <div className="empty-state">
-        <strong>Nothing to configure yet</strong>
-        <p>For now, manage your transfer targets during onboarding and keep using your signed-in account to return to your plan.</p>
-      </div>
+      <p className="onboarding-hint">Your courses, majors, and plan are in the other tabs.</p>
+      <Link href="/app/plan" className="production-button">
+        Back to your plan
+      </Link>
     </div>
   );
 }

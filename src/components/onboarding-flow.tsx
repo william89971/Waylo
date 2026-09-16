@@ -273,7 +273,7 @@ export function OnboardingFlow({
         ) : null}
 
         {step === 1 ? (
-          <div className="onboarding-question fade-in">
+          <div className="onboarding-question ">
             <h1>What college do you attend?</h1>
             <p>Waylo’s first release is built specifically for College of the Canyons students.</p>
             <button className="selection-row selected" type="button">
@@ -296,7 +296,7 @@ export function OnboardingFlow({
         ) : null}
 
         {step === 2 ? (
-          <div className="onboarding-question fade-in">
+          <div className="onboarding-question ">
             <h1>Where do you want to transfer?</h1>
             <p>
               Pick your universities first. Then choose exactly one major for each school, and mark which campus is
@@ -424,7 +424,7 @@ export function OnboardingFlow({
         ) : null}
 
         {step === 3 ? (
-          <div className="onboarding-question course-question fade-in">
+          <div className="onboarding-question course-question ">
             <h1>What have you completed?</h1>
             <p>Add completed or in-progress College of the Canyons courses. You can review every entry before planning.</p>
             <div className="course-entry-grid">
@@ -500,7 +500,7 @@ export function OnboardingFlow({
         ) : null}
 
         {step === 4 ? (
-          <div className="onboarding-question fade-in">
+          <div className="onboarding-question ">
             <h1>What should your plan account for?</h1>
             <p>These preferences shape the schedule. They never waive a prerequisite or requirement.</p>
             <div className="preference-form">
