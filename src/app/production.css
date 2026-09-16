@@ -253,7 +253,7 @@ a { color: var(--p-blue); }
   .production-mobile-nav a.active { color: var(--p-blue); font-weight: 700; }
   .semester-timeline { margin-inline: -16px; border-radius: 0; }
   .semester-column { min-width: 260px; }
-  .plan-footer { align-items: stretch; flex-direction: column; }
+  .plan-footer { align-items: stretch; flex-direction: column; scroll-margin-bottom: 88px; }
   .plan-footer .production-button { width: 100%; }
   .review-banner { align-items: flex-start; flex-wrap: wrap; }
   .evidence-list dl { grid-template-columns: 1fr 1fr; }
