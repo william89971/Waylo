@@ -228,10 +228,9 @@ a { color: var(--p-blue); }
   .course-row > a { grid-column: 2; grid-row: 2; }
   .course-total { padding: 13px; }
   .dashboard-actions { display: grid; }
+  .dashboard-actions .production-button { width: 100%; }
   .dashboard-rail { grid-template-columns: 1fr 1fr; }
   .dashboard-rail section:first-child { grid-column: 1 / -1; }
-  .mobile-primary-action { display: block; margin-top: 16px; }
-  .mobile-primary-action .production-button { width: 100%; }
   .production-mobile-nav { position: fixed; display: grid; grid-template-columns: repeat(4, 1fr); inset: auto 0 0; z-index: 30; min-height: 66px; border-top: 1px solid var(--p-border); background: white; }
   .production-mobile-nav a { min-height: 62px; display: grid; place-items: center; align-content: center; gap: 3px; color: var(--p-muted); font-size: 10px; text-decoration: none; }
   .production-mobile-nav a.active { color: var(--p-blue); font-weight: 700; }

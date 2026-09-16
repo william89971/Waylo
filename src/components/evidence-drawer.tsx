@@ -98,7 +98,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
   return (
     <div
       className={cn(
-        "fixed inset-0 z-50 no-print",
+        "fixed inset-0 z-50 overflow-hidden no-print",
         open ? "pointer-events-auto" : "pointer-events-none",
       )}
       aria-hidden={!open}
@@ -123,7 +123,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
           "absolute inset-y-0 right-0 flex w-[min(100%-0.75rem,28rem)] max-w-md flex-col border-l border-border/40 bg-white",
           "transition-transform duration-200 ease-out",
           open ? "translate-x-0" : "translate-x-full",
-          !open && "invisible",
+          !open && "hidden",
         )}
       >
         <header className="flex items-start justify-between gap-3 border-b border-border/40 px-5 py-4">

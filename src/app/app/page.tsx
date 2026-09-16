@@ -155,11 +155,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </section>
         </aside>
       </div>
-      <div className="mobile-primary-action">
-        <Link href="/app/plan" className="production-button primary">
-          Review semester plan
-        </Link>
-      </div>
       <p className="saved-meta">
         Saved plan version {plan.version} · academic data {plan.academicDataVersion}
       </p>
