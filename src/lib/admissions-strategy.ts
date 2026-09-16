@@ -85,7 +85,7 @@ export function buildAdmissionsStrategy(
     );
   }
   for (const { target, note } of constraintQuestions) {
-    counselorItems.push(`For ${target.institutionName} ${target.displayName}, confirm this note: ${note}`);
+    counselorItems.push(`Confirm this note for ${target.institutionName} ${target.displayName}: ${note}`);
   }
   if (chosen.some((target) => target.coverageTier === "archetype")) {
     counselorItems.push(
