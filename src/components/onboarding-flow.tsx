@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, ChevronRight, LockKeyhole, Plus, Trash2 } from "lucide-react";
+import { Check, Trash2 } from "lucide-react";
 import { isPreferredTransferTerm } from "@/lib/admissions-strategy";
 import type { CourseDefinition } from "@/lib/domain";
 import type { ProductionCourse, SelectableTarget, StudentWorkspaceRecord } from "@/lib/production-types";
@@ -310,7 +310,7 @@ export function OnboardingFlow({
                 disabled={!hydrated || working}
                 onClick={() => void saveProfile(2)}
               >
-                Continue <ChevronRight size={17} />
+                Continue
               </button>
             </div>
           </div>
@@ -438,7 +438,7 @@ export function OnboardingFlow({
                 disabled={!hydrated || working || !majorsComplete}
                 onClick={() => void saveTargetsAndContinue()}
               >
-                Continue <ChevronRight size={17} />
+                Continue
               </button>
             </div>
           </div>
@@ -491,7 +491,7 @@ export function OnboardingFlow({
                 className="production-button primary"
                 disabled={working || !selectedCourseId}
               >
-                <Plus size={17} aria-hidden="true" /> Add course
+                Add course
               </button>
             </form>
             <div className="confirmed-course-list">
@@ -526,7 +526,7 @@ export function OnboardingFlow({
                 disabled={working || workspace.courses.length === 0}
                 onClick={() => void saveProfile(4, editing && workspace.profile.onboardingCompleted)}
               >
-                Continue <ChevronRight size={17} />
+                Continue
               </button>
             </div>
           </div>
@@ -578,11 +578,8 @@ export function OnboardingFlow({
               </label>
             </div>
             <div className="privacy-note">
-              <LockKeyhole size={18} />
-              <span>
-                <strong>Your confirmed courses are saved to your account.</strong>
-                <small>Waylo does not store a transcript file in this manual-entry flow.</small>
-              </span>
+              <strong>Your confirmed courses are saved to your account.</strong>
+              <small>Waylo does not store a transcript file in this manual-entry flow.</small>
             </div>
             <div className="onboarding-actions">
               <button className="production-button" onClick={() => setStep(3)}>
@@ -595,7 +592,6 @@ export function OnboardingFlow({
                 onClick={() => void finish()}
               >
                 {working ? "Saving…" : "View proposed schedule"}
-              </button>
               </button>
             </div>
           </div>

@@ -23,9 +23,9 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await expect(page.locator(".confirmed-course-list")).toContainText("A");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: "What should your plan account for?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Schedule preferences" })).toBeVisible();
   await page.getByLabel("Maximum units per semester").fill("15");
-  await page.getByRole("button", { name: "Generate my plan", exact: true }).click();
+  await page.getByRole("button", { name: "View proposed schedule", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Review your transfer plan" })).toBeVisible();
   await expect(page.getByText("Proposed — not saved")).toBeVisible();
@@ -37,7 +37,7 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await page.getByRole("button", { name: "Save this plan" }).click();
 
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
-  await expect(page.getByText("Your plan is saved"), "save confirmation should be visible").toBeVisible();
+  await expect(page.getByText("Plan saved."), "save confirmation should be visible").toBeVisible();
   await expect(page.locator(".saved-meta")).toContainText("version 1");
   await expect(page.getByRole("link", { name: "Read the strategy note" })).toBeVisible();
   await page.getByRole("link", { name: "Read the strategy note" }).click();
@@ -118,8 +118,8 @@ test("UCB Economics primary with USC Business secondary shows divergence badges"
   await page.getByRole("button", { name: "Add course" }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: "What should your plan account for?" })).toBeVisible();
-  await page.getByRole("button", { name: "Generate my plan", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Schedule preferences" })).toBeVisible();
+  await page.getByRole("button", { name: "View proposed schedule", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: /multi-target plan/i })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Articulation matrix" })).toBeVisible();

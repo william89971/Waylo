@@ -136,16 +136,14 @@ export function MultiCampusMatrix({
                 }}
                 className={cn(
                   "group cursor-pointer border-b border-border/40 outline-none",
-                  "hover:bg-muted/30 focus-visible:bg-muted/40",
-                  selected && "bg-muted/40 shadow-[inset_3px_0_0_0_#125bd7]",
+                  "hover:bg-transparent focus-visible:shadow-[inset_3px_0_0_0_#111b2e]",
+                  selected && "shadow-[inset_3px_0_0_0_#111b2e]",
                 )}
               >
                 <th
                   scope="row"
                   className={cn(
-                    "sticky left-0 z-10 px-3 py-3.5 text-left font-normal",
-                    selected ? "bg-muted/40" : "bg-background",
-                    "group-hover:bg-muted/30 group-focus-visible:bg-muted/40",
+                    "sticky left-0 z-10 px-3 py-3.5 text-left font-normal bg-background",
                   )}
                 >
                   <div className="flex min-w-[10rem] flex-col gap-0.5">

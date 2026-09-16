@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AlertTriangle, ArrowRight, LockKeyhole } from "lucide-react";
 import { AdmissionsStrategyPanel } from "@/components/admissions-strategy-panel";
 import { CounselorPacket } from "@/components/counselor-packet";
 import { EvidenceStatus } from "@/components/evidence-status";
@@ -107,35 +106,26 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         </header>
         {showProposal ? (
           <div className="proposal-banner no-print">
-            <LockKeyhole />
-            <div>
-              <strong>Proposed — not saved</strong>
-              <span>
-                Semester packing uses College of the Canyons units. Destination audits convert units only below.
-              </span>
-            </div>
+            <strong>Proposed — not saved</strong>
+            <span>
+              Semester packing uses College of the Canyons units. Destination audits convert units only below.
+            </span>
           </div>
         ) : null}
         {!workspace.includeSecondaryDivergence ? (
           <div className="review-banner no-print">
-            <AlertTriangle />
-            <div>
-              <strong>Secondary divergence courses are omitted.</strong>
-              <span>Enable secondary major prep to include secondary-only requirements in the schedule.</span>
-            </div>
+            <strong>Secondary divergence courses are omitted.</strong>
+            <span>Enable secondary major prep to include secondary-only requirements in the schedule.</span>
           </div>
         ) : null}
         {multi.divergencePoints.length ? (
           <div className="review-banner no-print">
-            <AlertTriangle />
-            <div>
-              <strong>Divergence trade-offs</strong>
-              <ul>
-                {multi.divergencePoints.map((point) => (
-                  <li key={point.id}>{point.message}</li>
-                ))}
-              </ul>
-            </div>
+            <strong>Divergence trade-offs</strong>
+            <ul>
+              {multi.divergencePoints.map((point) => (
+                <li key={point.id}>{point.message}</li>
+              ))}
+            </ul>
           </div>
         ) : null}
         <section className="no-print matrix-section" aria-label="Multi-campus articulation matrix">
@@ -296,23 +286,17 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       </header>
       {showProposal ? (
         <div className="proposal-banner no-print">
-          <LockKeyhole />
-          <div>
-            <strong>Proposed — not saved</strong>
-            <span>Review the semester sequence and evidence before saving this plan.</span>
-          </div>
+          <strong>Proposed — not saved</strong>
+          <span>Review the semester sequence and evidence before saving this plan.</span>
         </div>
       ) : null}
       {productionEvidenceState() === "needs_review" ? (
         <div className="review-banner no-print">
-          <AlertTriangle aria-hidden="true" />
-          <div>
-            <strong>This plan contains articulation items that need confirmation.</strong>
-            <span>
-              You can save it as a planning route, but it is not an official degree audit or verified articulation
-              agreement.
-            </span>
-          </div>
+          <strong>This plan contains articulation items that need confirmation.</strong>
+          <span>
+            You can save it as a planning route, but it is not an official degree audit or verified articulation
+            agreement.
+          </span>
           <Link href="/app/evidence">Review evidence</Link>
         </div>
       ) : null}
@@ -337,9 +321,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                     <span>{course.title}</span>
                     <small>{course.units} units</small>
                     <EvidenceStatus state={needsReview ? "review" : "suggestion"} />
-                    <Link href={`/app/evidence?course=${course.courseId}`}>
-                      View source <ArrowRight />
-                    </Link>
+                    <Link href={`/app/evidence?course=${course.courseId}`}>View source</Link>
                   </section>
                 );
               })}
@@ -363,13 +345,9 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       </div>
       {strategy ? <AdmissionsStrategyPanel strategy={strategy} /> : null}
       <section id="what-if" className="what-if-placeholder no-print">
-        <h2>If your schedule changes</h2>
-        <p>
-          The protected what-if workflow will preview timing and downstream course changes without overwriting this
-          saved plan.
-        </p>
+        <p>What-if planning is not available yet.</p>
         <button className="production-button" disabled>
-          What-if planning arrives after Preview validation
+          What-if planning
         </button>
       </section>
       <CounselorPacket

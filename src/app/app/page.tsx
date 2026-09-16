@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, CalendarClock } from "lucide-react";
 import { EvidenceStatus } from "@/components/evidence-status";
 import { evidenceById } from "@/lib/academic-data";
 import { buildAdmissionsStrategy } from "@/lib/admissions-strategy";
@@ -158,11 +157,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </div>
       <div className="mobile-primary-action">
         <Link href="/app/plan" className="production-button primary">
-          Review semester plan <ArrowRight aria-hidden="true" />
+          Review semester plan
         </Link>
       </div>
       <p className="saved-meta">
-        <CalendarClock aria-hidden="true" />
         Saved plan version {plan.version} · academic data {plan.academicDataVersion}
       </p>
     </div>
