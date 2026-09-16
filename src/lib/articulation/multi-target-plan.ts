@@ -13,6 +13,7 @@ import type {
   VerificationTier,
 } from "@/lib/articulation/types";
 import { articulatedUnitsForAudit, juniorStandingThreshold } from "@/lib/articulation/units";
+import { formatGraphTargetLabel } from "@/lib/student-facing-copy";
 
 export const MULTI_TARGET_ALGORITHM_VERSION = "multi-target-csp-v1";
 
@@ -338,7 +339,12 @@ function buildAuditSummaries(
   });
 }
 
+function formatTargetList(graph: ArticulationGraph, ids: string[]): string {
+  return ids.map((id) => formatGraphTargetLabel(graph, id)).join(", ");
+}
+
 function buildDivergencePoints(
+  graph: ArticulationGraph,
   primaryTargetId: string,
   secondaryTargetIds: string[],
   candidates: CandidateCourse[],
@@ -346,20 +352,22 @@ function buildDivergencePoints(
   const points: DivergencePoint[] = [];
   for (const candidate of candidates) {
     if (candidate.bucket === "secondary_divergence") {
+      const labels = formatTargetList(graph, candidate.targetIds);
       points.push({
         id: `div-secondary-${candidate.code}`,
         kind: "secondary_only",
-        message: `${candidate.code} is required only by secondary target(s). Toggle secondary major prep to include it.`,
+        message: `${candidate.code} is required only for ${labels}, not your first-choice campus. Include secondary major prep if you want it packed into the schedule.`,
         primaryCourseCodes: [],
         secondaryCourseCodes: [candidate.code],
         secondaryTargetIds: candidate.targetIds,
       });
     }
     if (candidate.excessElectiveForTargets.length) {
+      const labels = formatTargetList(graph, candidate.excessElectiveForTargets);
       points.push({
         id: `div-excess-${candidate.code}`,
         kind: "superset_excess",
-        message: `${candidate.code} is required by the primary target and treated as excess elective for: ${candidate.excessElectiveForTargets.join(", ")}.`,
+        message: `${candidate.code} is required for your first-choice campus and is not required for ${labels}.`,
         primaryCourseCodes: [candidate.code],
         secondaryCourseCodes: [],
         secondaryTargetIds: candidate.excessElectiveForTargets,
@@ -437,7 +445,7 @@ export function computeMultiTargetPlan(input: MultiTargetPlanInput): MultiTarget
     completed,
     scheduledCodes,
   );
-  const divergencePoints = buildDivergencePoints(input.primaryTargetId, secondaryTargetIds, candidates);
+  const divergencePoints = buildDivergencePoints(graph, input.primaryTargetId, secondaryTargetIds, candidates);
   const usedRules = rulesForTargets(graph, [input.primaryTargetId, ...secondaryTargetIds]);
 
   return {

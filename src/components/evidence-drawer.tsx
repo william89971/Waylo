@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { ExternalLink, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ArticulationSourceType, VerificationTier } from "@/lib/articulation/types";
+import { VERIFICATION_EXPLAIN, VERIFICATION_SHORT } from "@/lib/student-facing-copy";
 
 export type EvidenceCampusEntry = {
   targetMajorId: string;
@@ -29,22 +30,6 @@ export type EvidenceDrawerProps = {
   open: boolean;
   evidence: CourseEvidencePayload | null;
   onClose: () => void;
-};
-
-const TIER_COPY: Record<VerificationTier, string> = {
-  VERIFIED_ASSIST: "VERIFIED_ASSIST",
-  VERIFIED_INSTITUTIONAL_GUIDE: "VERIFIED_INSTITUTIONAL_GUIDE",
-  HISTORICAL_PRECEDENT: "HISTORICAL_PRECEDENT",
-  PLANNING_SUGGESTION: "PLANNING_SUGGESTION",
-  NEEDS_COUNSELOR_CONFIRMATION: "NEEDS_COUNSELOR_CONFIRMATION",
-};
-
-const TIER_EXPLAIN: Record<VerificationTier, string> = {
-  VERIFIED_ASSIST: "Confirmed in an official ASSIST agreement.",
-  VERIFIED_INSTITUTIONAL_GUIDE: "Confirmed in the university’s transfer guide.",
-  HISTORICAL_PRECEDENT: "Based on past departmental practice — confirm with a counselor.",
-  PLANNING_SUGGESTION: "A planning recommendation, not a verified articulation.",
-  NEEDS_COUNSELOR_CONFIRMATION: "Uncertain. Ask a counselor before you enroll.",
 };
 
 const SOURCE_LABELS: Record<ArticulationSourceType, string> = {
@@ -157,11 +142,13 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
             <div className="space-y-6">
               <div className={cn("border px-3 py-2.5", tierTone(headlineTier))}>
                 <p className="text-[14px] font-medium leading-snug tracking-normal normal-case">
-                  {headlineTier ? TIER_EXPLAIN[headlineTier] : "This course is not required by the first-choice campus."}
+                  {headlineTier
+                    ? VERIFICATION_EXPLAIN[headlineTier]
+                    : "This course is not required by the first-choice campus."}
                 </p>
-                <p className="mt-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.12em]">
-                  {headlineTier ? TIER_COPY[headlineTier] : "NO PRIMARY ARTICULATION"}
-                </p>
+                {headlineTier ? (
+                  <p className="mt-1.5 text-[12px] leading-snug">{VERIFICATION_SHORT[headlineTier]}</p>
+                ) : null}
               </div>
 
               <dl>
@@ -189,11 +176,11 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                   ) : (
                     <dl>
                       <LedgerRow
-                        label="TARGET INSTITUTION"
+                        label="Campus"
                         value={campus.campusLabel}
                       />
                       <LedgerRow
-                        label="DESTINATION REQUIREMENT"
+                        label="Requirement"
                         value={
                           campus.destinationRequirement ? (
                             <span className="font-mono text-[12px] tabular-nums">
@@ -205,15 +192,9 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                         }
                       />
                       <LedgerRow
-                        label="Verification tier"
+                        label="Verification"
                         value={
-                          campus.verificationTier ? (
-                            <span className="font-mono text-[11px] tracking-tight">
-                              {TIER_COPY[campus.verificationTier]}
-                            </span>
-                          ) : (
-                            "—"
-                          )
+                          campus.verificationTier ? VERIFICATION_EXPLAIN[campus.verificationTier] : "—"
                         }
                       />
                       <LedgerRow
@@ -227,10 +208,20 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                         }
                       />
                       <LedgerRow
-                        label="Source repository"
+                        label="Source"
                         value={campus.sourceType ? SOURCE_LABELS[campus.sourceType] : "—"}
                       />
                       {campus.notes ? <LedgerRow label="Notes" value={campus.notes} /> : null}
+                      {campus.verificationTier ? (
+                        <LedgerRow
+                          label="Internal code"
+                          value={
+                            <span className="font-mono text-[11px] tracking-tight text-slate-500">
+                              {campus.verificationTier}
+                            </span>
+                          }
+                        />
+                      ) : null}
                     </dl>
                   )}
 

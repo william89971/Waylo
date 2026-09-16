@@ -8,12 +8,12 @@ import type { SavedPlan, SelectableTarget } from "@/lib/production-types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
 import { listSelectableTargets } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
+import { formatSelectableTargetLabel } from "@/lib/student-facing-copy";
 
 export const dynamic = "force-dynamic";
 
 function labelFor(targets: SelectableTarget[], id: string) {
-  const target = targets.find((item) => item.id === id);
-  return target ? `${target.institutionName} ${target.displayName}` : id;
+  return formatSelectableTargetLabel(targets, id);
 }
 
 function courseEvidenceState(

@@ -3,6 +3,7 @@
 import { AlertCircle, Check, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VerificationTier } from "@/lib/articulation/types";
+import { VERIFICATION_SHORT } from "@/lib/student-facing-copy";
 
 export type MatrixCampusColumn = {
   targetMajorId: string;
@@ -45,7 +46,7 @@ function StatusGlyph({ cell }: { cell: MatrixCampusCell }) {
     return (
       <span
         className="inline-flex items-center gap-1.5 text-amber-700"
-        title={cell.verificationTier ?? "Needs counselor review"}
+        title={cell.verificationTier ? VERIFICATION_SHORT[cell.verificationTier] : "Needs counselor review"}
       >
         <AlertCircle className="size-4 shrink-0" aria-hidden />
         <span className="sr-only">Needs counselor review</span>
@@ -59,7 +60,7 @@ function StatusGlyph({ cell }: { cell: MatrixCampusCell }) {
   return (
     <span
       className="inline-flex items-center gap-1.5 text-emerald-700"
-      title={cell.verificationTier ?? "Verified"}
+      title={cell.verificationTier ? VERIFICATION_SHORT[cell.verificationTier] : "Verified"}
     >
       <Check className="size-4 shrink-0" strokeWidth={2.5} aria-hidden />
       <span className="sr-only">Verified</span>

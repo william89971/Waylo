@@ -26,6 +26,7 @@ import {
   UCSD_DATA_RELEASE,
 } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
+import { formatCourseCode, formatSelectableTargetLabel, requirementProgressLabel } from "@/lib/student-facing-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
   if (!workspace.profile.onboardingCompleted) redirect("/onboarding");
   const showProposal = (await searchParams).new === "1" || !workspace.activePlan;
   const targets = await listSelectableTargets();
-  const labelFor = (id: string) => targets.find((target) => target.id === id)?.displayName ?? id;
+  const labelFor = (id: string) => formatSelectableTargetLabel(targets, id);
 
   if (!shouldUseLegacyUcsdPlanner(workspace)) {
     const [multi, graph] = await Promise.all([
@@ -156,8 +157,8 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               {multi.schedule.terms.flatMap((term) =>
                 term.conflicts.map((conflict, index) => (
                   <li key={`${term.id}-conflict-${index}`}>
-                    {term.label}: {conflict.message} Trade-off courses:{" "}
-                    {conflict.tradeoffCourseIds.join(", ")}
+                    {term.label}: {conflict.message} Courses held for a later term:{" "}
+                    {conflict.tradeoffCourseIds.map((id) => formatCourseCode(graph, id)).join(", ")}
                   </li>
                 )),
               )}
@@ -182,8 +183,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                 {audit.requirementStates.map((requirement) => (
                   <li key={requirement.requirementKey}>
                     <span>
-                      {requirement.label}:{" "}
-                      {requirement.satisfied ? "satisfied" : `missing ${requirement.missingCourseCodes.join(", ")}`}
+                      {requirement.label}: {requirementProgressLabel(requirement)}
                     </span>
                     <EvidenceStatus tier={requirement.verificationTier} />
                   </li>

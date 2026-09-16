@@ -72,9 +72,11 @@ test.describe("multi-target articulation matrix and evidence drawer", () => {
     await expect(drawer).toHaveAttribute("data-state", "open");
     await expect(drawer).toBeVisible();
     await expect(drawer).toContainText("MATH-211");
-    await expect(drawer.getByText("VERIFIED_ASSIST").first()).toBeVisible();
-    await expect(drawer.getByText("TARGET INSTITUTION").first()).toBeVisible();
-    await expect(drawer.getByText("DESTINATION REQUIREMENT").first()).toBeVisible();
+    await expect(drawer.getByText("Confirmed in an official ASSIST agreement.").first()).toBeVisible();
+    await expect(drawer.getByText("Campus").first()).toBeVisible();
+    await expect(drawer.getByText("Requirement").first()).toBeVisible();
+    await expect(page.getByText(/usc:business_administration/)).toHaveCount(0);
+    await expect(page.getByText(/UC Berkeley Economics/).first()).toBeVisible();
 
     await page.keyboard.press("Escape");
     await expect(drawer).toHaveAttribute("data-state", "closed");

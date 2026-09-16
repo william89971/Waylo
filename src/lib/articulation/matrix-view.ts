@@ -15,6 +15,7 @@ import type {
   MatrixCampusColumn,
   MatrixCourseRow,
 } from "@/components/multi-campus-matrix";
+import { formatGraphTargetLabel, formatMatrixCampusLabel } from "@/lib/student-facing-copy";
 
 const REVIEW_TIERS = new Set<VerificationTier>([
   "NEEDS_COUNSELOR_CONFIRMATION",
@@ -54,10 +55,9 @@ export function buildMatrixCampuses(
 ): MatrixCampusColumn[] {
   const ids = [plan.primaryTargetId, ...plan.secondaryTargetIds];
   return ids.map((targetMajorId) => {
-    const major = graph.targetMajorById.get(targetMajorId);
     return {
       targetMajorId,
-      label: major?.displayName ?? targetMajorId,
+      label: formatMatrixCampusLabel(graph, targetMajorId),
       isPrimary: targetMajorId === plan.primaryTargetId,
     };
   });
@@ -109,12 +109,11 @@ function campusEntryForCourse(
   isPrimary: boolean,
   graph: ArticulationGraph,
 ): EvidenceCampusEntry {
-  const major = graph.targetMajorById.get(campusId);
   const fulfills = course.fulfillsTargetIds.includes(campusId);
   if (!fulfills) {
     return {
       targetMajorId: campusId,
-      campusLabel: major?.displayName ?? campusId,
+      campusLabel: formatGraphTargetLabel(graph, campusId),
       isPrimary,
       required: false,
     };
@@ -126,7 +125,7 @@ function campusEntryForCourse(
   );
   return {
     targetMajorId: campusId,
-    campusLabel: major?.displayName ?? campusId,
+    campusLabel: formatGraphTargetLabel(graph, campusId),
     isPrimary,
     required: true,
     destinationRequirement: rule?.label ?? rule?.requirementKey,

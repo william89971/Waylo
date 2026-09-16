@@ -621,9 +621,6 @@ a { color: var(--p-blue); }
 
 @media (max-width: 720px) {
   .onboarding-actions {
-    position: sticky;
-    bottom: 0;
-    z-index: 6;
     margin-top: 24px;
     padding: 12px 0 max(16px, env(safe-area-inset-bottom));
     border-top: 1px solid var(--p-border);

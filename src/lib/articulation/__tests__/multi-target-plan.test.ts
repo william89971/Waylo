@@ -111,5 +111,7 @@ describe("multi-target planner", () => {
       primaryOnly.totalSemesterUnits + secondaryOnly.totalSemesterUnits,
     );
     expect(multi.schedule.terms.flatMap((term) => term.courses).some((course) => course.bucket === "core_overlap")).toBe(true);
+    expect(multi.divergencePoints.map((point) => point.message).join("\n")).not.toMatch(/usc:business_administration/);
+    expect(multi.divergencePoints.some((point) => point.message.includes("University of Southern California"))).toBe(true);
   });
 });
