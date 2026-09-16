@@ -39,6 +39,14 @@ const TIER_COPY: Record<VerificationTier, string> = {
   NEEDS_COUNSELOR_CONFIRMATION: "NEEDS_COUNSELOR_CONFIRMATION",
 };
 
+const TIER_EXPLAIN: Record<VerificationTier, string> = {
+  VERIFIED_ASSIST: "Confirmed in an official ASSIST agreement.",
+  VERIFIED_INSTITUTIONAL_GUIDE: "Confirmed in the university’s transfer guide.",
+  HISTORICAL_PRECEDENT: "Based on past departmental practice — confirm with a counselor.",
+  PLANNING_SUGGESTION: "A planning recommendation, not a verified articulation.",
+  NEEDS_COUNSELOR_CONFIRMATION: "Uncertain. Ask a counselor before you enroll.",
+};
+
 const SOURCE_LABELS: Record<ArticulationSourceType, string> = {
   assist_public: "ASSIST public articulation",
   institutional_guide: "Institutional transfer guide",
@@ -112,7 +120,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
         aria-label={evidence ? `Evidence for ${evidence.courseCode}` : "Course evidence"}
         data-testid="evidence-drawer" data-state={open ? "open" : "closed"}
         className={cn(
-          "absolute inset-y-0 right-0 flex w-[min(100%-1.5rem,28rem)] max-w-md flex-col",
+          "absolute inset-y-0 right-0 flex w-[min(100%-0.75rem,28rem)] max-w-md flex-col border-l border-border/40 bg-white",
           "transition-transform duration-200 ease-out",
           open ? "translate-x-0" : "translate-x-full",
           !open && "invisible",
@@ -137,7 +145,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
           <button
             type="button"
             onClick={onClose}
-            className="rounded-sm p-1.5 text-slate-500 transition-colors hover:bg-muted/50 hover:text-slate-900"
+            className="grid size-11 shrink-0 place-items-center text-slate-500 hover:bg-muted/50 hover:text-slate-900"
             aria-label="Close"
           >
             <X className="size-4" />
@@ -147,13 +155,13 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {evidence ? (
             <div className="space-y-6">
-              <div
-                className={cn(
-                  "border px-3 py-2.5 font-mono text-[11px] font-medium uppercase tracking-[0.12em]",
-                  tierTone(headlineTier),
-                )}
-              >
-                {headlineTier ? TIER_COPY[headlineTier] : "NO PRIMARY ARTICULATION"}
+              <div className={cn("border px-3 py-2.5", tierTone(headlineTier))}>
+                <p className="text-[14px] font-medium leading-snug tracking-normal normal-case">
+                  {headlineTier ? TIER_EXPLAIN[headlineTier] : "This course is not required by the first-choice campus."}
+                </p>
+                <p className="mt-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.12em]">
+                  {headlineTier ? TIER_COPY[headlineTier] : "NO PRIMARY ARTICULATION"}
+                </p>
               </div>
 
               <dl>
@@ -172,7 +180,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                   <div className="flex items-baseline justify-between gap-2 border-b border-border/40 pb-2">
                     <h3 className="text-[13px] font-medium text-slate-900">{campus.campusLabel}</h3>
                     {campus.isPrimary ? (
-                      <span className="font-mono text-[9px] tracking-wider text-slate-400">PRI</span>
+                      <span className="text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">First choice</span>
                     ) : null}
                   </div>
 
@@ -231,7 +239,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                       href={campus.sourceUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-3 inline-flex items-center gap-1.5 border border-border/40 px-2.5 py-1.5 text-[12px] font-medium text-slate-800 transition-colors hover:bg-muted/40"
+                      className="mt-3 inline-flex min-h-11 items-center gap-1.5 border border-border/40 px-3 text-[12px] font-medium text-slate-800 hover:bg-muted/40"
                     >
                       View official source
                       <ExternalLink className="size-3.5" aria-hidden />

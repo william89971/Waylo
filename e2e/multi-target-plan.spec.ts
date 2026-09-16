@@ -28,8 +28,8 @@ async function onboardMultiTargetPlan(page: Page, testUser: string) {
   await page.getByRole("button", { name: "Add course" }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: "What should your plan account for?" })).toBeVisible();
-  await page.getByRole("button", { name: "Generate my plan", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Schedule preferences" })).toBeVisible();
+  await page.getByRole("button", { name: "View proposed schedule", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: /multi-target plan/i })).toBeVisible();
   await expect(page.getByTestId("articulation-matrix")).toBeVisible();
@@ -70,6 +70,7 @@ test.describe("multi-target articulation matrix and evidence drawer", () => {
 
     await page.keyboard.press("Escape");
     await expect(drawer).toHaveAttribute("data-state", "closed");
+    await expect(row).toBeFocused();
 
     await row.click();
     await expect(drawer).toHaveAttribute("data-state", "open");
@@ -81,4 +82,29 @@ test.describe("multi-target articulation matrix and evidence drawer", () => {
 
     await context.close();
   });
+});
+
+test("multi-target Save this plan reaches the dashboard and shows strategy", async ({ browser }, testInfo) => {
+  test.setTimeout(180_000);
+  const testUser = `test-sv-${testInfo.project.name}-${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 6)}`;
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await onboardMultiTargetPlan(page, testUser);
+  await expect(page.getByRole("button", { name: "Save this plan" })).toBeVisible();
+  await page.getByRole("button", { name: "Save this plan" }).click();
+
+  await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
+  await expect(page.getByText("Plan saved.")).toBeVisible();
+  await expect(page.getByText(/UC Berkeley Economics/).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Read the strategy note" })).toBeVisible();
+  await page.getByRole("link", { name: "Read the strategy note" }).click();
+  await expect(page.locator("#admissions-strategy")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Admissions strategy — not verified articulation" })).toBeVisible();
+  await expect(page.locator("#admissions-strategy")).not.toContainText(/admission guarantee/i);
+  await expect(page.locator("body")).not.toContainText(/You are likely/i);
+
+  await context.close();
 });

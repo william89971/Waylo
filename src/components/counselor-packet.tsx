@@ -1,3 +1,4 @@
+import type { AdmissionsStrategy } from "@/lib/admissions-strategy";
 import type { VerificationTier } from "@/lib/articulation/types";
 
 export interface CounselorCitation {
@@ -28,6 +29,7 @@ export interface CounselorPacketProps {
   academicDataVersion: string;
   algorithmVersion?: string;
   evaluatedAt?: string;
+  strategy?: AdmissionsStrategy | null;
 }
 
 /**
@@ -44,12 +46,14 @@ export function CounselorPacket({
   academicDataVersion,
   algorithmVersion,
   evaluatedAt,
+  strategy,
 }: CounselorPacketProps) {
   return (
     <section className="counselor-packet" id="counselor-packet" aria-label="Counselor audit packet">
       <header className="counselor-packet-header">
         <strong>Waylo Counselor Packet</strong>
         <span>Student: {preferredName || "Student"}</span>
+        <span>College of the Canyons transfer plan</span>
       </header>
 
       <div className="counselor-targets">
@@ -119,6 +123,27 @@ export function CounselorPacket({
           ))}
         </tbody>
       </table>
+
+      {strategy ? (
+        <div className="counselor-strategy">
+          <h2>Admissions strategy — not verified articulation</h2>
+          <p>
+            <strong>{strategy.grades.title}.</strong> {strategy.grades.body}
+          </p>
+          <p>
+            <strong>{strategy.activities.title}.</strong> {strategy.activities.body}
+          </p>
+          <p>
+            <strong>{strategy.counselor.title}</strong>
+          </p>
+          <ol>
+            {strategy.counselor.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ol>
+          <p>{strategy.disclaimer}</p>
+        </div>
+      ) : null}
 
       <p className="counselor-meta">
         Release: {academicDataVersion}

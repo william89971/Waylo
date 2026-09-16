@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, ChevronRight, LockKeyhole, Plus, Trash2 } from "lucide-react";
+import { Check, Trash2 } from "lucide-react";
+import { isPreferredTransferTerm } from "@/lib/admissions-strategy";
 import type { CourseDefinition } from "@/lib/domain";
 import type { ProductionCourse, SelectableTarget, StudentWorkspaceRecord } from "@/lib/production-types";
 
@@ -33,10 +35,14 @@ export function OnboardingFlow({
   initial,
   catalog,
   targets = [],
+  startStep,
+  editing = false,
 }: {
   initial: StudentWorkspaceRecord;
   catalog: CourseDefinition[];
   targets?: SelectableTarget[];
+  startStep?: number;
+  editing?: boolean;
 }) {
   const router = useRouter();
   const hydrated = useSyncExternalStore(
@@ -45,7 +51,9 @@ export function OnboardingFlow({
     () => false,
   );
   const [workspace, setWorkspace] = useState(initial);
-  const [step, setStep] = useState(initial.profile.onboardingCompleted ? 4 : initial.profile.onboardingStep);
+  const [step, setStep] = useState(
+    startStep ?? (initial.profile.onboardingCompleted ? 4 : initial.profile.onboardingStep),
+  );
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState(catalog[0]?.id ?? "");
@@ -57,6 +65,10 @@ export function OnboardingFlow({
   const [weeklyWorkHours, setWeeklyWorkHours] = useState(initial.preferences.weeklyWorkHours);
   const [targetTerm, setTargetTerm] = useState(initial.preferences.targetTerm ?? "");
   const [includeSecondaryDivergence, setIncludeSecondaryDivergence] = useState(initial.includeSecondaryDivergence ?? true);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [step]);
 
   const institutions = useMemo(() => {
     const seen = new Map<string, string>();
@@ -141,7 +153,7 @@ export function OnboardingFlow({
         method: "PATCH",
         body: JSON.stringify({
           section: "profile",
-          profile: { ...body.workspace.profile, onboardingStep: 3, onboardingCompleted: false },
+          profile: { ...body.workspace.profile, onboardingStep: 3, onboardingCompleted: editing ? workspace.profile.onboardingCompleted : false },
         }),
       });
       setWorkspace(profileBody.workspace);
@@ -212,6 +224,11 @@ export function OnboardingFlow({
   };
 
   const finish = async () => {
+    const trimmedTerm = targetTerm.trim();
+    if (trimmedTerm && !isPreferredTransferTerm(trimmedTerm)) {
+      setError("Preferred transfer term must be Fall, Spring, or Summer plus a year, for example Spring 2029.");
+      return;
+    }
     setWorking(true);
     setError("");
     try {
@@ -223,7 +240,7 @@ export function OnboardingFlow({
             maxUnits,
             summerEnrollment,
             weeklyWorkHours,
-            targetTerm: targetTerm || null,
+            targetTerm: trimmedTerm || null,
           },
         }),
       });
@@ -245,8 +262,12 @@ export function OnboardingFlow({
   return (
     <main className="onboarding-page">
       <header className="onboarding-top">
-        <span className="production-brand">Waylo</span>
-        <span>Save and exit</span>
+        <Link href="/" className="production-brand">
+          Waylo
+        </Link>
+        <Link href={editing ? "/app" : "/"} className="production-text-link">
+          {editing ? "Back to dashboard" : "Exit"}
+        </Link>
       </header>
       <section className="onboarding-panel">
         <div className="onboarding-progress" aria-label="Onboarding progress">
@@ -273,8 +294,8 @@ export function OnboardingFlow({
         ) : null}
 
         {step === 1 ? (
-          <div className="onboarding-question fade-in">
-            <h1>What college do you attend?</h1>
+          <div className="onboarding-question ">
+            <h1 ref={headingRef} tabIndex={-1}>What college do you attend?</h1>
             <p>Waylo’s first release is built specifically for College of the Canyons students.</p>
             <button className="selection-row selected" type="button">
               <span>
@@ -289,15 +310,15 @@ export function OnboardingFlow({
                 disabled={!hydrated || working}
                 onClick={() => void saveProfile(2)}
               >
-                Continue <ChevronRight size={17} />
+                Continue
               </button>
             </div>
           </div>
         ) : null}
 
         {step === 2 ? (
-          <div className="onboarding-question fade-in">
-            <h1>Where do you want to transfer?</h1>
+          <div className="onboarding-question ">
+            <h1 ref={headingRef} tabIndex={-1}>Where do you want to transfer?</h1>
             <p>
               Pick your universities first. Then choose exactly one major for each school, and mark which campus is
               primary.
@@ -417,17 +438,29 @@ export function OnboardingFlow({
                 disabled={!hydrated || working || !majorsComplete}
                 onClick={() => void saveTargetsAndContinue()}
               >
-                Continue <ChevronRight size={17} />
+                Continue
               </button>
             </div>
           </div>
         ) : null}
 
         {step === 3 ? (
-          <div className="onboarding-question course-question fade-in">
-            <h1>What have you completed?</h1>
-            <p>Add completed or in-progress College of the Canyons courses. You can review every entry before planning.</p>
-            <div className="course-entry-grid">
+          <div className="onboarding-question course-question">
+            <h1 ref={headingRef} tabIndex={-1}>
+              {editing ? "Edit your completed courses" : "What have you completed?"}
+            </h1>
+            <p>
+              {editing
+                ? "Update completed or in-progress College of the Canyons courses. Waylo uses this history to rebuild your plan."
+                : "Add completed or in-progress College of the Canyons courses. You can review every entry before planning."}
+            </p>
+            <form
+              className="course-entry-grid"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void addCourse();
+              }}
+            >
               <label>
                 Course
                 <select value={selectedCourseId} onChange={(event) => setSelectedCourseId(event.target.value)}>
@@ -454,13 +487,13 @@ export function OnboardingFlow({
                 <input value={grade} onChange={(event) => setGrade(event.target.value)} placeholder="Optional" />
               </label>
               <button
+                type="submit"
                 className="production-button primary"
-                onClick={() => void addCourse()}
                 disabled={working || !selectedCourseId}
               >
-                <Plus size={17} /> Add course
+                Add course
               </button>
-            </div>
+            </form>
             <div className="confirmed-course-list">
               {workspace.courses.length ? (
                 workspace.courses.map((course) => (
@@ -491,17 +524,17 @@ export function OnboardingFlow({
               <button
                 className="production-button primary"
                 disabled={working || workspace.courses.length === 0}
-                onClick={() => void saveProfile(4)}
+                onClick={() => void saveProfile(4, editing && workspace.profile.onboardingCompleted)}
               >
-                Continue <ChevronRight size={17} />
+                Continue
               </button>
             </div>
           </div>
         ) : null}
 
         {step === 4 ? (
-          <div className="onboarding-question fade-in">
-            <h1>What should your plan account for?</h1>
+          <div className="onboarding-question ">
+            <h1 ref={headingRef} tabIndex={-1}>Schedule preferences</h1>
             <p>These preferences shape the schedule. They never waive a prerequisite or requirement.</p>
             <div className="preference-form">
               <label>
@@ -529,8 +562,11 @@ export function OnboardingFlow({
                 <input
                   value={targetTerm}
                   placeholder="Optional · Spring 2029"
+                  aria-describedby="target-term-hint"
+                  aria-invalid={Boolean(targetTerm.trim()) && !isPreferredTransferTerm(targetTerm)}
                   onChange={(event) => setTargetTerm(event.target.value)}
                 />
+                <small id="target-term-hint">Use Fall, Spring, or Summer plus a year, or leave blank.</small>
               </label>
               <label className="checkbox-row">
                 <input
@@ -542,27 +578,20 @@ export function OnboardingFlow({
               </label>
             </div>
             <div className="privacy-note">
-              <LockKeyhole size={18} />
-              <span>
-                <strong>Your confirmed courses are saved to your account.</strong>
-                <small>Waylo does not store a transcript file in this manual-entry flow.</small>
-              </span>
+              <strong>Your confirmed courses are saved to your account.</strong>
+              <small>Waylo does not store a transcript file in this manual-entry flow.</small>
             </div>
             <div className="onboarding-actions">
               <button className="production-button" onClick={() => setStep(3)}>
                 Back
               </button>
-              <button className="production-button primary" disabled={working} onClick={() => void finish()}>
-                {working ? (
-                  <span className="button-loading">
-                    <span className="spinner" aria-hidden="true" />
-                    Building your plan…
-                  </span>
-                ) : (
-                  <>
-                    Generate my plan <ChevronRight size={17} />
-                  </>
-                )}
+              <button
+                type="button"
+                className="production-button primary"
+                disabled={working || (Boolean(targetTerm.trim()) && !isPreferredTransferTerm(targetTerm))}
+                onClick={() => void finish()}
+              >
+                {working ? "Saving…" : "View proposed schedule"}
               </button>
             </div>
           </div>
