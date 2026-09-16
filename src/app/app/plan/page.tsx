@@ -202,7 +202,6 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             </article>
           ))}
         </section>
-        {strategy ? <AdmissionsStrategyPanel strategy={strategy} /> : null}
         <div className="plan-footer no-print">
           <div>
             <strong>Total planned</strong>
@@ -217,6 +216,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             </Link>
           )}
         </div>
+        {strategy ? <AdmissionsStrategyPanel strategy={strategy} /> : null}
         <CounselorPacket
           preferredName={workspace.profile.preferredName}
           primaryLabel={labelFor(multi.primaryTargetId)}

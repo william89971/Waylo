@@ -98,7 +98,7 @@ test("multi-target Save this plan reaches the dashboard and shows strategy", asy
 
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.getByText("Your plan is saved")).toBeVisible();
-  await expect(page.getByText(/UC Berkeley/)).toBeVisible();
+  await expect(page.getByText(/UC Berkeley Economics/).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Read the strategy note" })).toBeVisible();
   await page.getByRole("link", { name: "Read the strategy note" }).click();
   await expect(page.locator("#admissions-strategy")).toBeVisible();
