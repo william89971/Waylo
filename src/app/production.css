@@ -776,8 +776,8 @@ a:hover { color: var(--p-ink-deep); }
   .production-mobile-header .production-brand { font-size: 22px; }
   .production-mobile-header .waylo-wordmark { font-size: 24px; }
   .production-mobile-header .local-sign-out { padding: 0; }
-  .production-main { margin-left: 0; padding-bottom: 76px; }
-  .production-page { padding: 30px 16px 70px; }
+  .production-main { margin-left: 0; padding-bottom: 108px; }
+  .production-page { padding: 30px 16px 96px; }
   .production-page-header h1 { font-size: 32px; }
   .next-term-codes li { grid-template-columns: 1fr; gap: 2px; }
   .next-term-hero-meta { align-items: stretch; flex-direction: column; }
@@ -1312,6 +1312,10 @@ a:hover { color: var(--p-ink-deep); }
   }
   .counselor-handoff-actions {
     display: grid;
+  }
+  .counselor-handoff,
+  .counselor-handoff-actions .production-button {
+    scroll-margin-bottom: 96px;
   }
   .plan-header-actions .production-button {
     width: 100%;
