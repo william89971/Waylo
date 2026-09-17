@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
   counselorMailtoHref,
   isCounselorEmail,
@@ -9,7 +9,7 @@ import {
 
 const STORAGE_KEY = "waylo-counselor-email";
 
-export function CounselorHandoff({ email }: { email: CounselorEmailPayload }) {
+export function CounselorHandoff({ email, children }: { email: CounselorEmailPayload; children?: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [address, setAddress] = useState("");
   const [error, setError] = useState("");
@@ -65,6 +65,7 @@ export function CounselorHandoff({ email }: { email: CounselorEmailPayload }) {
         >
           Email counselor
         </button>
+        {children}
       </div>
       {open ? (
         <form className="counselor-email-form" onSubmit={send}>

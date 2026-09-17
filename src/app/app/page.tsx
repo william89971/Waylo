@@ -346,10 +346,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 })),
                 totalUnits: nextTerm?.totalUnits ?? 0,
               }}
-            />
-            <Link href="/app/plan" className="production-button">
-              See all terms
-            </Link>
+            >
+              <Link href="/app/plan" className="production-button">
+                See all terms
+              </Link>
+            </CounselorHandoff>
           </div>
         </section>
         <aside className="dashboard-rail">
