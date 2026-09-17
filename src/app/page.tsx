@@ -1,13 +1,22 @@
 import Link from "next/link";
+import { LandingTargetTeaser } from "@/components/landing-target-teaser";
+import { LandingStagePlayer } from "@/components/landing-stage-player";
 import { WayloWordmark } from "@/components/waylo-wordmark";
 import { WaypointO } from "@/components/waypoint-o";
-import { LandingStagePlayer } from "@/components/landing-stage-player";
+import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
+import {
+  buildLandingSpecimen,
+  buildLandingTeaser,
+  LANDING_CTA_LABEL,
+  landingCoverageLine,
+} from "@/lib/landing-teaser";
+import { MULTI_TARGET_DATA_RELEASE } from "@/lib/server/production-planning";
 
 const path = [
   {
     index: "01",
     label: "Your classes",
-    note: "What is already on your College of the Canyons record.",
+    note: "Paste or upload a transcript, or pick from a list.",
   },
   {
     index: "02",
@@ -21,11 +30,16 @@ const path = [
   },
 ] as const;
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const graph = await loadActiveArticulationGraph();
+  const teaser = buildLandingTeaser(graph);
+  const specimen = buildLandingSpecimen(graph);
+  const coverage = landingCoverageLine(graph, MULTI_TARGET_DATA_RELEASE);
+
   return (
     <main className="production-landing">
       <a href="#sign-up" className="skip-link">
-        Skip to sign up
+        Skip to build your list
       </a>
       <nav className="production-landing-nav" aria-label="Main navigation">
         <div className="production-landing-nav-inner">
@@ -35,7 +49,7 @@ export default function LandingPage() {
               Sign in
             </Link>
             <Link href="/sign-up" className="production-button primary">
-              Sign up
+              {LANDING_CTA_LABEL}
             </Link>
           </div>
         </div>
@@ -45,65 +59,54 @@ export default function LandingPage() {
           <WaypointO className="kicker-o" />
           College of the Canyons · transfer
         </p>
+        <p className="production-coverage">{coverage}</p>
         <h1>Know what to take next semester.</h1>
         <p className="production-lede">
           ASSIST is the official map, and it is a maze. Waylo reads those agreements and hands you a next-semester
           list for the universities you are planning toward. Bring it to a College of the Canyons counselor before you
           enroll.
         </p>
-        <div id="sign-up" className="production-hero-actions">
-          <Link href="/sign-up" className="production-button primary">
-            Sign up
-          </Link>
-        </div>
+        <LandingTargetTeaser data={teaser} ctaLabel={LANDING_CTA_LABEL} />
       </section>
       <div className="waylo-stage">
         <LandingStagePlayer />
         <aside className="waylo-stage-satellite left" aria-hidden="true">
           <p>Your classes</p>
           <ul>
-            <li>
-              <strong className="font-mono tabular-nums">CHEM-201</strong>
-            </li>
-            <li>
-              <strong className="font-mono tabular-nums">MATH-211</strong>
-            </li>
-            <li>
-              <strong className="font-mono tabular-nums">ENGL-103</strong>
-            </li>
+            {specimen.courses.map((course) => (
+              <li key={course.code}>
+                <strong className="font-mono tabular-nums">{course.code}</strong>
+              </li>
+            ))}
           </ul>
         </aside>
         <aside className="waylo-stage-satellite right" aria-hidden="true">
-          <p>Fall 2026</p>
+          <p>{specimen.term}</p>
           <em className="verified">Official agreement</em>
           <em className="review">Ask a counselor</em>
         </aside>
         <section className="waylo-well" aria-label="Sample next semester">
           <figure className="waylo-specimen">
             <figcaption>
+              <span className="waylo-specimen-target">{specimen.destination}</span>
               <span className="waylo-specimen-kicker">Next semester</span>
-              <strong>Fall 2026</strong>
-              <span className="waylo-specimen-units">13.0 COC units</span>
+              <strong>{specimen.term}</strong>
+              <span className="waylo-specimen-units">{specimen.unitsLabel}</span>
             </figcaption>
             <ol>
-              <li>
-                <strong className="font-mono tabular-nums">CHEM-201</strong>
-                <span>General Chemistry I</span>
-                <span className="tabular-nums">5.0</span>
-                <em className="verified">Official agreement</em>
-              </li>
-              <li>
-                <strong className="font-mono tabular-nums">MATH-211</strong>
-                <span>Calculus I</span>
-                <span className="tabular-nums">5.0</span>
-                <em className="verified">Official agreement</em>
-              </li>
-              <li>
-                <strong className="font-mono tabular-nums">ENGL-103</strong>
-                <span>Critical Reading, Writing and Thinking</span>
-                <span className="tabular-nums">3.0</span>
-                <em className="review">Ask a counselor</em>
-              </li>
+              {specimen.courses.map((course) => (
+                <li key={course.code}>
+                  <strong className="font-mono tabular-nums">{course.code}</strong>
+                  <span className="waylo-specimen-copy">
+                    {course.title}
+                    {course.overlap ? (
+                      <small aria-label={course.overlapLabel ?? course.overlap}>{course.overlapLabel ?? course.overlap}</small>
+                    ) : null}
+                  </span>
+                  <span className="tabular-nums">{course.units}</span>
+                  <em className={course.status}>{course.statusLabel}</em>
+                </li>
+              ))}
             </ol>
           </figure>
         </section>
@@ -123,8 +126,7 @@ export default function LandingPage() {
         ))}
       </ol>
       <p className="production-disclaimer">
-        Waylo is a planning aid, not an official degree audit. Confirm anything marked for review in ASSIST or with
-        a counselor before you enroll.
+        Engineered to match official ASSIST.org articulations — verified side-by-side with your COC counselor.
       </p>
     </main>
   );
