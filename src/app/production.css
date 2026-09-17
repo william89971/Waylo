@@ -420,7 +420,7 @@ a:hover { color: var(--p-ink-deep); }
 .course-bucket.secondary_divergence { background: transparent; color: var(--p-amber); box-shadow: inset 3px 0 0 var(--p-amber); }
 .course-total { min-height: 55px; display: flex; justify-content: space-between; align-items: center; padding: 16px 0; background: transparent; font-size: 16px; }
 .course-total strong { font-family: var(--p-display); font-size: 22px; font-weight: 500; letter-spacing: -0.02em; }
-.dashboard-actions { display: flex; gap: 10px; align-items: center; margin-top: 24px; }
+.dashboard-actions { display: flex; flex-wrap: wrap; gap: 16px; align-items: start; margin-top: 24px; }
 .dashboard-rail { display: grid; align-content: start; border: 0; border-top: 1px solid var(--p-border); border-radius: 0; overflow: visible; }
 .dashboard-rail section { padding: 18px; border-bottom: 1px solid var(--p-border); display: grid; gap: 6px; }
 .dashboard-rail section:last-child { border-bottom: 0; }
@@ -543,6 +543,55 @@ a:hover { color: var(--p-ink-deep); }
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+}
+
+.counselor-handoff {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+.counselor-handoff-label {
+  margin: 0;
+  color: var(--p-muted);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.counselor-handoff-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.counselor-email-form {
+  display: grid;
+  gap: 10px;
+  width: min(420px, 100%);
+  padding-top: 4px;
+}
+.counselor-email-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--p-muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+.counselor-email-form input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--p-border-strong);
+  border-radius: 2px;
+  background: var(--p-paper);
+  color: var(--p-ink);
+  padding: 9px 11px;
+  font: inherit;
+}
+.counselor-email-form p {
+  margin: 0;
+  color: var(--p-muted);
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 400;
 }
 
 .plan-footer {
@@ -934,6 +983,15 @@ a:hover { color: var(--p-ink-deep); }
   .plan-header-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+  .plan-header-actions .production-button,
+  .counselor-handoff,
+  .counselor-handoff-actions,
+  .counselor-email-form {
+    width: 100%;
+  }
+  .counselor-handoff-actions {
+    display: grid;
   }
   .plan-header-actions .production-button {
     width: 100%;

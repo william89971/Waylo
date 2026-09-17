@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CalGetcPanel } from "@/components/cal-getc-panel";
 import { CounselorConfirmationList } from "@/components/counselor-confirmation-list";
+import { CounselorHandoff } from "@/components/counselor-handoff";
+import { citationsFromAudit, CounselorPacket } from "@/components/counselor-packet";
 import type { CourseEvidencePayload } from "@/components/evidence-drawer";
 import { HomeSemesterList, type HomeSemesterCourse } from "@/components/home-semester-list";
 import { evidenceById } from "@/lib/academic-data";
@@ -15,7 +17,7 @@ import { graphCodeForStudentCourse, unmatchedCompletedCourses } from "@/lib/arti
 import type { ArticulationGraph, VerificationTier } from "@/lib/articulation/types";
 import type { SavedPlan, SelectableTarget } from "@/lib/production-types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
-import { generateMultiTargetProductionPlan, listSelectableTargets } from "@/lib/server/production-planning";
+import { generateMultiTargetProductionPlan, listSelectableTargets, MULTI_TARGET_DATA_RELEASE } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
 import { alreadyDoneLine, courseCountsLine, courseWhySentence, formatSelectableTargetLabel, isOfficialVerifiedSource, officialSourceLabel } from "@/lib/student-facing-copy";
 
@@ -250,9 +252,30 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       sourceLabel: sourceCampus?.agreementYear ? officialSourceLabel(sourceCampus.agreementYear) : undefined,
     };
   });
+  const scheduleRows =
+    auditPlan?.schedule.terms.flatMap((term) =>
+      term.courses.map((course) => ({
+        termLabel: term.label,
+        code: course.code,
+        title: course.title,
+        semesterUnits: course.semesterUnits,
+        bucket: course.bucket,
+      })),
+    ) ??
+    route.terms.flatMap((term) =>
+      term.courses.map((course) => ({
+        termLabel: term.label,
+        code: course.code,
+        title: course.title,
+        semesterUnits: course.units,
+      })),
+    );
+  const citations = citationsFromAudit(auditPlan?.auditSummary, graph, (id) => labelFor(targets, id));
+  const packetUnits = auditPlan?.totalSemesterUnits ?? route.terms.reduce((sum, term) => sum + term.totalUnits, 0);
 
   return (
     <div className="production-page dashboard-page">
+      <div className="no-print">
       {saved ? (
         <div className="success-banner" role="status">
           Plan saved. You can come back to this list anytime.
@@ -310,9 +333,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <CalGetcPanel areas={calGetc} />
           <CounselorConfirmationList items={counselorItems} />
           <div className="dashboard-actions">
-            <Link href="/app/plan#counselor-packet" className="production-button primary">
-              Take this to your counselor
-            </Link>
+            <CounselorHandoff
+              email={{
+                studentName: workspace.profile.preferredName,
+                primaryLabel,
+                secondaryLabels,
+                nextTermLabel: nextTerm?.label ?? "Next term",
+                courses: nextCourses.map((course) => ({
+                  code: course.code,
+                  title: course.title,
+                  units: course.units,
+                })),
+                totalUnits: nextTerm?.totalUnits ?? 0,
+              }}
+            />
             <Link href="/app/plan" className="production-button">
               See all terms
             </Link>
@@ -365,6 +399,17 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <p className="saved-meta">
         Saved plan version {plan.version}
       </p>
+      </div>
+      <CounselorPacket
+        preferredName={workspace.profile.preferredName}
+        primaryLabel={primaryLabel}
+        secondaryLabels={secondaryLabels}
+        scheduleRows={scheduleRows}
+        totalSemesterUnits={packetUnits}
+        citations={citations}
+        academicDataVersion={MULTI_TARGET_DATA_RELEASE}
+        strategy={strategy}
+      />
     </div>
   );
 }
