@@ -9,6 +9,7 @@ import { externalCatalogId } from "@/lib/articulation/transcript-match";
 import type { MultiTargetPlanResult } from "@/lib/articulation/types";
 import type { RouteCandidate } from "@/lib/domain";
 import type { OnboardingProfile, PlanningPreferencesInput, ProductionCourse, ProductionCourseInput, SavedPlan, StudentWorkspaceRecord } from "@/lib/production-types";
+import { uniqueBlockedNextTermCodes } from "@/lib/next-term-blocks";
 import { ApiError } from "@/lib/server/api-errors";
 import { getDatabase } from "@/lib/server/db/client";
 import { planCourses, plans, planTerms, planningPreferences, studentCourses, studentProfiles, transferGoals, users } from "@/lib/server/db/schema";
@@ -117,6 +118,11 @@ const DEFAULT_PROFILE: OnboardingProfile = {
   onboardingCompleted: false,
 };
 
+function asBlockedNextTermCodes(value: unknown): string[] {
+  const raw = Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+  return uniqueBlockedNextTermCodes(raw);
+}
+
 const DEFAULT_PREFERENCES: PlanningPreferencesInput = {
   maxUnits: 15,
   summerEnrollment: false,
@@ -143,6 +149,7 @@ function localWorkspace(clerkUserId: string): LocalRecord {
     includeSecondaryDivergence: true,
     coverageTier: "reviewed",
     preferences: { ...DEFAULT_PREFERENCES },
+    blockedNextTermCodes: [],
   };
   localUsers.set(clerkUserId, created);
   return created;
@@ -215,7 +222,11 @@ async function loadSavedPlan(userId: string): Promise<SavedPlan | undefined> {
 export const studentRepository = {
   async load(clerkUserId: string): Promise<StudentWorkspaceRecord> {
     const db = getDatabase();
-    if (!db) return structuredClone(localWorkspace(clerkUserId));
+    if (!db) {
+      const current = localWorkspace(clerkUserId);
+      current.blockedNextTermCodes ??= [];
+      return structuredClone(current);
+    }
     const user = await ensureDatabaseUser(clerkUserId);
     if (!user) throw new ApiError("database_unavailable", "Student storage is unavailable.", 503, true);
     const [[profile], courseRows, [goal], [preferences], activePlan] = await Promise.all([
@@ -256,6 +267,7 @@ export const studentRepository = {
         weeklyWorkHours: preferences?.weeklyWorkHours ?? 0,
         targetTerm: goal?.targetTerm ?? null,
       },
+      blockedNextTermCodes: asBlockedNextTermCodes(preferences?.blockedNextTermCodes),
       activePlan,
     };
   },
@@ -289,6 +301,23 @@ export const studentRepository = {
       db.update(planningPreferences).set({ maxUnits: preferences.maxUnits, summerEnrollment: preferences.summerEnrollment, weeklyWorkHours: preferences.weeklyWorkHours, updatedAt: new Date() }).where(eq(planningPreferences.userId, user.id)),
       db.update(transferGoals).set({ pathwayId: "ucsd-data", targetTerm: preferences.targetTerm, updatedAt: new Date() }).where(eq(transferGoals.userId, user.id)),
     ]);
+    return this.load(clerkUserId);
+  },
+
+  async updateBlockedNextTermCodes(clerkUserId: string, codes: string[]) {
+    const blockedNextTermCodes = uniqueBlockedNextTermCodes(codes);
+    const db = getDatabase();
+    if (!db) {
+      const current = localWorkspace(clerkUserId);
+      current.blockedNextTermCodes = blockedNextTermCodes;
+      return structuredClone(current);
+    }
+    const user = await ensureDatabaseUser(clerkUserId);
+    if (!user) throw new ApiError("database_unavailable", "Student storage is unavailable.", 503, true);
+    await db.update(planningPreferences).set({
+      blockedNextTermCodes,
+      updatedAt: new Date(),
+    }).where(eq(planningPreferences.userId, user.id));
     return this.load(clerkUserId);
   },
 

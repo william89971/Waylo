@@ -69,6 +69,7 @@ function workspace(overrides: Partial<StudentWorkspaceRecord> = {}): StudentWork
       weeklyWorkHours: 0,
       targetTerm: null,
     },
+    blockedNextTermCodes: [],
     ...overrides,
   };
 }

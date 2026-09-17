@@ -134,4 +134,52 @@ describe("multi-target planner", () => {
     expect(calc2?.historySatisfied).toBe(false);
     expect(plan.schedule.terms.flatMap((term) => term.courses.map((course) => course.code))).not.toContain("MATH-211");
   });
+
+  it("keeps a blocked class off the first term and still schedules it later", () => {
+    const baseline = computeMultiTargetPlan({
+      history: [],
+      primaryTargetId: ucsdData,
+      maxUnitsPerTerm: 15,
+      graph,
+    });
+    const firstCode = baseline.schedule.terms[0]?.courses[0]?.code;
+    expect(firstCode).toBeTruthy();
+    const blocked = computeMultiTargetPlan({
+      history: [],
+      primaryTargetId: ucsdData,
+      maxUnitsPerTerm: 15,
+      unavailableNextTermCodes: [firstCode!],
+      graph,
+    });
+    expect(blocked.schedule.terms[0]?.courses.map((course) => course.code)).not.toContain(firstCode);
+    expect(blocked.schedule.terms.slice(1).flatMap((term) => term.courses.map((course) => course.code))).toContain(
+      firstCode,
+    );
+    const order = blocked.schedule.terms.flatMap((term) => term.courses.map((course) => course.code));
+    const first = order.indexOf("MATH-211");
+    const second = order.indexOf("MATH-212");
+    if (first >= 0 && second >= 0) expect(first).toBeLessThan(second);
+  });
+
+  it("emits an empty first term rather than forcing a blocked class", () => {
+    const baseline = computeMultiTargetPlan({
+      history: [],
+      primaryTargetId: ucsdData,
+      maxUnitsPerTerm: 15,
+      graph,
+    });
+    const firstCodes = baseline.schedule.terms[0]?.courses.map((course) => course.code) ?? [];
+    expect(firstCodes.length).toBeGreaterThan(0);
+    const blocked = computeMultiTargetPlan({
+      history: [],
+      primaryTargetId: ucsdData,
+      maxUnitsPerTerm: 15,
+      unavailableNextTermCodes: firstCodes,
+      graph,
+    });
+    expect(blocked.schedule.terms[0]?.courses).toEqual([]);
+    expect(blocked.schedule.terms[0]?.label).toBe(baseline.schedule.terms[0]?.label);
+    const later = blocked.schedule.terms.slice(1).flatMap((term) => term.courses.map((course) => course.code));
+    for (const code of firstCodes) expect(later).toContain(code);
+  });
 });

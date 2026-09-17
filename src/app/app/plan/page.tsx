@@ -37,6 +37,7 @@ import {
   requirementProgressLabel,
   studentFacingDataRelease,
 } from "@/lib/student-facing-copy";
+import { blockedNextTermCounselorLine, blockedNextTermPlacements } from "@/lib/next-term-blocks";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,8 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       targets: selectedTargets,
     });
     const nextTerm = multi.schedule.terms[0];
+    const nextTermBlocks = blockedNextTermPlacements(multi, workspace.blockedNextTermCodes);
+    const nextTermBlockLine = blockedNextTermCounselorLine(nextTermBlocks);
     const strategy = buildAdmissionsStrategy(workspace, targets, {
       hasValidPlan: true,
       plannedCourseCodes: multi.schedule.terms.flatMap((term) => term.courses.map((course) => course.code)),
@@ -125,6 +128,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                 units: course.semesterUnits,
               })),
               totalUnits: nextTerm?.totalSemesterUnits ?? 0,
+              nextTermBlockLine,
             }}
           />
         </header>
@@ -244,6 +248,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           citations={citations}
           academicDataVersion={MULTI_TARGET_DATA_RELEASE}
           strategy={strategy}
+          nextTermBlockLine={nextTermBlockLine}
         />
       </div>
     );

@@ -22,6 +22,7 @@ import { generateMultiTargetProductionPlan, listSelectableTargets, MULTI_TARGET_
 import { studentRepository } from "@/lib/server/student-repository";
 import { courseWhySentence, formatSelectableTargetLabel, isOfficialVerifiedSource, officialSourceLabel } from "@/lib/student-facing-copy";
 import { loadPhrase } from "@/lib/production-routes";
+import { blockedNextTermCounselorLine, blockedNextTermPlacements } from "@/lib/next-term-blocks";
 
 export const dynamic = "force-dynamic";
 
@@ -288,6 +289,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     );
   const citations = citationsFromAudit(auditPlan?.auditSummary, graph, (id) => labelFor(targets, id));
   const packetUnits = auditPlan?.totalSemesterUnits ?? route.terms.reduce((sum, term) => sum + term.totalUnits, 0);
+  const nextTermBlocks = blockedNextTermPlacements(auditPlan, workspace.blockedNextTermCodes);
+  const nextTermBlockLine = blockedNextTermCounselorLine(nextTermBlocks);
 
   return (
     <div className="production-page dashboard-page">
@@ -313,6 +316,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           totalUnits={nextTerm?.totalUnits ?? 0}
           termLabel={nextTerm?.label ?? "Next term"}
           evidenceByCourseCode={evidenceByCourseCode}
+          blocked={nextTermBlocks}
         />
         <CounselorHandoff
           email={{
@@ -326,6 +330,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               units: course.units,
             })),
             totalUnits: nextTerm?.totalUnits ?? 0,
+            nextTermBlockLine,
           }}
         >
           <Link href="/app/plan" className="production-button">
@@ -397,6 +402,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         citations={citations}
         academicDataVersion={MULTI_TARGET_DATA_RELEASE}
         strategy={strategy}
+        nextTermBlockLine={nextTermBlockLine}
       />
     </div>
   );

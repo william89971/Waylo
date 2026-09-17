@@ -79,6 +79,7 @@ export async function generateMultiTargetProductionPlan(
     maxUnitsPerTerm: overrides?.maxUnitsPerTerm ?? workspace.preferences.maxUnits,
     includeSecondaryDivergence: overrides?.includeSecondaryDivergence ?? workspace.includeSecondaryDivergence,
     includeSummer: overrides?.includeSummer ?? workspace.preferences.summerEnrollment,
+    unavailableNextTermCodes: workspace.blockedNextTermCodes ?? [],
     graph,
   });
 }

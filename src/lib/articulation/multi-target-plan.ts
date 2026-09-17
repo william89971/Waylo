@@ -33,6 +33,8 @@ export interface MultiTargetPlanInput {
   startSeason?: "fall" | "spring";
   startYear?: number;
   graph?: ArticulationGraph;
+  /** Graph course codes the student cannot take in the first packed term. Later terms may still schedule them. */
+  unavailableNextTermCodes?: string[];
 }
 
 interface CandidateCourse {
@@ -65,6 +67,10 @@ function worseTier(left: VerificationTier | undefined, right: VerificationTier):
 
 function unique(values: string[]): string[] {
   return [...new Set(values)];
+}
+
+function planCourseCodeKey(code: string) {
+  return code.trim().toUpperCase().replace(/\s+/g, "-");
 }
 
 function completedCodes(history: AcademicHistoryCourse[], graph: ArticulationGraph): Set<string> {
@@ -164,6 +170,20 @@ function prereqClosure(courseId: string, graph: ArticulationGraph, completedIds:
   into.add(courseId);
 }
 
+function toScheduledCourse(course: CandidateCourse): ScheduledCourse {
+  return {
+    courseId: course.courseId,
+    code: course.code,
+    title: course.title,
+    semesterUnits: course.semesterUnits,
+    bucket: course.bucket,
+    fulfillsTargetIds: course.targetIds,
+    verificationTier: course.verificationTier,
+    evidenceNotes: course.evidenceNotes,
+    excessElectiveForTargets: course.excessElectiveForTargets,
+  };
+}
+
 function topoSchedule(
   candidates: CandidateCourse[],
   graph: ArticulationGraph,
@@ -172,6 +192,7 @@ function topoSchedule(
   includeSummer: boolean,
   startSeason: "fall" | "spring",
   startYear: number,
+  unavailableNextTermCodes: Set<string>,
 ): ScheduleTerm[] {
   const needed = new Set<string>();
   for (const candidate of candidates) prereqClosure(candidate.courseId, graph, completedIds, needed);
@@ -210,58 +231,47 @@ function topoSchedule(
       continue;
     }
 
+    const firstTerm = terms.length === 0;
+    const blockedThisTerm = (course: CandidateCourse) =>
+      firstTerm && unavailableNextTermCodes.has(planCourseCodeKey(course.code));
+
     const ready = [...remaining]
       .map((id) => candidateById.get(id)!)
       .filter((course) => course.prerequisites.every((prereq) => done.has(prereq)))
       .filter((course) => course.offeredTerms.includes(season))
       .sort((left, right) => right.weight - left.weight || left.code.localeCompare(right.code));
+    const packable = ready.filter((course) => !blockedThisTerm(course));
 
     const selected: ScheduledCourse[] = [];
     let units = 0;
     const overflowTradeoffs: string[] = [];
 
-    for (const course of ready) {
+    for (const course of packable) {
       if (units + course.semesterUnits > maxUnitsPerTerm) {
         if (course.bucket === "secondary_divergence") overflowTradeoffs.push(course.courseId);
         continue;
       }
-      selected.push({
-        courseId: course.courseId,
-        code: course.code,
-        title: course.title,
-        semesterUnits: course.semesterUnits,
-        bucket: course.bucket,
-        fulfillsTargetIds: course.targetIds,
-        verificationTier: course.verificationTier,
-        evidenceNotes: course.evidenceNotes,
-        excessElectiveForTargets: course.excessElectiveForTargets,
-      });
+      selected.push(toScheduledCourse(course));
       units += course.semesterUnits;
       remaining.delete(course.courseId);
       done.add(course.courseId);
     }
 
     if (selected.length === 0) {
-      const forced =
-        ready[0] ??
-        [...remaining]
-          .map((id) => candidateById.get(id)!)
-          .sort((left, right) => right.weight - left.weight)[0];
-      if (!forced) break;
-      selected.push({
-        courseId: forced.courseId,
-        code: forced.code,
-        title: forced.title,
-        semesterUnits: forced.semesterUnits,
-        bucket: forced.bucket,
-        fulfillsTargetIds: forced.targetIds,
-        verificationTier: forced.verificationTier,
-        evidenceNotes: forced.evidenceNotes,
-        excessElectiveForTargets: forced.excessElectiveForTargets,
-      });
-      remaining.delete(forced.courseId);
-      done.add(forced.courseId);
-      units = forced.semesterUnits;
+      if (firstTerm) {
+        // Leave the first term empty rather than forcing a blocked class or a later prereq.
+      } else {
+        const forced =
+          ready[0] ??
+          [...remaining]
+            .map((id) => candidateById.get(id)!)
+            .sort((left, right) => right.weight - left.weight)[0];
+        if (!forced) break;
+        selected.push(toScheduledCourse(forced));
+        remaining.delete(forced.courseId);
+        done.add(forced.courseId);
+        units = forced.semesterUnits;
+      }
     }
 
     terms.push({
@@ -423,6 +433,9 @@ export function computeMultiTargetPlan(input: MultiTargetPlanInput): MultiTarget
     candidates = candidates.filter((item) => item.bucket !== "secondary_divergence");
   }
 
+  const unavailableNextTermCodes = new Set(
+    (input.unavailableNextTermCodes ?? []).map(planCourseCodeKey).filter(Boolean),
+  );
   const terms = topoSchedule(
     candidates,
     graph,
@@ -431,6 +444,7 @@ export function computeMultiTargetPlan(input: MultiTargetPlanInput): MultiTarget
     input.includeSummer ?? false,
     input.startSeason ?? "fall",
     input.startYear ?? 2026,
+    unavailableNextTermCodes,
   );
 
   const schedule: PlanSchedule = {

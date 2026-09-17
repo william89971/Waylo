@@ -31,6 +31,7 @@ function workspace(overrides: Partial<StudentWorkspaceRecord> = {}): StudentWork
       weeklyWorkHours: 0,
       targetTerm: null,
     },
+    blockedNextTermCodes: [],
     ...overrides,
   };
 }
@@ -77,5 +78,18 @@ describe("production routes", () => {
     expect(options[0]?.title).toMatch(/Your route/);
     expect(new Set(options.map((option) => option.id)).size).toBe(options.length);
     expect(options.some((option) => option.nextTermCodes.length > 0)).toBe(true);
+  });
+
+  it("keeps a blocked class off the selected route's first term", () => {
+    const graph = getSeedArticulationGraph();
+    const open = buildProductionRouteOptions(workspace(), graph, []);
+    const first = open[0]?.nextTermCodes[0];
+    expect(first).toBeTruthy();
+    const blocked = buildProductionRouteOptions(
+      workspace({ blockedNextTermCodes: [first!] }),
+      graph,
+      [],
+    );
+    expect(blocked.find((option) => option.selected)?.nextTermCodes).not.toContain(first);
   });
 });

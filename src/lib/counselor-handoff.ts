@@ -11,6 +11,7 @@ export type CounselorEmailPayload = {
   nextTermLabel: string;
   courses: CounselorEmailCourse[];
   totalUnits: number;
+  nextTermBlockLine?: string | null;
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -34,7 +35,7 @@ First choice: ${payload.primaryLabel}.${also}
 
 Next semester (${payload.nextTermLabel}):
 ${classes}
-${payload.totalUnits} COC units.
+${payload.totalUnits} COC units.${payload.nextTermBlockLine ? `\n${payload.nextTermBlockLine}` : ""}
 
 This is a planning list from Waylo, based on official ASSIST agreements. It is not an official degree audit or admission decision. I'd like to confirm it before I enroll.
 

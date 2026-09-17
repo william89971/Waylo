@@ -31,6 +31,7 @@ export interface CounselorPacketProps {
   citations: CounselorCitation[];
   academicDataVersion: string;
   strategy?: AdmissionsStrategy | null;
+  nextTermBlockLine?: string | null;
 }
 
 export function citationsFromAudit(
@@ -70,6 +71,7 @@ export function CounselorPacket({
   citations,
   academicDataVersion,
   strategy,
+  nextTermBlockLine,
 }: CounselorPacketProps) {
   return (
     <section className="counselor-packet" id="counselor-packet" aria-label="Counselor audit packet">
@@ -89,6 +91,8 @@ export function CounselorPacket({
           {secondaryLabels.length ? secondaryLabels.join(", ") : "None"}
         </p>
       </div>
+
+      {nextTermBlockLine ? <p className="counselor-next-term-block">{nextTermBlockLine}</p> : null}
 
       <h2>Semester-by-semester plan (COC units)</h2>
       <table className="counselor-table">

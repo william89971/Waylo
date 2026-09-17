@@ -29,6 +29,14 @@ describe("counselor handoff", () => {
     expect(body).not.toMatch(/usc:business_administration|multi-target-csp/i);
   });
 
+  it("names next-term delays the student asked for", () => {
+    const { body } = buildCounselorMailto({
+      ...payload,
+      nextTermBlockLine: "Not this term (student): MATH-213 — on the plan in Spring 2027.",
+    });
+    expect(body).toContain("Not this term (student): MATH-213 — on the plan in Spring 2027.");
+  });
+
   it("builds a mailto link from the student's own inbox", () => {
     const href = counselorMailtoHref("pat.nguyen@canyons.edu", payload);
     expect(href.startsWith("mailto:pat.nguyen%40canyons.edu?")).toBe(true);
