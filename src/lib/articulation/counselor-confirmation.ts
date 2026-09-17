@@ -36,8 +36,8 @@ export function buildCounselorConfirmationItems(input: {
       items.push({
         id: `ap-${course.id}`,
         kind: "ap_credit",
-        title: `${course.code} — AP credit`,
-        detail: "Ask a counselor whether this AP credit counts. Waylo does not treat it as done.",
+        title: `${course.code} — counselor confirmation required`,
+        detail: "Ask whether this AP credit counts.",
       });
       continue;
     }
@@ -45,8 +45,8 @@ export function buildCounselorConfirmationItems(input: {
       items.push({
         id: `petition-${course.id}`,
         kind: "petition",
-        title: `${course.code} — petition`,
-        detail: "Ask a counselor whether this substitution counts.",
+        title: `${course.code} — petition pending`,
+        detail: "Ask whether this substitution counts.",
       });
       continue;
     }
@@ -54,8 +54,8 @@ export function buildCounselorConfirmationItems(input: {
       items.push({
         id: `ext-${course.id}`,
         kind: course.catalogCourseId.startsWith("ext:") ? "other_college" : "unmatched_course",
-        title: `${course.code} ${course.title}`,
-        detail: "Saved, but not matched to a listed requirement. Ask a counselor whether it counts.",
+        title: `${course.code} ${course.title} — unmatched`,
+        detail: "Not matched to a listed requirement. Ask a counselor.",
       });
       continue;
     }
@@ -64,7 +64,7 @@ export function buildCounselorConfirmationItems(input: {
         id: `recorded-${course.id}`,
         kind: "unmatched_course",
         title: `${course.code} is on your record`,
-        detail: "Saved, but it does not close a listed major-prep requirement. Ask whether it counts for Cal-GETC or something else.",
+        detail: "Does not close listed major prep. Ask if it counts for Cal-GETC.",
       });
     }
   }
