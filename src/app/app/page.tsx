@@ -20,7 +20,7 @@ import type { SavedPlan, SelectableTarget } from "@/lib/production-types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
 import { generateMultiTargetProductionPlan, listSelectableTargets, MULTI_TARGET_DATA_RELEASE } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
-import { alreadyDoneLine, courseWhySentence, formatSelectableTargetLabel, isOfficialVerifiedSource, officialSourceLabel } from "@/lib/student-facing-copy";
+import { courseWhySentence, formatSelectableTargetLabel, isOfficialVerifiedSource, officialSourceLabel } from "@/lib/student-facing-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -179,25 +179,26 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     reviewItemCount: reviewCount,
   });
   const saved = (await searchParams).saved === "1";
-  const alreadyDone = (auditPlan?.auditSummary ?? [])
-    .map((audit) => {
-      const labels = audit.requirementStates
-        .filter((requirement) => requirement.historySatisfied)
-        .map((requirement) => requirement.label)
-        .slice(0, 3);
-      return alreadyDoneLine(labelFor(targets, audit.targetMajorId), labels);
-    })
-    .filter(Boolean);
+  const alreadyDone = (auditPlan?.auditSummary ?? []).flatMap((audit) => {
+    const school = labelFor(targets, audit.targetMajorId);
+    return audit.requirementStates
+      .filter((requirement) => requirement.historySatisfied)
+      .slice(0, 3)
+      .map((requirement) => ({
+        key: `${audit.targetMajorId}:${requirement.requirementKey}`,
+        label: requirement.label,
+        school,
+      }));
+  });
   const stillMissing = (auditPlan?.auditSummary ?? []).flatMap((audit) =>
     audit.requirementStates
       .filter((requirement) => !requirement.satisfied)
-      .map((requirement) => {
-        const school = labelFor(targets, audit.targetMajorId);
-        if (requirement.verificationTier === "NEEDS_COUNSELOR_CONFIRMATION") {
-          return `${requirement.label} at ${school} — ask a counselor.`;
-        }
-        return `${requirement.label} at ${school} is still open.`;
-      }),
+      .map((requirement) => ({
+        key: `${audit.targetMajorId}:${requirement.requirementKey}`,
+        label: requirement.label,
+        school: labelFor(targets, audit.targetMajorId),
+        review: requirement.verificationTier === "NEEDS_COUNSELOR_CONFIRMATION",
+      })),
   );
   const unmatched = unmatchedCompletedCourses(workspace.courses, graph);
   const selectedTargets = targets.filter((target) => target.id === primaryId || secondaryIds.includes(target.id));
@@ -278,26 +279,21 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {saved ? (
         <div className="success-banner" role="status">
           <WaypointDrawPlayer />
-          Plan saved. You can come back to this list anytime.
+          Plan saved.
         </div>
       ) : null}
       <header className="production-page-header">
         <h1>What to take next semester</h1>
         <p>
-          {nextTerm?.label ?? "Next term"} · {primaryLabel}
+          {primaryLabel}
           {secondaryLabels.length ? ` · also ${secondaryLabels.join(", ")}` : ""}
         </p>
       </header>
       <section className="recommended-semester">
-        <div className="section-heading">
-          <h2>
-            <WaypointDrawPlayer />
-            Recommended semester
-          </h2>
-        </div>
         <HomeSemesterList
           courses={nextCourses}
           totalUnits={nextTerm?.totalUnits ?? 0}
+          termLabel={nextTerm?.label ?? "Next term"}
           evidenceByCourseCode={evidenceByCourseCode}
         />
         <CounselorHandoff
@@ -327,31 +323,44 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <div className="already-counted">
           <h2>Already finished</h2>
           {alreadyDone.length ? (
-            <ul>
-              {alreadyDone.map((line) => (
-                <li key={line}>{line}</li>
+            <ul className="status-scan">
+              {alreadyDone.map((item) => (
+                <li key={item.key}>
+                  <strong>{item.label}</strong>
+                  <span>{item.school}</span>
+                  <em>Done</em>
+                </li>
               ))}
             </ul>
           ) : (
             <p>
               {completedCount
-                ? "Your finished classes are saved. None of them close a listed major-prep requirement yet."
-                : "No finished classes yet. Add them under Your classes if you have already taken College of the Canyons courses."}
+                ? "None close a listed requirement yet."
+                : "No finished classes yet."}
             </p>
           )}
           {unmatched.length ? (
-            <p>
-              Not matched to a listed requirement:{" "}
-              {unmatched.map((course) => `${course.code} ${course.title}`).join("; ")}. Ask a counselor.
-            </p>
+            <ul className="status-scan">
+              {unmatched.map((course) => (
+                <li key={`${course.code}-${course.title}`}>
+                  <strong className="font-mono tabular-nums">{course.code}</strong>
+                  <span>{course.title}</span>
+                  <em className="review">Unmatched</em>
+                </li>
+              ))}
+            </ul>
           ) : null}
         </div>
         {stillMissing.length ? (
           <div className="already-counted">
             <h2>Still missing after this plan</h2>
-            <ul>
-              {stillMissing.slice(0, 4).map((line) => (
-                <li key={line}>{line}</li>
+            <ul className="status-scan">
+              {stillMissing.slice(0, 4).map((item) => (
+                <li key={item.key}>
+                  <strong>{item.label}</strong>
+                  <span>{item.school}</span>
+                  <em className={item.review ? "review" : "open"}>{item.review ? "Ask a counselor" : "Open"}</em>
+                </li>
               ))}
             </ul>
           </div>
@@ -359,9 +368,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <CalGetcPanel areas={calGetc} />
         <CounselorConfirmationList items={counselorItems} />
       </section>
-      <p className="saved-meta">
-        Saved plan version {plan.version}
-      </p>
       </div>
       <CounselorPacket
         preferredName={workspace.profile.preferredName}

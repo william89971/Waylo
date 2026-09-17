@@ -360,10 +360,7 @@ export function OnboardingFlow({
         {step === 2 ? (
           <div className="onboarding-question ">
             <h1 ref={headingRef} tabIndex={-1}>Where do you want to transfer?</h1>
-            <p>
-              Choose every university you are seriously considering. Waylo will show one plan that works across them.
-              Mark your first-choice school.
-            </p>
+            <p>Pick the universities you are considering. Mark your first choice.</p>
 
             <h2 className="onboarding-subheading">1. Universities</h2>
             <div className="selection-group" data-testid="university-list">
@@ -406,7 +403,7 @@ export function OnboardingFlow({
                       <header className="campus-major-header">
                         <div>
                           <h3>{institution?.name ?? institutionId}</h3>
-                          <p>Choose one major for this campus.</p>
+                          <p>One major</p>
                         </div>
                         <label className="primary-campus-control">
                           <input
@@ -489,8 +486,8 @@ export function OnboardingFlow({
             </h1>
             <p>
               {editing
-                ? "Add or remove College of the Canyons classes. You can paste a transcript if that is faster."
-                : "Add the College of the Canyons classes you already finished. You can paste a transcript if that is faster."}
+                ? "Add or remove College of the Canyons classes, or paste a transcript."
+                : "Add finished College of the Canyons classes, or paste a transcript."}
             </p>
             <form
               className="course-entry-grid"
@@ -556,7 +553,7 @@ export function OnboardingFlow({
               ) : (
                 <div className="empty-state">
                   <strong>No classes yet</strong>
-                  <p>That is okay. Waylo will plan from the start. You can add classes later.</p>
+                  <p>Waylo will plan from the start. You can add classes later.</p>
                 </div>
               )}
             </div>
@@ -645,7 +642,7 @@ export function OnboardingFlow({
         {step === 4 ? (
           <div className="onboarding-question ">
             <h1 ref={headingRef} tabIndex={-1}>How heavy can next semester be?</h1>
-            <p>Set a unit cap. Waylo will never skip a required class to stay under it.</p>
+            <p>Waylo will not skip a required class to stay under this cap.</p>
             <div className="preference-form">
               <label>
                 Maximum units per semester
@@ -666,7 +663,7 @@ export function OnboardingFlow({
                   aria-invalid={Boolean(targetTerm.trim()) && !isPreferredTransferTerm(targetTerm)}
                   onChange={(event) => setTargetTerm(event.target.value)}
                 />
-                <small id="target-term-hint">Use Fall, Spring, or Summer plus a year, or leave blank. This is a preference, not a transfer date.</small>
+                <small id="target-term-hint">Fall, Spring, or Summer plus a year. Optional.</small>
               </label>
               <label className="checkbox-row">
                 <input

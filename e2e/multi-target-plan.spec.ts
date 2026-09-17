@@ -108,11 +108,10 @@ test("multi-target Save this plan reaches the dashboard and shows strategy", asy
   await expect(homeDrawer).toHaveAttribute("data-state", "open");
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(homeDrawer.getByRole("link", { name: /Official source|View official source/ }).first()).toBeVisible();
+  await expect(homeDrawer).toContainText(/You take |Not required|Confirmed in/);
   await page.keyboard.press("Escape");
   await expect(homeDrawer).toHaveAttribute("data-state", "closed");
   await expect(page.getByText(/UC Berkeley Economics/).first()).toBeVisible();
-  await expect(page.locator(".course-why").first()).toBeVisible();
-  await expect(page.locator(".course-why").first()).toHaveText(/You take |Not required/);
   await expect(page.getByRole("heading", { name: "Already finished" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Read the strategy note" })).toBeVisible();
   await page.getByRole("link", { name: "Read the strategy note" }).click();

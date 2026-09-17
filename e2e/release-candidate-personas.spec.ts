@@ -21,7 +21,6 @@ async function finishToHome(page: Page) {
 
 async function assertHomeInvariants(page: Page, opts?: { completedCodes?: string[] }) {
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Recommended semester" })).toBeVisible();
   await expect(page.locator(".dashboard-rail")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Change unit limit" })).toBeVisible();
   const pdf = page.getByRole("button", { name: "Download PDF" });
@@ -40,12 +39,6 @@ async function assertHomeInvariants(page: Page, opts?: { completedCodes?: string
   const recommended = page.getByRole("table", { name: "Recommended semester courses" });
   for (const code of opts?.completedCodes ?? []) {
     await expect(recommended).not.toContainText(code);
-  }
-
-  const officialLinks = page.getByRole("link", { name: /Official source/ });
-  const officialCount = await officialLinks.count();
-  for (let index = 0; index < officialCount; index += 1) {
-    await expect(officialLinks.nth(index)).toHaveText(/Official source · \d/);
   }
 
   const overflow = await page.evaluate(() => ({
@@ -75,9 +68,9 @@ test("brand-new student still gets a next-semester answer with dated official so
   await page.getByRole("button", { name: "See next semester", exact: true }).click();
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Why this class?" }).first()).toBeVisible();
-  const verifiedRow = page.locator(".course-row").filter({ has: page.getByRole("link", { name: /Official source · / }) }).first();
+  const verifiedRow = page.locator(".course-row").filter({ hasText: "Official agreement" }).first();
   await expect(verifiedRow).toBeVisible();
-  await verifiedRow.getByRole("button", { name: "Why this class?" }).click();
+  await verifiedRow.click();
   const drawer = page.getByTestId("evidence-drawer");
   await expect(drawer).toHaveAttribute("data-state", "open");
   await expect(drawer.getByRole("link", { name: /View official source · / }).first()).toHaveText(/2025-26|20\d{2}/);
@@ -140,15 +133,17 @@ test("completed COC, C1000, unmatched, AP, other-college, and petition stay hone
     completedCodes: ["MATH 211", "ENGL C1000", "STAT C1000", "SOCI 101", "AP Calculus AB"],
   });
   await expect(page.getByRole("heading", { name: "Already finished" })).toBeVisible();
-  await expect(page.getByText(/Calculus I .+ is already done/)).toBeVisible();
-  await expect(page.getByText("SOCI 101 Introduction to Sociology — unmatched")).toBeVisible();
+  await expect(page.getByText("Calculus I")).toBeVisible();
+  await expect(page.getByText("Done").first()).toBeVisible();
+  await expect(page.getByText("SOCI 101")).toBeVisible();
+  await expect(page.getByText("Unmatched").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Counselor confirmation required" })).toBeVisible();
   await expect(page.getByText("AP Calculus AB — counselor confirmation required")).toBeVisible();
   await expect(page.getByText(/petition pending/i)).toBeVisible();
   await expect(page.getByText(/does not treat them as/i)).toBeVisible();
   await expect(page.getByRole("button", { name: "Why this class?" }).first()).toBeVisible();
-  const verifiedRow = page.locator(".course-row").filter({ has: page.getByRole("link", { name: /Official source · / }) }).first();
-  await verifiedRow.getByRole("button", { name: "Why this class?" }).click();
+  const verifiedRow = page.locator(".course-row").filter({ hasText: "Official agreement" }).first();
+  await verifiedRow.click();
   const drawer = page.getByTestId("evidence-drawer");
   await expect(drawer).toHaveAttribute("data-state", "open");
   await expect(drawer.getByRole("link", { name: /View official source · / })).toBeVisible();

@@ -17,51 +17,57 @@ export type HomeSemesterCourse = {
   sourceLabel?: string;
 };
 
+function unitsLabel(units: number) {
+  return Number.isInteger(units) ? units.toFixed(1) : String(units);
+}
+
 export function HomeSemesterList({
   courses,
   totalUnits,
+  termLabel,
   evidenceByCourseCode,
 }: {
   courses: HomeSemesterCourse[];
   totalUnits: number;
+  termLabel: string;
   evidenceByCourseCode: Record<string, CourseEvidencePayload>;
 }) {
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
-  const evidence = selectedCode ? evidenceByCourseCode[selectedCode] ?? null : null;
+  const selected = courses.find((course) => course.code === selectedCode);
+  const evidence = selected
+    ? { ...(evidenceByCourseCode[selected.code] ?? {
+        courseCode: selected.code,
+        courseTitle: selected.title,
+        semesterUnits: selected.units,
+        campuses: [],
+      }), why: selected.why }
+    : null;
 
   return (
     <>
-      <div className="course-table" role="table" aria-label="Recommended semester courses">
-        {courses.map((course) => {
-          const sourceUrl = course.state === "verified" ? course.sourceUrl : undefined;
-          return (
-            <div className="course-row" role="row" key={course.courseId}>
-              <div className="course-identity">
-                <strong className="font-mono tabular-nums">{course.code}</strong>
-                <small>
-                  {course.title} · {course.units} units
-                </small>
-                <p className="course-why">{course.why}</p>
-              </div>
+      <figure className="waylo-specimen home-appointment">
+        <figcaption>
+          <span className="waylo-specimen-kicker">Next semester</span>
+          <strong>{termLabel}</strong>
+          <span className="waylo-specimen-units">{unitsLabel(totalUnits)} units</span>
+        </figcaption>
+        <div className="course-table" role="table" aria-label="Recommended semester courses">
+          {courses.map((course) => (
+            <button
+              type="button"
+              className="course-row"
+              key={course.courseId}
+              onClick={() => setSelectedCode(course.code)}
+              aria-label={`Why this class? ${course.code} ${course.title}`}
+            >
+              <strong className="font-mono tabular-nums">{course.code}</strong>
+              <span className="course-title">{course.title}</span>
+              <span className="tabular-nums course-units">{unitsLabel(course.units)}</span>
               <EvidenceStatus state={course.state} tier={course.tier} />
-              <div className="course-row-actions">
-                <button type="button" className="production-text-link" onClick={() => setSelectedCode(course.code)}>
-                  Why this class?
-                </button>
-                {sourceUrl && course.sourceLabel ? (
-                  <a href={sourceUrl} target="_blank" rel="noreferrer">
-                    {course.sourceLabel}
-                  </a>
-                ) : null}
-              </div>
-            </div>
-          );
-        })}
-        <div className="course-total">
-          <span>Total</span>
-          <strong>{totalUnits} planned units</strong>
+            </button>
+          ))}
         </div>
-      </div>
+      </figure>
       <EvidenceDrawer open={selectedCode !== null} evidence={evidence} onClose={() => setSelectedCode(null)} />
     </>
   );

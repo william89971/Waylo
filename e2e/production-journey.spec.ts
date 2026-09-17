@@ -22,7 +22,6 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
 
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.getByText("Plan saved."), "save confirmation should be visible").toBeVisible();
-  await expect(page.locator(".saved-meta")).toContainText("version 1");
   await expect(page.getByRole("button", { name: "Why this class?" }).first()).toBeVisible();
   await expect(page.getByText("Take this to your counselor").first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Download PDF" })).toBeVisible();
@@ -55,7 +54,7 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await returning.goto(`/sign-in?testUser=${testUser}`);
   await returning.getByRole("button", { name: "Continue as test student" }).click();
   await expect(returning.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
-  await expect(returning.locator(".saved-meta")).toContainText("version 1");
+  await expect(returning.getByRole("button", { name: "Why this class?" }).first()).toBeVisible();
   await returnContext.close();
 });
 

@@ -85,7 +85,7 @@ export function CounselorHandoff({ email, children }: { email: CounselorEmailPay
           <button type="submit" className="production-button primary">
             Send from my email
           </button>
-          <p>Opens your mail app with next semester already written. Attach the PDF if you downloaded it.</p>
+          <p>Opens your mail app with next semester written.</p>
         </form>
       ) : null}
       {error ? (

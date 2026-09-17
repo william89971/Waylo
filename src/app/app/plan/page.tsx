@@ -55,7 +55,6 @@ function DivergenceList({
   return (
     <section className="divergence-section no-print">
       <h2>Schools want different classes</h2>
-      <p>They stay on this plan because you selected more than one school.</p>
       <ul className="divergence-list">
         {points.map((point) => {
           const { code, line } = divergenceDisplay(point, labelFor);
@@ -157,11 +156,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             <strong>Proposed — not saved</strong>
             <span>Save it so next semester stays on Home.</span>
           </div>
-        ) : (
-          <p className="plan-secondary-note no-print">
-            Next semester is also on <Link href="/app">Home</Link>.
-          </p>
-        )}
+        ) : null}
         {nextTerm ? (
           <section className="next-term-hero no-print" aria-label="Next semester recap">
             <YellowFieldPlayer />
@@ -205,12 +200,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         <DivergenceList points={multi.divergencePoints} labelFor={labelFor} />
         <section className="no-print matrix-section" aria-label="Multi-campus articulation matrix">
           <div className="matrix-heading">
-            <div>
-              <h2>How each class counts</h2>
-              <p>
-                Tap a class to see why it counts, and which school still needs a counselor.
-              </p>
-            </div>
+            <h2>How each class counts</h2>
             <p className="matrix-totals">
               {multi.totalSemesterUnits.toFixed(1)} COC units · {matrixRows.length} courses
             </p>
@@ -228,7 +218,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             initialCourseCode={focusCourse}
           />
           {multi.schedule.terms.some((term) => term.conflicts.length > 0) ? (
-            <ul className="space-y-1 text-sm text-amber-800" role="status">
+            <ul className="space-y-1 text-[16px] text-amber-800" role="status">
               {multi.schedule.terms.flatMap((term) =>
                 term.conflicts.map((conflict, index) => (
                   <li key={`${term.id}-conflict-${index}`}>
@@ -243,7 +233,6 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         <section id="requirements" className="audit-section no-print" aria-label="Destination audit summaries">
           <div className="section-heading">
             <h2>What&apos;s left at each school</h2>
-            <p>Green is an official agreement. Amber means ask a counselor before you enroll.</p>
           </div>
           {multi.auditSummary.map((audit) => (
             <article className="audit-block" key={audit.targetMajorId}>

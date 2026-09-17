@@ -5,7 +5,7 @@ export function CounselorConfirmationList({ items }: { items: CounselorConfirmat
   return (
     <section className="counselor-confirm" aria-labelledby="counselor-confirm-title">
       <h2 id="counselor-confirm-title">Counselor confirmation required</h2>
-      <p>Ask about these before you enroll. Waylo does not treat them as done.</p>
+      <p>Waylo does not treat them as done.</p>
       <ul>
         {items.map((item) => (
           <li key={item.id}>

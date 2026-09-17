@@ -4,7 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { ExternalLink, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ArticulationSourceType, VerificationTier } from "@/lib/articulation/types";
-import { isOfficialVerifiedSource, SOURCE_TYPE_LABEL, VERIFICATION_EXPLAIN, VERIFICATION_SHORT } from "@/lib/student-facing-copy";
+import { isOfficialVerifiedSource, VERIFICATION_EXPLAIN } from "@/lib/student-facing-copy";
 
 export type EvidenceCampusEntry = {
   targetMajorId: string;
@@ -24,6 +24,7 @@ export type CourseEvidencePayload = {
   courseTitle: string;
   semesterUnits: number;
   campuses: EvidenceCampusEntry[];
+  why?: string;
 };
 
 export type EvidenceDrawerProps = {
@@ -35,8 +36,8 @@ export type EvidenceDrawerProps = {
 function LedgerRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] gap-3 border-b border-border/40 py-2.5 last:border-b-0">
-      <dt className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{label}</dt>
-      <dd className="text-right text-[13px] leading-snug text-foreground">{value}</dd>
+      <dt className="text-[15px] font-medium text-muted-foreground">{label}</dt>
+      <dd className="text-right text-[16px] leading-snug text-foreground">{value}</dd>
     </div>
   );
 }
@@ -107,15 +108,15 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
       >
         <header className="flex items-start justify-between gap-3 border-b border-border/40 px-5 py-4">
           <div className="min-w-0">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            <p className="text-[15px] font-medium text-muted-foreground">
               Why this class
             </p>
             {evidence ? (
               <>
-                <h2 className="mt-1 font-mono text-lg font-medium tabular-nums tracking-tight text-foreground">
+                <h2 className="mt-1 font-mono text-xl font-medium tabular-nums tracking-tight text-foreground">
                   {evidence.courseCode}
                 </h2>
-                <p className="mt-0.5 truncate text-sm text-muted-foreground">{evidence.courseTitle}</p>
+                <p className="mt-0.5 truncate text-[16px] text-muted-foreground">{evidence.courseTitle}</p>
               </>
             ) : (
               <h2 className="mt-1 text-lg font-medium text-foreground">No course selected</h2>
@@ -134,39 +135,28 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {evidence ? (
             <div className="space-y-6">
+              {evidence.why ? (
+                <p className="text-[17px] leading-snug text-foreground">{evidence.why}</p>
+              ) : null}
               <div className={cn("border px-3 py-2.5", tierTone(headlineTier))}>
-                <p className="text-[14px] font-medium leading-snug tracking-normal normal-case">
+                <p className="text-[16px] font-medium leading-snug tracking-normal normal-case">
                   {headlineTier
                     ? VERIFICATION_EXPLAIN[headlineTier]
                     : "This course is not required by the first-choice campus."}
                 </p>
-                {headlineTier ? (
-                  <p className="mt-1.5 text-[12px] leading-snug">{VERIFICATION_SHORT[headlineTier]}</p>
-                ) : null}
               </div>
-
-              <dl>
-                <LedgerRow
-                  label="Source course"
-                  value={
-                    <span className="font-mono tabular-nums">
-                      {evidence.courseCode} · {Number.isInteger(evidence.semesterUnits) ? evidence.semesterUnits : evidence.semesterUnits.toFixed(1)} units
-                    </span>
-                  }
-                />
-              </dl>
 
               {evidence.campuses.map((campus) => (
                 <section key={campus.targetMajorId} className="space-y-1">
                   <div className="flex items-baseline justify-between gap-2 border-b border-border/40 pb-2">
-                    <h3 className="text-[13px] font-medium text-foreground">{campus.campusLabel}</h3>
+                    <h3 className="text-[16px] font-medium text-foreground">{campus.campusLabel}</h3>
                     {campus.isPrimary ? (
-                      <span className="text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground">First choice</span>
+                      <span className="text-[15px] font-medium text-muted-foreground">First choice</span>
                     ) : null}
                   </div>
 
                   {!campus.required ? (
-                    <p className="py-3 text-[13px] text-muted-foreground">This school does not need this class.</p>
+                    <p className="py-3 text-[16px] text-muted-foreground">This school does not need this class.</p>
                   ) : (
                     <dl>
                       <LedgerRow
@@ -177,18 +167,12 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                         label="Requirement"
                         value={
                           campus.destinationRequirement ? (
-                            <span className="font-mono text-[12px] tabular-nums">
+                            <span className="font-mono text-[16px] tabular-nums">
                               {campus.destinationRequirement}
                             </span>
                           ) : (
                             "—"
                           )
-                        }
-                      />
-                      <LedgerRow
-                        label="Verification"
-                        value={
-                          campus.verificationTier ? VERIFICATION_EXPLAIN[campus.verificationTier] : "—"
                         }
                       />
                       <LedgerRow
@@ -201,10 +185,6 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                           )
                         }
                       />
-                      <LedgerRow
-                        label="Source"
-                        value={campus.sourceType ? SOURCE_TYPE_LABEL[campus.sourceType] : "—"}
-                      />
                       {campus.notes ? <LedgerRow label="Notes" value={campus.notes} /> : null}
                     </dl>
                   )}
@@ -214,7 +194,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                       href={campus.sourceUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-3 inline-flex min-h-11 items-center gap-1.5 border border-border/40 px-3 text-[12px] font-medium text-foreground"
+                      className="mt-3 inline-flex min-h-11 items-center gap-1.5 border border-border/40 px-3 text-[16px] font-medium text-foreground"
                     >
                       View official source · {campus.agreementYear}
                       <ExternalLink className="size-3.5" aria-hidden />
@@ -224,7 +204,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Select a class to see why it is on the plan.</p>
+            <p className="text-[16px] text-muted-foreground">Select a class to see why it is on the plan.</p>
           )}
         </div>
       </aside>
