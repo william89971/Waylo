@@ -21,9 +21,59 @@ export type StrategyContext = {
 
 const TARGET_TERM = /^(Fall|Spring|Summer) \d{4}$/;
 const RIGOR_PATTERN = /(MATH|CALC|COMP SCI|CHEM|PHYS|BIOSCI|STAT)/i;
+const TRANSFER_SEASONS = ["Spring", "Summer", "Fall"] as const;
+
+export const CLASS_LOAD_OPTIONS = [
+  { classes: 3, units: 12, hint: "lighter" },
+  { classes: 4, units: 15, hint: "typical" },
+  { classes: 5, units: 18, hint: "heavy" },
+] as const;
+
+export type ClassLoadOption = (typeof CLASS_LOAD_OPTIONS)[number];
 
 export function isPreferredTransferTerm(value: string): boolean {
   return TARGET_TERM.test(value.trim());
+}
+
+export function classLoadFromUnits(units: number): ClassLoadOption {
+  const current = Number.isFinite(units) ? units : 15;
+  return CLASS_LOAD_OPTIONS.reduce((best, option) =>
+    Math.abs(option.units - current) < Math.abs(best.units - current) ? option : best,
+  );
+}
+
+function seasonFromMonth(month: number): (typeof TRANSFER_SEASONS)[number] {
+  if (month < 5) return "Spring";
+  if (month < 7) return "Summer";
+  return "Fall";
+}
+
+export function listTransferTermOptions(now = new Date(), count = 12): string[] {
+  let year = now.getFullYear();
+  let seasonIndex = TRANSFER_SEASONS.indexOf(seasonFromMonth(now.getMonth())) + 1;
+  if (seasonIndex > 2) {
+    seasonIndex = 0;
+    year += 1;
+  }
+  const options: string[] = [];
+  for (let i = 0; i < count; i += 1) {
+    options.push(`${TRANSFER_SEASONS[seasonIndex]} ${year}`);
+    seasonIndex += 1;
+    if (seasonIndex > 2) {
+      seasonIndex = 0;
+      year += 1;
+    }
+  }
+  return options;
+}
+
+export function listTransferTermChoices(current: string, now = new Date()): string[] {
+  const options = listTransferTermOptions(now);
+  const trimmed = current.trim();
+  if (trimmed && isPreferredTransferTerm(trimmed) && !options.includes(trimmed)) {
+    return [trimmed, ...options];
+  }
+  return options;
 }
 
 function selectedTargets(workspace: StudentWorkspaceRecord, targets: SelectableTarget[]) {

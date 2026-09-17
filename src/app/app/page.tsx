@@ -318,7 +318,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {strategy ? (
             <Link href="/app/plan#admissions-strategy">Read the strategy note</Link>
           ) : null}
-          <Link href="/onboarding?units=1">Change unit limit</Link>
+          <Link href="/onboarding?units=1">Change class load</Link>
         </nav>
         <div className="already-counted">
           <h2>Already finished</h2>

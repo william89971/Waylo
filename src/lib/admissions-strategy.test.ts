@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildAdmissionsStrategy, isPreferredTransferTerm } from "@/lib/admissions-strategy";
+import {
+  buildAdmissionsStrategy,
+  classLoadFromUnits,
+  isPreferredTransferTerm,
+  listTransferTermChoices,
+  listTransferTermOptions,
+} from "@/lib/admissions-strategy";
 import type { SelectableTarget, StudentWorkspaceRecord } from "@/lib/production-types";
 
 const targets: SelectableTarget[] = [
@@ -127,5 +133,20 @@ describe("admissions strategy", () => {
     expect(isPreferredTransferTerm("Spring 2029")).toBe(true);
     expect(isPreferredTransferTerm("")).toBe(false);
     expect(isPreferredTransferTerm("soon")).toBe(false);
+  });
+
+  it("maps unit caps to a 3, 4, or 5 class load", () => {
+    expect(classLoadFromUnits(15)).toMatchObject({ classes: 4, units: 15 });
+    expect(classLoadFromUnits(12)).toMatchObject({ classes: 3, units: 12 });
+    expect(classLoadFromUnits(9)).toMatchObject({ classes: 3, units: 12 });
+    expect(classLoadFromUnits(18)).toMatchObject({ classes: 5, units: 18 });
+  });
+
+  it("lists upcoming transfer terms instead of free text", () => {
+    const options = listTransferTermOptions(new Date(2026, 8, 17));
+    expect(options[0]).toBe("Spring 2027");
+    expect(options).toContain("Fall 2028");
+    expect(options).not.toContain("Fall 2026");
+    expect(listTransferTermChoices("Fall 2025", new Date(2026, 8, 17))[0]).toBe("Fall 2025");
   });
 });
