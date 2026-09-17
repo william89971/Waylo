@@ -38,7 +38,7 @@ export default async function EvidencePage({ searchParams }: { searchParams: Pro
   if (!clerkUserId) redirect("/sign-in");
   const workspace = await studentRepository.load(clerkUserId);
   const courseQuery = (await searchParams).course;
-  if (workspace.profile.onboardingCompleted && !shouldStayOnLegacyEvidence(workspace.primaryTargetId, workspace.secondaryTargetIds)) {
+  if (workspace.profile.onboardingCompleted) {
     const focus = courseQuery ? `?course=${encodeURIComponent(courseQuery)}` : "";
     redirect(`/app/plan${focus}`);
   }
@@ -108,8 +108,4 @@ export default async function EvidencePage({ searchParams }: { searchParams: Pro
       </div>
     </div>
   );
-}
-
-function shouldStayOnLegacyEvidence(primaryTargetId: string, secondaryTargetIds?: string[]) {
-  return primaryTargetId === "uc_san_diego:data_science" && !(secondaryTargetIds?.length);
 }

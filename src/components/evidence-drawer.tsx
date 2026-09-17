@@ -150,7 +150,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                   label="Source course"
                   value={
                     <span className="font-mono tabular-nums">
-                      {evidence.courseCode} · {evidence.semesterUnits.toFixed(1)} u
+                      {evidence.courseCode} · {Number.isInteger(evidence.semesterUnits) ? evidence.semesterUnits : evidence.semesterUnits.toFixed(1)} units
                     </span>
                   }
                 />

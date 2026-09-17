@@ -99,8 +99,11 @@ export async function listSelectableTargets(): Promise<SelectableTarget[]> {
   });
 }
 
-/** Prefer the legacy UCSD planner when only the reviewed UCSD Data Science target is selected. */
-export function shouldUseLegacyUcsdPlanner(workspace: StudentWorkspaceRecord): boolean {
-  const primary = workspace.primaryTargetId || DEFAULT_PRIMARY_TARGET_ID;
-  return primary === DEFAULT_PRIMARY_TARGET_ID && (workspace.secondaryTargetIds?.length ?? 0) === 0;
+/**
+ * The legacy UCSD planner is retired for students. It labeled the same next-semester
+ * classes as "Ask a counselor" while Home showed official ASSIST sources.
+ */
+export function shouldUseLegacyUcsdPlanner(workspace?: StudentWorkspaceRecord): boolean {
+  void workspace;
+  return false;
 }

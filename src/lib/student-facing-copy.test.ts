@@ -14,6 +14,7 @@ import {
   isOfficialVerifiedSource,
   officialSourceLabel,
   studentFacingConstraintNotes,
+  studentFacingDataRelease,
   targetCoverageNote,
 } from "@/lib/student-facing-copy";
 import type { SelectableTarget } from "@/lib/production-types";
@@ -125,5 +126,11 @@ describe("student-facing copy", () => {
     expect(studentFacingConstraintNotes(["Production baseline pathway.", "Complete major prep by the spring before fall matriculation."])).toEqual([
       "Complete major prep by the spring before fall matriculation.",
     ]);
+  });
+
+  it("never prints internal data-release ids to students", () => {
+    expect(studentFacingDataRelease("ucsd-data-2026-review-needed")).toBe("ASSIST 2025-26");
+    expect(studentFacingDataRelease("seed-articulation-2025-26.v1")).toBe("ASSIST 2025-26");
+    expect(studentFacingDataRelease("multi-target-csp-v1")).toBe("ASSIST 2025-26");
   });
 });
