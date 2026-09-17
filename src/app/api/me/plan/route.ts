@@ -1,3 +1,5 @@
+import { expandLabPairCourseCodes } from "@/lib/articulation/multi-target-plan";
+import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
 import { PlanActionSchema } from "@/lib/production-types";
 import { ApiError, apiFailure } from "@/lib/server/api-errors";
 import { parseJson } from "@/lib/server/api-request";
@@ -52,6 +54,8 @@ export async function POST(request: Request) {
       }
       if (input.action === "block_next_term" || input.action === "unblock_next_term") {
         const code = normalizePlanCourseCode(input.code);
+        const graph = await loadActiveArticulationGraph();
+        const paired = expandLabPairCourseCodes([code], graph);
         if (input.action === "block_next_term") {
           const current = await generateMultiTargetProductionPlan(workspace);
           const firstCodes = (current.schedule.terms[0]?.courses ?? []).map((course) =>
@@ -62,12 +66,13 @@ export async function POST(request: Request) {
           }
           await studentRepository.updateBlockedNextTermCodes(clerkUserId, [
             ...workspace.blockedNextTermCodes,
-            code,
+            ...paired,
           ]);
         } else {
+          const remove = new Set(paired);
           await studentRepository.updateBlockedNextTermCodes(
             clerkUserId,
-            workspace.blockedNextTermCodes.filter((item) => item !== code),
+            workspace.blockedNextTermCodes.filter((item) => !remove.has(item)),
           );
         }
         workspace = await studentRepository.load(clerkUserId);

@@ -556,7 +556,7 @@ a:hover { color: var(--p-ink-deep); }
   margin: 0;
   padding: 0;
 }
-.waylo-specimen li {
+.waylo-specimen ol > li {
   display: grid;
   grid-template-columns: 7.2rem minmax(0, 1fr) 3.2rem auto;
   gap: 12px 16px;
@@ -578,24 +578,24 @@ a:hover { color: var(--p-ink-deep); }
   font-weight: 650;
   letter-spacing: -0.01em;
 }
-.waylo-specimen li:nth-child(1) { animation-delay: 0.08s; }
-.waylo-specimen li:nth-child(2) { animation-delay: 0.16s; }
-.waylo-specimen li:nth-child(3) { animation-delay: 0.24s; }
-.waylo-specimen li strong {
+.waylo-specimen ol > li:nth-child(1) { animation-delay: 0.08s; }
+.waylo-specimen ol > li:nth-child(2) { animation-delay: 0.16s; }
+.waylo-specimen ol > li:nth-child(3) { animation-delay: 0.24s; }
+.waylo-specimen ol > li strong {
   font-family: var(--p-mono);
   font-size: 15px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
-.waylo-specimen li em {
+.waylo-specimen ol > li em {
   font-style: normal;
   font-size: 15px;
   font-weight: 650;
   justify-self: end;
 }
-.waylo-specimen li em.verified { color: var(--p-teal); }
-.waylo-specimen li em.review { color: var(--p-amber); }
-.waylo-specimen li .tabular-nums {
+.waylo-specimen ol > li em.verified { color: var(--p-teal); }
+.waylo-specimen ol > li em.review { color: var(--p-amber); }
+.waylo-specimen ol > li .tabular-nums {
   font-family: var(--p-mono);
   font-variant-numeric: tabular-nums;
   color: var(--p-muted);
@@ -764,9 +764,14 @@ a:hover { color: var(--p-ink-deep); }
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px 16px;
   align-items: center;
+  animation: none;
+  color: var(--p-ink);
 }
 .home-appointment .next-term-blocks span {
   font-size: 16px;
+  color: var(--p-ink);
+  font-weight: 650;
+  text-align: left;
 }
 .home-appointment .next-term-empty {
   margin: 0;
@@ -988,8 +993,8 @@ a:hover { color: var(--p-ink-deep); }
   .waylo-well { padding: 0 20px; }
   .waylo-stage { margin-top: -16px; padding: 36px 0 44px; }
   .waylo-specimen { padding: 20px; }
-  .waylo-specimen li { grid-template-columns: 6.4rem minmax(0, 1fr) 2.6rem; }
-  .waylo-specimen li em { grid-column: 1 / -1; justify-self: start; }
+  .waylo-specimen ol > li { grid-template-columns: 6.4rem minmax(0, 1fr) 2.6rem; }
+  .waylo-specimen ol > li em { grid-column: 1 / -1; justify-self: start; }
   .waylo-path { grid-template-columns: 1fr; padding: 0 20px 40px; }
   .production-disclaimer { padding: 0 20px 56px; }
   .production-hero-actions { align-items: stretch; flex-direction: column; }
@@ -1075,7 +1080,7 @@ a:hover { color: var(--p-ink-deep); }
   .nav-waypoint,
   .stage-o-ring,
   .stage-o-drift,
-  .waylo-specimen li,
+  .waylo-specimen ol > li,
   .waylo-path li,
   .waylo-stage-satellite,
   .landing-teaser-preview li {

@@ -72,7 +72,11 @@ describe("production routes", () => {
   });
 
   it("builds unique selectable routes from the live planner", () => {
-    const options = buildProductionRouteOptions(workspace(), getSeedArticulationGraph(), []);
+    const options = buildProductionRouteOptions(
+      workspace({ secondaryTargetIds: ["usc:business_administration"] }),
+      getSeedArticulationGraph(),
+      [],
+    );
     expect(options.length).toBeGreaterThanOrEqual(2);
     expect(options.filter((option) => option.selected)).toHaveLength(1);
     expect(options[0]?.title).toMatch(/Your route/);

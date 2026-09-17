@@ -37,6 +37,7 @@ import {
   requirementProgressLabel,
   studentFacingDataRelease,
 } from "@/lib/student-facing-copy";
+import { expandLabPairCourseCodes } from "@/lib/articulation/multi-target-plan";
 import { blockedNextTermCounselorLine, blockedNextTermPlacements } from "@/lib/next-term-blocks";
 
 export const dynamic = "force-dynamic";
@@ -85,7 +86,10 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       targets: selectedTargets,
     });
     const nextTerm = multi.schedule.terms[0];
-    const nextTermBlocks = blockedNextTermPlacements(multi, workspace.blockedNextTermCodes);
+    const nextTermBlocks = blockedNextTermPlacements(
+      multi,
+      expandLabPairCourseCodes(workspace.blockedNextTermCodes, graph),
+    );
     const nextTermBlockLine = blockedNextTermCounselorLine(nextTermBlocks);
     const strategy = buildAdmissionsStrategy(workspace, targets, {
       hasValidPlan: true,

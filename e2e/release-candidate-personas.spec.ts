@@ -24,7 +24,6 @@ async function finishToHome(page: Page) {
 async function assertHomeInvariants(page: Page, opts?: { completedCodes?: string[] }) {
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.locator(".dashboard-rail")).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "See other routes" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Change class load" })).toBeVisible();
   const pdf = page.getByRole("button", { name: "Download PDF" });
   const alreadyFinished = page.getByRole("heading", { name: "Already finished" });

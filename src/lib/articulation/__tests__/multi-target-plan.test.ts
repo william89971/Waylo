@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getSeedArticulationGraph } from "@/lib/articulation/graph";
-import { computeMultiTargetPlan } from "@/lib/articulation/multi-target-plan";
+import { computeMultiTargetPlan, expandLabPairCourseCodes } from "@/lib/articulation/multi-target-plan";
 import { targetMajorId } from "@/lib/articulation/types";
 
 describe("multi-target planner", () => {
@@ -181,5 +181,74 @@ describe("multi-target planner", () => {
     expect(blocked.schedule.terms[0]?.label).toBe(baseline.schedule.terms[0]?.label);
     const later = blocked.schedule.terms.slice(1).flatMap((term) => term.courses.map((course) => course.code));
     for (const code of firstCodes) expect(later).toContain(code);
+  });
+
+  it("schedules a lecture and its lab in the same term", () => {
+    const plan = computeMultiTargetPlan({
+      history: [],
+      primaryTargetId: ucsdData,
+      maxUnitsPerTerm: 15,
+      graph,
+    });
+    const laterByTerm = plan.schedule.terms.map((term) => term.courses.map((course) => course.code));
+    const lectureTerm = laterByTerm.find((codes) => codes.includes("CMPSCI-111"));
+    const labTerm = laterByTerm.find((codes) => codes.includes("CMPSCI-111L"));
+    expect(lectureTerm).toBeTruthy();
+    expect(labTerm).toEqual(lectureTerm);
+  });
+
+  it("moves a lecture and its lab together when either is blocked for next term", () => {
+    const blocked = computeMultiTargetPlan({
+      history: [],
+      primaryTargetId: ucsdData,
+      maxUnitsPerTerm: 15,
+      unavailableNextTermCodes: ["CMPSCI-111"],
+      graph,
+    });
+    const first = blocked.schedule.terms[0]?.courses.map((course) => course.code) ?? [];
+    expect(first).not.toContain("CMPSCI-111");
+    expect(first).not.toContain("CMPSCI-111L");
+    const laterByTerm = blocked.schedule.terms.slice(1).map((term) => ({
+      label: term.label,
+      codes: term.courses.map((course) => course.code),
+    }));
+    const lectureTerm = laterByTerm.find((term) => term.codes.includes("CMPSCI-111"));
+    const labTerm = laterByTerm.find((term) => term.codes.includes("CMPSCI-111L"));
+    expect(lectureTerm).toBeTruthy();
+    expect(labTerm?.label).toBe(lectureTerm?.label);
+  });
+
+  it("moves the lecture when the student skips only the lab", () => {
+    const blocked = computeMultiTargetPlan({
+      history: [],
+      primaryTargetId: ucsdData,
+      maxUnitsPerTerm: 15,
+      unavailableNextTermCodes: ["CMPSCI-111L"],
+      graph,
+    });
+    const first = blocked.schedule.terms[0]?.courses.map((course) => course.code) ?? [];
+    expect(first).not.toContain("CMPSCI-111");
+    expect(first).not.toContain("CMPSCI-111L");
+  });
+
+  it("expands a skipped lecture to its lab pair", () => {
+    expect(expandLabPairCourseCodes(["CMPSCI-111"], graph).sort()).toEqual(["CMPSCI-111", "CMPSCI-111L"]);
+    expect(expandLabPairCourseCodes(["math 211"], graph)).toEqual(["MATH-211"]);
+  });
+
+  it("never schedules a class in a term the catalog does not offer", () => {
+    const plan = computeMultiTargetPlan({
+      history: [],
+      primaryTargetId: ucsdData,
+      maxUnitsPerTerm: 15,
+      includeSummer: true,
+      graph,
+    });
+    for (const term of plan.schedule.terms) {
+      for (const course of term.courses) {
+        const offered = graph.courseByCode.get(course.code)?.offeredTerms ?? [];
+        expect(offered, `${course.code} in ${term.label}`).toContain(term.season);
+      }
+    }
   });
 });
