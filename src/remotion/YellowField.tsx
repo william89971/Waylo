@@ -21,7 +21,7 @@ export function YellowField() {
           position: "absolute",
           right: -80,
           top: 10,
-          opacity: interpolate(frame, [0, 0.4 * fps], [0, 0.18], {
+          opacity: interpolate(frame, [0, 0.4 * fps], [0, 0.24], {
             extrapolateLeft: "clamp",
             extrapolateRight: "clamp",
             easing: Easing.bezier(0.16, 1, 0.3, 1),

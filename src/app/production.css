@@ -250,6 +250,8 @@ a:hover { color: var(--p-ink-deep); }
 .waypoint-draw {
   display: block;
   line-height: 0;
+  min-width: 18px;
+  min-height: 18px;
 }
 .waypoint-draw-fallback {
   width: 100%;

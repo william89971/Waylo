@@ -75,21 +75,21 @@ export default function LandingPage() {
       <ol className="waylo-path" aria-label="How Waylo works">
         <li>
           <span className="waylo-path-step">
-            <WaypointDrawPlayer playWhenVisible />
+            <WaypointDrawPlayer />
             <strong>1</strong>
           </span>
           Your classes
         </li>
         <li>
           <span className="waylo-path-step">
-            <WaypointDrawPlayer playWhenVisible />
+            <WaypointDrawPlayer />
             <strong>2</strong>
           </span>
           What they count for
         </li>
         <li>
           <span className="waylo-path-step">
-            <WaypointDrawPlayer playWhenVisible />
+            <WaypointDrawPlayer />
             <strong>3</strong>
           </span>
           What to take next
