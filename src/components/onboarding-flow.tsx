@@ -651,7 +651,7 @@ export function OnboardingFlow({
         ) : null}
 
         {step === 4 ? (
-          <div className="onboarding-question ">
+          <div className="onboarding-question preference-question">
             <h1 ref={headingRef} tabIndex={-1}>How heavy can next semester be?</h1>
             <p>Waylo will not skip a required class to stay under this cap.</p>
             <div className="preference-form">
@@ -667,15 +667,10 @@ export function OnboardingFlow({
                     </option>
                   ))}
                 </select>
-                <small>12 is lighter. 18 is a heavy load.</small>
               </label>
               <label>
                 When do you want to transfer?
-                <select
-                  value={targetTerm}
-                  aria-describedby="target-term-hint"
-                  onChange={(event) => setTargetTerm(event.target.value)}
-                >
+                <select value={targetTerm} onChange={(event) => setTargetTerm(event.target.value)}>
                   <option value="">Not sure yet</option>
                   {transferTermOptions.map((term) => (
                     <option key={term} value={term}>
@@ -683,7 +678,6 @@ export function OnboardingFlow({
                     </option>
                   ))}
                 </select>
-                <small id="target-term-hint">Optional. You can change this later.</small>
               </label>
               <label className="checkbox-row">
                 <input

@@ -670,6 +670,7 @@ a:hover { color: var(--p-ink-deep); }
 .confirmed-course-list button { min-width: 44px; min-height: 44px; border: 0; background: transparent; color: var(--p-muted); cursor: pointer; }
 .preference-form { display: grid; grid-template-columns: 1fr; gap: 22px; max-width: 28rem; }
 .preference-form select { cursor: pointer; }
+.preference-question .onboarding-actions { max-width: 28rem; }
 .checkbox-row { display: flex; align-items: center; gap: 10px; color: var(--p-ink); font-size: 16px; cursor: pointer; }
 .checkbox-row input { width: 18px; min-height: 18px; accent-color: var(--p-ink); }
 .preference-form .checkbox-row { grid-column: 1 / -1; }
