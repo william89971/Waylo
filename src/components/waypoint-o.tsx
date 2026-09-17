@@ -50,7 +50,7 @@ export function WaypointO({
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeDasharray={`${visible} ${circumference}`}
-        strokeDashoffset={offset}
+        strokeDashoffset={progress === 1 ? undefined : offset}
         transform={`rotate(-38 ${CX} ${CY})`}
       />
     </svg>

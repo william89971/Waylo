@@ -83,7 +83,16 @@ a:hover { color: var(--p-ink-deep); }
   letter-spacing: -0.05em;
   line-height: 1;
 }
-.waylo-letters { font: inherit; }
+.waylo-letters { font: inherit; color: var(--p-ink); }
+.waylo-o,
+.kicker-o,
+.waylo-path-o,
+.nav-waypoint,
+.waypoint-draw .waylo-o,
+.stage-o-ring {
+  color: var(--p-teal);
+  animation: waylo-o-spin 2.6s linear infinite, waylo-o-hue 3.4s ease-in-out infinite;
+}
 .waylo-o {
   width: 0.72em;
   height: 0.72em;
@@ -91,20 +100,19 @@ a:hover { color: var(--p-ink-deep); }
   flex: none;
   overflow: visible;
 }
-.waylo-o svg { display: block; width: 100%; height: 100%; }
-.waylo-o circle,
-.kicker-o circle,
-.waylo-path-o circle {
-  animation: waylo-o-draw 4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+.kicker-o {
+  animation-duration: 3s, 3.8s;
 }
-.kicker-o circle { animation-duration: 4.4s; animation-delay: 0.2s; }
-.waylo-path li:nth-child(1) .waylo-path-o circle { animation-delay: 0.1s; }
-.waylo-path li:nth-child(2) .waylo-path-o circle { animation-delay: 0.28s; }
-.waylo-path li:nth-child(3) .waylo-path-o circle { animation-delay: 0.46s; }
-@keyframes waylo-o-draw {
-  0%, 58% { stroke-dashoffset: 0; }
-  78%, 84% { stroke-dashoffset: 54.1; }
-  100% { stroke-dashoffset: 0; }
+.waylo-path li:nth-child(2) .waylo-path-o { animation-delay: 0.18s, 0.18s; }
+.waylo-path li:nth-child(3) .waylo-path-o { animation-delay: 0.36s, 0.36s; }
+.nav-waypoint { animation-duration: 3.8s, 4.6s; }
+@keyframes waylo-o-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes waylo-o-hue {
+  0%, 100% { color: #087f72; }
+  35% { color: #111111; }
+  65% { color: #b85c00; }
 }
 
 .production-button {
@@ -171,9 +179,8 @@ a:hover { color: var(--p-ink-deep); }
   gap: 8px;
 }
 .production-kicker .kicker-o {
-  width: 11px;
-  height: 11px;
-  color: var(--p-ink);
+  width: 18px;
+  height: 18px;
   overflow: visible;
 }
 .production-hero h1 {
@@ -228,7 +235,6 @@ a:hover { color: var(--p-ink-deep); }
   width: 22px;
   height: 22px;
   overflow: visible;
-  color: var(--p-ink);
 }
 .waylo-path-index {
   font-family: var(--p-mono);
@@ -268,6 +274,11 @@ a:hover { color: var(--p-ink-deep); }
   min-width: 18px;
   min-height: 18px;
 }
+.waypoint-draw .waylo-o,
+.yellow-field-motion .stage-o-ring {
+  width: 100%;
+  height: 100%;
+}
 .waypoint-draw-fallback {
   width: 100%;
   height: 100%;
@@ -281,7 +292,10 @@ a:hover { color: var(--p-ink-deep); }
   overflow: hidden;
   margin-top: -28px;
   padding: 64px 0 72px;
-  background: var(--p-waypoint);
+  background:
+    radial-gradient(ellipse 90% 80% at 88% 18%, rgb(8 127 114 / 32%), transparent 58%),
+    radial-gradient(ellipse 70% 90% at 6% 92%, #fff1a8, transparent 54%),
+    var(--p-waypoint);
 }
 .waylo-stage::before {
   content: "";
@@ -296,6 +310,45 @@ a:hover { color: var(--p-ink-deep); }
   position: absolute;
   inset: 0;
   pointer-events: none;
+}
+.stage-o-drift {
+  position: absolute;
+  display: block;
+  line-height: 0;
+}
+.stage-o-drift.a {
+  left: -14%;
+  top: -34%;
+  width: min(78vw, 760px);
+  height: min(78vw, 760px);
+  opacity: 0.42;
+  animation: stage-drift-a 9s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+.stage-o-drift.b {
+  right: -8%;
+  top: 6%;
+  width: min(56vw, 540px);
+  height: min(56vw, 540px);
+  opacity: 0.5;
+  animation: stage-drift-b 11s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+.stage-o-ring {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+.stage-o-drift.b .stage-o-ring {
+  animation-duration: 6.4s, 4.8s;
+  animation-direction: reverse, alternate;
+}
+@keyframes stage-drift-a {
+  0%, 100% { transform: translate(0, 10px); }
+  50% { transform: translate(28px, -22px); }
+}
+@keyframes stage-drift-b {
+  0%, 100% { transform: translate(0, -8px); }
+  50% { transform: translate(-24px, 18px); }
 }
 .waylo-stage-satellite {
   position: absolute;
@@ -642,8 +695,7 @@ a:hover { color: var(--p-ink-deep); }
 }
 .production-sidebar > .production-brand { padding: 0 8px 32px; }
 .production-sidebar nav { display: grid; gap: 6px; }
-.production-sidebar nav a .nav-waypoint { width: 14px; height: 14px; flex: none; color: var(--p-ink); }
-.production-sidebar nav a.active .nav-waypoint { color: var(--p-ink); }
+.production-sidebar nav a .nav-waypoint { width: 14px; height: 14px; flex: none; }
 .production-sidebar nav a:hover { color: var(--p-ink); }
 .production-account { margin-top: auto; padding: 13px 8px 2px; }
 .local-sign-out { min-height: 44px; border: 0; background: transparent; display: flex; align-items: center; gap: 9px; color: var(--p-muted); cursor: pointer; }
@@ -824,18 +876,16 @@ a:hover { color: var(--p-ink-deep); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
-  .waylo-o circle,
-  .kicker-o circle,
-  .waylo-path-o circle,
+  .waylo-o,
+  .kicker-o,
+  .waylo-path-o,
+  .nav-waypoint,
+  .stage-o-ring,
+  .stage-o-drift,
   .waylo-specimen li,
   .waylo-path li,
   .waylo-stage-satellite {
     animation: none !important;
-  }
-  .waylo-o circle,
-  .kicker-o circle,
-  .waylo-path-o circle {
-    stroke-dashoffset: 0 !important;
   }
 }
 
@@ -969,11 +1019,13 @@ a:hover { color: var(--p-ink-deep); }
 }
 
 @media print {
-  .waylo-o circle,
-  .kicker-o circle,
-  .waylo-path-o circle {
+  .waylo-o,
+  .kicker-o,
+  .waylo-path-o,
+  .nav-waypoint,
+  .stage-o-ring,
+  .stage-o-drift {
     animation: none !important;
-    stroke-dashoffset: 0 !important;
   }
   .yellow-field-motion,
   .waylo-stage-motion,
@@ -1427,7 +1479,9 @@ a:hover { color: var(--p-ink-deep); }
   padding: 24px 28px;
   border: 0;
   border-radius: var(--p-radius);
-  background: var(--p-waypoint);
+  background:
+    radial-gradient(ellipse 70% 90% at 100% 50%, rgb(8 127 114 / 28%), transparent 58%),
+    var(--p-waypoint);
   box-shadow: none;
 }
 .next-term-hero .yellow-field-motion {
