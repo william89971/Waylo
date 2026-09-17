@@ -12,12 +12,38 @@ export const VERIFICATION_EXPLAIN: Record<VerificationTier, string> = {
 };
 
 export const VERIFICATION_SHORT: Record<VerificationTier, string> = {
-  VERIFIED_ASSIST: "Verified ASSIST",
-  VERIFIED_INSTITUTIONAL_GUIDE: "Institutional guide",
-  HISTORICAL_PRECEDENT: "Historical precedent",
+  VERIFIED_ASSIST: "Official agreement",
+  VERIFIED_INSTITUTIONAL_GUIDE: "University guide",
+  HISTORICAL_PRECEDENT: "Past practice — confirm",
   PLANNING_SUGGESTION: "Planning suggestion",
-  NEEDS_COUNSELOR_CONFIRMATION: "Needs counselor confirmation",
+  NEEDS_COUNSELOR_CONFIRMATION: "Ask a counselor",
 };
+
+export function formatList(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? "";
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+export function targetCoverageNote(coverageTier: SelectableTarget["coverageTier"]): string {
+  if (coverageTier === "reviewed" || coverageTier === "full") {
+    return "Official UC/CSU transfer agreement";
+  }
+  return "Estimate only — confirm with this university";
+}
+
+export function planBucketLabel(bucket?: string): string {
+  if (bucket === "core_overlap") return "Counts at more than one school";
+  if (bucket === "primary_mandate") return "Needed for your first-choice school";
+  if (bucket === "secondary_divergence") return "Needed only for a second school";
+  return "On your plan";
+}
+
+export function courseCountsLine(schoolLabels: string[]): string {
+  if (schoolLabels.length > 1) return `Counts toward ${formatList(schoolLabels)}`;
+  if (schoolLabels.length === 1) return `Needed for ${schoolLabels[0]}`;
+  return "Not required by your first-choice school";
+}
 
 export function formatSelectableTargetLabel(
   targets: SelectableTarget[],

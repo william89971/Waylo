@@ -356,7 +356,7 @@ function buildDivergencePoints(
       points.push({
         id: `div-secondary-${candidate.code}`,
         kind: "secondary_only",
-        message: `${candidate.code} is required only for ${labels}, not your first-choice campus. Include secondary major prep if you want it packed into the schedule.`,
+        message: `${candidate.code} is required only for ${labels}, not your first-choice campus. Also plan classes that only the second school needs if you want it on the schedule.`,
         primaryCourseCodes: [],
         secondaryCourseCodes: [candidate.code],
         secondaryTargetIds: candidate.targetIds,

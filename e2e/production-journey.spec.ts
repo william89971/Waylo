@@ -9,10 +9,7 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
 
   await page.goto(`/sign-up?testUser=${testUser}`);
   await page.getByRole("button", { name: "Create test account" }).click();
-  await expect(page.getByRole("heading", { name: "What college do you attend?" })).toBeVisible({ timeout: 60_000 });
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-
-  await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText("UC San Diego").first()).toBeVisible();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
@@ -39,6 +36,7 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.getByText("Plan saved."), "save confirmation should be visible").toBeVisible();
   await expect(page.locator(".saved-meta")).toContainText("version 1");
+  await expect(page.getByRole("link", { name: "Take this to your counselor" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Read the strategy note" })).toBeVisible();
   await page.getByRole("link", { name: "Read the strategy note" }).click();
   await expect(page.locator("#admissions-strategy")).toBeVisible();
@@ -95,10 +93,7 @@ test("UCB Economics primary with USC Business secondary shows divergence badges"
 
   await page.goto(`/sign-up?testUser=${testUser}`);
   await page.getByRole("button", { name: "Create test account" }).click();
-  await expect(page.getByRole("heading", { name: "What college do you attend?" })).toBeVisible({ timeout: 60_000 });
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-
-  await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible({ timeout: 60_000 });
   // Clear the default UCSD selection so this journey is UCB primary + USC secondary only.
   const ucsd = page.getByTestId("university-list").getByRole("button", { name: /UC San Diego/ });
   if (await ucsd.getAttribute("aria-pressed") === "true") {
@@ -109,7 +104,7 @@ test("UCB Economics primary with USC Business secondary shows divergence badges"
   await page.getByTestId("campus-majors-uc_berkeley").getByLabel("Primary school").check();
   await page.getByTestId("university-list").getByRole("button", { name: /University of Southern California/ }).click();
   await page.getByTestId("campus-majors-usc").getByRole("radio", { name: /Business/ }).click();
-  await expect(page.getByText(/Include secondary major prep/i)).toBeVisible();
+  await expect(page.getByText(/Also plan classes that only the second school needs/i)).toBeVisible();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
@@ -131,7 +126,7 @@ test("UCB Economics primary with USC Business secondary shows divergence badges"
   await expect(mathCode.first()).toHaveClass(/font-mono/);
   await expect(mathCode.first()).toHaveClass(/tabular-nums/);
   await expect(page.getByRole("heading", { name: "Destination audits" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Export Counselor Audit" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Take this to your counselor" })).toBeVisible();
   await context.close();
 });
 

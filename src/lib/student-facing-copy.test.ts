@@ -6,7 +6,10 @@ import {
   formatGraphTargetLabel,
   formatMatrixCampusLabel,
   formatSelectableTargetLabel,
+  planBucketLabel,
   requirementProgressLabel,
+  courseCountsLine,
+  targetCoverageNote,
 } from "@/lib/student-facing-copy";
 import type { SelectableTarget } from "@/lib/production-types";
 
@@ -58,5 +61,13 @@ describe("student-facing copy", () => {
         verificationTier: "VERIFIED_ASSIST",
       }),
     ).toBe("satisfied");
+  });
+
+  it("explains overlap the way a counselor would say it", () => {
+    expect(courseCountsLine(["UC Berkeley Economics", "USC Business Administration (Marshall)"])).toBe(
+      "Counts toward UC Berkeley Economics and USC Business Administration (Marshall)",
+    );
+    expect(planBucketLabel("secondary_divergence")).toBe("Needed only for a second school");
+    expect(targetCoverageNote("reviewed")).toMatch(/Official UC\/CSU/);
   });
 });

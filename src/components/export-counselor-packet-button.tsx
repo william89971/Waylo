@@ -9,11 +9,11 @@ export function ExportCounselorPacketButton() {
       type="button"
       className="production-button no-print"
       onClick={() => window.print()}
-      aria-label="Export Counselor Audit"
-      title="Print a counselor-ready summary of this plan"
+      aria-label="Take this to your counselor"
+      title="Print a one-page summary to bring to counseling"
     >
       <Printer size={16} aria-hidden />
-      Export Counselor Audit
+      Take this to your counselor
     </button>
   );
 }

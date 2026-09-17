@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, Trash2 } from "lucide-react";
 import { isPreferredTransferTerm } from "@/lib/admissions-strategy";
+import { targetCoverageNote } from "@/lib/student-facing-copy";
 import type { CourseDefinition } from "@/lib/domain";
 import type { ProductionCourse, SelectableTarget, StudentWorkspaceRecord } from "@/lib/production-types";
 
-const STEP_LABELS = ["Academic history", "Transfer goal", "Completed courses", "Preferences"];
+const STEP_LABELS = ["Schools and majors", "Your COC classes", "Schedule"];
 
 async function jsonRequest(url: string, init: RequestInit) {
   const response = await fetch(url, {
@@ -51,9 +52,10 @@ export function OnboardingFlow({
     () => false,
   );
   const [workspace, setWorkspace] = useState(initial);
-  const [step, setStep] = useState(
-    startStep ?? (initial.profile.onboardingCompleted ? 4 : initial.profile.onboardingStep),
-  );
+  const [step, setStep] = useState(() => {
+    const raw = startStep ?? (initial.profile.onboardingCompleted ? 4 : initial.profile.onboardingStep);
+    return raw <= 1 ? 2 : raw;
+  });
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState(catalog[0]?.id ?? "");
@@ -96,7 +98,8 @@ export function OnboardingFlow({
     return primary?.institutionId ?? "";
   });
 
-  const progress = useMemo(() => `${Math.round((step / 4) * 100)}%`, [step]);
+  const visibleStep = Math.min(3, Math.max(1, step - 1));
+  const progress = useMemo(() => `${Math.round((visibleStep / 3) * 100)}%`, [visibleStep]);
   const primaryTargetId = primaryInstitutionId ? (majorByInstitution[primaryInstitutionId] ?? "") : "";
   const secondaryTargetIds = useMemo(
     () =>
@@ -272,16 +275,16 @@ export function OnboardingFlow({
       <section className="onboarding-panel">
         <div className="onboarding-progress" aria-label="Onboarding progress">
           <div>
-            <strong>Step {step} of 4</strong>
-            <span>{STEP_LABELS[step - 1]}</span>
+            <strong>Step {visibleStep} of 3</strong>
+            <span>{STEP_LABELS[visibleStep - 1]}</span>
           </div>
           <div className="progress-track" aria-hidden="true">
             <span style={{ width: progress }} />
           </div>
           <ol>
             {STEP_LABELS.map((label, index) => (
-              <li key={label} className={index + 1 <= step ? "active" : ""}>
-                {index + 1 < step ? <Check size={13} /> : index + 1}
+              <li key={label} className={index + 1 <= visibleStep ? "active" : ""}>
+                {index + 1 < visibleStep ? <Check size={13} /> : index + 1}
                 <span>{label}</span>
               </li>
             ))}
@@ -293,35 +296,12 @@ export function OnboardingFlow({
           </div>
         ) : null}
 
-        {step === 1 ? (
-          <div className="onboarding-question ">
-            <h1 ref={headingRef} tabIndex={-1}>What college do you attend?</h1>
-            <p>Waylo’s first release is built specifically for College of the Canyons students.</p>
-            <button className="selection-row selected" type="button">
-              <span>
-                <strong>College of the Canyons</strong>
-                <small>Santa Clarita, California</small>
-              </span>
-              <Check />
-            </button>
-            <div className="onboarding-actions">
-              <button
-                className="production-button primary"
-                disabled={!hydrated || working}
-                onClick={() => void saveProfile(2)}
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-        ) : null}
-
         {step === 2 ? (
           <div className="onboarding-question ">
             <h1 ref={headingRef} tabIndex={-1}>Where do you want to transfer?</h1>
             <p>
-              Pick your universities first. Then choose exactly one major for each school, and mark which campus is
-              primary.
+              Choose every university you are seriously considering. Waylo will show one plan that works across them.
+              Mark your first-choice school.
             </p>
 
             <h2 className="onboarding-subheading">1. Universities</h2>
@@ -396,10 +376,7 @@ export function OnboardingFlow({
                               <span>
                                 <strong>{target.displayName}</strong>
                                 <small>
-                                  {target.degree} · Tier {target.ingestionTier}
-                                  {target.coverageTier === "reviewed" || target.coverageTier === "full"
-                                    ? " · reviewed pathway"
-                                    : " · planning archetype"}
+                                  {target.degree} · {targetCoverageNote(target.coverageTier)}
                                 </small>
                               </span>
                               {selected ? <Check /> : null}
@@ -420,19 +397,19 @@ export function OnboardingFlow({
                   checked={includeSecondaryDivergence}
                   onChange={(event) => setIncludeSecondaryDivergence(event.target.checked)}
                 />
-                Include secondary major prep when packing terms
+                Also plan classes that only the second school needs
               </label>
             ) : null}
             {needsIgetcWarning ? (
               <div className="production-error" role="status" style={{ marginTop: "1rem" }}>
-                One or more selected private universities do not recognize IGETC. California GE packaging will not
-                exempt university breadth.
+                At least one private university here does not take the California IGETC general-education package. Ask a
+                counselor which extra GE or language classes you still need.
               </div>
             ) : null}
             <div className="onboarding-actions">
-              <button className="production-button" onClick={() => setStep(1)}>
-                Back
-              </button>
+              <Link href={editing ? "/app" : "/"} className="production-button">
+                {editing ? "Back" : "Exit"}
+              </Link>
               <button
                 className="production-button primary"
                 disabled={!hydrated || working || !majorsComplete}
@@ -451,8 +428,8 @@ export function OnboardingFlow({
             </h1>
             <p>
               {editing
-                ? "Update completed or in-progress College of the Canyons courses. Waylo uses this history to rebuild your plan."
-                : "Add completed or in-progress College of the Canyons courses. You can review every entry before planning."}
+                ? "Update College of the Canyons classes you have finished or are taking now. You can add more later."
+                : "Add College of the Canyons classes you have finished or are taking now. If you are just starting, continue with none."}
             </p>
             <form
               className="course-entry-grid"
@@ -512,8 +489,8 @@ export function OnboardingFlow({
                 ))
               ) : (
                 <div className="empty-state">
-                  <strong>No courses yet</strong>
-                  <p>Add at least one completed or in-progress course to continue.</p>
+                  <strong>No COC classes yet</strong>
+                  <p>That is okay. Continue and Waylo will plan from the start. You can add classes later.</p>
                 </div>
               )}
             </div>
@@ -523,7 +500,7 @@ export function OnboardingFlow({
               </button>
               <button
                 className="production-button primary"
-                disabled={working || workspace.courses.length === 0}
+                disabled={working}
                 onClick={() => void saveProfile(4, editing && workspace.profile.onboardingCompleted)}
               >
                 Continue
@@ -535,7 +512,7 @@ export function OnboardingFlow({
         {step === 4 ? (
           <div className="onboarding-question ">
             <h1 ref={headingRef} tabIndex={-1}>Schedule preferences</h1>
-            <p>These preferences shape the schedule. They never waive a prerequisite or requirement.</p>
+            <p>How many units you can handle. This never skips a required class.</p>
             <div className="preference-form">
               <label>
                 Maximum units per semester

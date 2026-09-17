@@ -1,5 +1,6 @@
 import type { AdmissionsStrategy } from "@/lib/admissions-strategy";
 import type { VerificationTier } from "@/lib/articulation/types";
+import { planBucketLabel, VERIFICATION_SHORT } from "@/lib/student-facing-copy";
 
 export interface CounselorCitation {
   targetLabel: string;
@@ -51,17 +52,17 @@ export function CounselorPacket({
   return (
     <section className="counselor-packet" id="counselor-packet" aria-label="Counselor audit packet">
       <header className="counselor-packet-header">
-        <strong>Waylo Counselor Packet</strong>
+        <strong>Take this to your counselor</strong>
         <span>Student: {preferredName || "Student"}</span>
         <span>College of the Canyons transfer plan</span>
       </header>
 
       <div className="counselor-targets">
         <p>
-          <strong>Primary:</strong> {primaryLabel}
+          <strong>First choice:</strong> {primaryLabel}
         </p>
         <p>
-          <strong>Secondaries:</strong>{" "}
+          <strong>Also considering:</strong>{" "}
           {secondaryLabels.length ? secondaryLabels.join(", ") : "None"}
         </p>
       </div>
@@ -74,7 +75,7 @@ export function CounselorPacket({
             <th scope="col">Course</th>
             <th scope="col">Title</th>
             <th scope="col">COC units</th>
-            <th scope="col">Bucket</th>
+            <th scope="col">Why it is on the plan</th>
           </tr>
         </thead>
         <tbody>
@@ -84,7 +85,7 @@ export function CounselorPacket({
               <td>{row.code}</td>
               <td>{row.title}</td>
               <td>{row.semesterUnits}</td>
-              <td>{row.bucket?.replace(/_/g, " ") ?? "—"}</td>
+              <td>{planBucketLabel(row.bucket)}</td>
             </tr>
           ))}
         </tbody>
@@ -96,29 +97,28 @@ export function CounselorPacket({
         </tfoot>
       </table>
 
-      <h2>Evidence citations</h2>
+      <h2>What is official, and what to confirm</h2>
       <table className="counselor-table">
         <thead>
           <tr>
-            <th scope="col">Target</th>
-            <th scope="col">Requirement key</th>
-            <th scope="col">Label</th>
-            <th scope="col">VerificationTier</th>
+            <th scope="col">School</th>
+            <th scope="col">Requirement</th>
+            <th scope="col">Status</th>
             <th scope="col">Agreement year</th>
             <th scope="col">Source</th>
-            <th scope="col">Status</th>
           </tr>
         </thead>
         <tbody>
           {citations.map((citation, index) => (
             <tr key={`${citation.targetLabel}-${citation.requirementKey}-${index}`}>
               <td>{citation.targetLabel}</td>
-              <td>{citation.requirementKey}</td>
               <td>{citation.label}</td>
-              <td>{citation.verificationTier}</td>
+              <td>
+                {citation.satisfied ? "On the plan · " : "Still open · "}
+                {VERIFICATION_SHORT[citation.verificationTier]}
+              </td>
               <td>{citation.effectiveYear}</td>
-              <td>{citation.sourceType}</td>
-              <td>{citation.satisfied ? "Satisfied / scheduled" : "Open"}</td>
+              <td>{citation.sourceType.replaceAll("_", " ")}</td>
             </tr>
           ))}
         </tbody>
@@ -126,21 +126,15 @@ export function CounselorPacket({
 
       {strategy ? (
         <div className="counselor-strategy">
-          <h2>Admissions strategy — not verified articulation</h2>
-          <p>
-            <strong>{strategy.grades.title}.</strong> {strategy.grades.body}
-          </p>
-          <p>
-            <strong>{strategy.activities.title}.</strong> {strategy.activities.body}
-          </p>
-          <p>
-            <strong>{strategy.counselor.title}</strong>
-          </p>
+          <h2>What to ask your counselor</h2>
           <ol>
             {strategy.counselor.items.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ol>
+          <p>
+            <strong>{strategy.grades.title}.</strong> {strategy.grades.body}
+          </p>
           <p>{strategy.disclaimer}</p>
         </div>
       ) : null}

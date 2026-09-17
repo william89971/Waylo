@@ -23,8 +23,8 @@ export default function LandingPage() {
         <div>
           <h1>Know what to take next semester.</h1>
           <p>
-            Enter your College of the Canyons academic history, choose universities and majors, and get a
-            semester-by-semester plan with sources you can take to a counselor.
+            Get a next-semester plan for one or more universities tonight. Bring it to a College of the Canyons
+            counselor before you enroll.
           </p>
           <div id="sign-up" className="production-hero-actions">
             <Link href="/sign-up" className="production-button primary">

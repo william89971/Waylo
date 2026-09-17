@@ -8,7 +8,7 @@ import type { SavedPlan, SelectableTarget } from "@/lib/production-types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
 import { listSelectableTargets } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
-import { formatSelectableTargetLabel } from "@/lib/student-facing-copy";
+import { courseCountsLine, formatSelectableTargetLabel } from "@/lib/student-facing-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -16,13 +16,20 @@ function labelFor(targets: SelectableTarget[], id: string) {
   return formatSelectableTargetLabel(targets, id);
 }
 
+function scheduledFor(
+  course: SavedPlan["route"]["terms"][number]["courses"][number],
+  plan: SavedPlan,
+) {
+  return plan.multiTargetPlan?.schedule.terms
+    .flatMap((term) => term.courses)
+    .find((item) => item.courseId === course.courseId || item.code === course.code);
+}
+
 function courseEvidenceState(
   course: SavedPlan["route"]["terms"][number]["courses"][number],
   plan: SavedPlan,
 ): "verified" | "suggestion" | "review" {
-  const scheduled = plan.multiTargetPlan?.schedule.terms
-    .flatMap((term) => term.courses)
-    .find((item) => item.courseId === course.courseId || item.code === course.code);
+  const scheduled = scheduledFor(course, plan);
   if (scheduled) {
     const tier: VerificationTier = scheduled.verificationTier;
     if (tier === "VERIFIED_ASSIST" || tier === "VERIFIED_INSTITUTIONAL_GUIDE") return "verified";
@@ -66,19 +73,21 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     reviewItemCount: reviewCount,
   });
   const saved = (await searchParams).saved === "1";
+  const whyHref = plan.multiTargetPlan ? "/app/plan" : "/app/evidence";
+  const askCounselor = strategy?.counselor.items[0];
 
   return (
     <div className="production-page dashboard-page">
       {saved ? (
         <div className="success-banner" role="status">
-          Plan saved.
+          Plan saved. You can come back to this list anytime.
         </div>
       ) : null}
       <header className="production-page-header">
         <h1>What to take next semester</h1>
         <p>
           {nextTerm?.label ?? "Next term"} · {primaryLabel}
-          {secondaryLabels.length ? ` · Secondary: ${secondaryLabels.join(", ")}` : ""}
+          {secondaryLabels.length ? ` · Also planning: ${secondaryLabels.join(", ")}` : ""}
         </p>
       </header>
       <div className="dashboard-layout">
@@ -86,14 +95,19 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <div className="section-heading">
             <div>
               <h2>Recommended semester</h2>
-              <p>
-                {route.label} · checked against prerequisites and your unit limit
-              </p>
+              <p>The next classes that move your transfer plan forward without going over your unit limit.</p>
             </div>
           </div>
           <div className="course-table" role="table" aria-label="Recommended semester courses">
             {nextTerm?.courses.map((course) => {
               const state = courseEvidenceState(course, plan);
+              const scheduled = scheduledFor(course, plan);
+              const schoolLabels = scheduled
+                ? scheduled.fulfillsTargetIds.map((id) => labelFor(targets, id))
+                : [primaryLabel];
+              const whyLink = scheduled
+                ? `/app/plan?course=${encodeURIComponent(scheduled.code)}`
+                : `/app/evidence?course=${encodeURIComponent(course.courseId)}`;
               return (
                 <div className="course-row" role="row" key={course.courseId}>
                   <div className="course-identity">
@@ -101,9 +115,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     <small>
                       {course.title} · {course.units} units
                     </small>
+                    <small>{courseCountsLine(schoolLabels)}</small>
                   </div>
-                  <EvidenceStatus state={state} />
-                  <Link href={`/app/evidence?course=${course.courseId}`}>View source</Link>
+                  <EvidenceStatus state={state} tier={scheduled?.verificationTier} />
+                  <Link href={whyLink}>Why this class</Link>
                 </div>
               );
             })}
@@ -116,8 +131,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <Link href="/app/plan" className="production-button primary">
               Review semester plan
             </Link>
-            <Link href="/app/plan" className="production-text-link">
-              See all semesters
+            <Link href="/app/plan#counselor-packet" className="production-button">
+              Take this to your counselor
             </Link>
           </div>
         </section>
@@ -125,10 +140,28 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <section>
             <h2>Why these courses</h2>
             <p>
-              They continue the {primaryLabel} prep sequence while staying inside your unit limit.
+              They are the next required prep for {primaryLabel}
+              {secondaryLabels.length ? `, while keeping ${secondaryLabels.join(" and ")} in view` : ""}. They stay
+              inside your unit limit.
             </p>
-            <Link href="/app/requirements">See how we decided</Link>
+            <Link href={whyHref}>See how we decided</Link>
           </section>
+          {reviewCount > 0 ? (
+            <section className="rail-review">
+              <strong>{reviewCount}</strong>
+              <span>
+                {reviewCount === 1 ? "item still needs a counselor" : "items still need a counselor"} before you
+                enroll
+              </span>
+              <p>{askCounselor ?? "Ask a counselor to confirm anything Waylo could not verify."}</p>
+              <Link href="/app/plan#counselor-packet">What to ask</Link>
+            </section>
+          ) : (
+            <section>
+              <strong>Ready to confirm</strong>
+              <span>Bring this list to a counselor before you enroll. Waylo is not an official degree audit.</span>
+            </section>
+          )}
           {strategy ? (
             <section className="strategy-teaser">
               <h2>Admissions strategy</h2>
@@ -139,19 +172,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <section>
             <strong>{completedCount}</strong>
             <span>
-              confirmed College of the Canyons {completedCount === 1 ? "course" : "courses"}
+              confirmed College of the Canyons {completedCount === 1 ? "class" : "classes"}
             </span>
           </section>
           <section>
             <strong>{route.estimatedTransferTerm}</strong>
             <span>estimated transfer</span>
-          </section>
-          <section className={reviewCount ? "rail-review" : ""}>
-            <strong>{reviewCount}</strong>
-            <span>
-              articulation {reviewCount === 1 ? "item" : "items"} need confirmation
-            </span>
-            <Link href="/app/evidence">View items</Link>
           </section>
         </aside>
       </div>

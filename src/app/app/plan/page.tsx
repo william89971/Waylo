@@ -34,12 +34,14 @@ function legacyTier(status?: string): VerificationTier {
   return status === "verified" ? "VERIFIED_ASSIST" : "NEEDS_COUNSELOR_CONFIRMATION";
 }
 
-export default async function PlanPage({ searchParams }: { searchParams: Promise<{ new?: string }> }) {
+export default async function PlanPage({ searchParams }: { searchParams: Promise<{ new?: string; course?: string }> }) {
   const clerkUserId = await getAuthenticatedUserId();
   if (!clerkUserId) redirect("/sign-in");
   const workspace = await studentRepository.load(clerkUserId);
   if (!workspace.profile.onboardingCompleted) redirect("/onboarding");
-  const showProposal = (await searchParams).new === "1" || !workspace.activePlan;
+  const params = await searchParams;
+  const showProposal = params.new === "1" || !workspace.activePlan;
+  const focusCourse = params.course?.trim() || null;
   const targets = await listSelectableTargets();
   const labelFor = (id: string) => formatSelectableTargetLabel(targets, id);
 
@@ -142,8 +144,8 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             </p>
           </div>
           <ul className="status-legend" aria-label="Articulation status key">
-            <li className="verified">Verified</li>
-            <li className="review">Needs counselor review</li>
+            <li className="verified">Official</li>
+            <li className="review">Ask a counselor</li>
             <li className="unrequired">Not required</li>
           </ul>
           <p className="scroll-hint">Swipe sideways to compare campuses.</p>
@@ -151,6 +153,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             campuses={matrixCampuses}
             rows={matrixRows}
             evidenceByCourseCode={evidenceByCourseCode}
+            initialCourseCode={focusCourse}
           />
           {multi.schedule.terms.some((term) => term.conflicts.length > 0) ? (
             <ul className="space-y-1 text-sm text-amber-800" role="status">
@@ -344,12 +347,6 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         )}
       </div>
       {strategy ? <AdmissionsStrategyPanel strategy={strategy} /> : null}
-      <section id="what-if" className="what-if-placeholder no-print">
-        <p>What-if planning is not available yet.</p>
-        <button className="production-button" disabled>
-          What-if planning
-        </button>
-      </section>
       <CounselorPacket
         preferredName={workspace.profile.preferredName}
         primaryLabel={labelFor(workspace.primaryTargetId)}

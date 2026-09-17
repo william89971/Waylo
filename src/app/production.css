@@ -66,7 +66,7 @@ a { color: var(--p-blue); }
 .onboarding-progress > div:first-child span { color: var(--p-muted); }
 .progress-track { height: 3px; margin: 17px 0 19px; background: #e7ebf0; border-radius: 3px; overflow: hidden; }
 .progress-track span { display: block; height: 100%; background: var(--p-blue); transition: width 180ms ease; }
-.onboarding-progress ol { display: grid; grid-template-columns: repeat(4, 1fr); list-style: none; padding: 0; margin: 0; }
+.onboarding-progress ol { display: grid; grid-template-columns: repeat(3, 1fr); list-style: none; padding: 0; margin: 0; }
 .onboarding-progress li { display: flex; align-items: center; gap: 8px; color: #8a96a7; font-size: 12px; }
 .onboarding-progress li::first-letter { font-weight: 700; }
 .onboarding-progress li.active { color: var(--p-blue); font-weight: 650; }
