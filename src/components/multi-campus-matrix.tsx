@@ -88,19 +88,19 @@ export function MultiCampusMatrix({
           <tr className="border-b border-border/40">
             <th
               scope="col"
-              className="sticky left-0 z-10 bg-background px-3 py-3 text-[13px] font-medium text-muted-foreground"
+              className="sticky left-0 z-10 bg-background px-3 py-3 text-[15px] font-medium text-muted-foreground"
             >
               Course
             </th>
             <th
               scope="col"
-              className="px-2 py-3 text-right text-[13px] font-medium text-muted-foreground"
+              className="px-2 py-3 text-right text-[15px] font-medium text-muted-foreground"
             >
               Units
             </th>
             <th
               scope="col"
-              className="px-2 py-3 text-[13px] font-medium text-muted-foreground"
+              className="px-2 py-3 text-[15px] font-medium text-muted-foreground"
             >
               Term
             </th>
@@ -108,12 +108,12 @@ export function MultiCampusMatrix({
               <th
                 key={campus.targetMajorId}
                 scope="col"
-                className="px-3 py-3 text-[13px] font-medium text-muted-foreground"
+                className="px-3 py-3 text-[15px] font-medium text-muted-foreground"
               >
                 <span className="inline-flex items-baseline gap-1.5">
                   <span className={cn(campus.isPrimary && "text-foreground")}>{campus.label}</span>
                   {campus.isPrimary ? (
-                    <span className="text-[13px] font-medium text-muted-foreground">First choice</span>
+                    <span className="text-[15px] font-medium text-muted-foreground">First choice</span>
                   ) : null}
                 </span>
               </th>

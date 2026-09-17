@@ -332,7 +332,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 </li>
               ))}
             </ul>
-          ) : (
+          ) : unmatched.length ? null : (
             <p>
               {completedCount
                 ? "None close a listed requirement yet."

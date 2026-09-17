@@ -556,6 +556,9 @@ a:hover { color: var(--p-ink-deep); }
   color: var(--p-ink);
   font-size: 17px;
   font-weight: 450;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
 }
 .home-appointment .course-units {
   font-family: var(--p-mono);
@@ -781,8 +784,18 @@ a:hover { color: var(--p-ink-deep); }
   .next-term-hero-meta .production-button { width: 100%; }
   .next-term-hero .yellow-field-motion { width: 140px; height: 140px; right: -36px; }
   .home-appointment .course-row {
-    grid-template-columns: 7rem minmax(0, 1fr) 3rem;
+    grid-template-columns: minmax(0, 1fr) 3rem;
     padding: 14px 0;
+  }
+  .home-appointment .course-row strong {
+    grid-column: 1;
+  }
+  .home-appointment .course-units {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .home-appointment .course-title {
+    grid-column: 1 / -1;
   }
   .home-appointment .course-row .evidence-state {
     grid-column: 1 / -1;
