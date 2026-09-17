@@ -133,10 +133,10 @@ test("completed COC, C1000, unmatched, AP, other-college, and petition stay hone
     completedCodes: ["MATH 211", "ENGL C1000", "STAT C1000", "SOCI 101", "AP Calculus AB"],
   });
   await expect(page.getByRole("heading", { name: "Already finished" })).toBeVisible();
-  await expect(page.getByText("Calculus I")).toBeVisible();
-  await expect(page.getByText("Done").first()).toBeVisible();
-  await expect(page.getByText("SOCI 101")).toBeVisible();
-  await expect(page.getByText("Unmatched").first()).toBeVisible();
+  await expect(page.locator(".status-scan").getByText("Calculus I", { exact: true })).toBeVisible();
+  await expect(page.locator(".status-scan").getByText("Done").first()).toBeVisible();
+  await expect(page.locator(".status-scan").getByText("SOCI 101", { exact: true })).toBeVisible();
+  await expect(page.locator(".status-scan").getByText("Unmatched").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Counselor confirmation required" })).toBeVisible();
   await expect(page.getByText("AP Calculus AB — counselor confirmation required")).toBeVisible();
   await expect(page.getByText(/petition pending/i)).toBeVisible();
