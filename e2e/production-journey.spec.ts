@@ -112,7 +112,7 @@ test("transcript rows stay off the plan until the student confirms them", async 
     buffer: Buffer.from("%PDF-1.4\n"),
   });
   await page.getByRole("button", { name: "Read transcript" }).click();
-  await expect(page.getByText(/Paste the course lines/)).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("Paste the course lines");
   await expect(page.getByTestId("transcript-confirm")).toHaveCount(0);
   await expect(page.locator(".confirmed-course-list")).toContainText("No classes yet");
 

@@ -6,6 +6,7 @@ import { targetMajorId } from "@/lib/articulation/types";
 import { planningEngine } from "@/lib/planning-engine";
 import type { StudentProfile } from "@/lib/domain";
 import type { SelectableTarget, StudentWorkspaceRecord } from "@/lib/production-types";
+import { studentFacingConstraintNotes } from "@/lib/student-facing-copy";
 
 export const WAYLO_ALGORITHM_VERSION = "planning-engine-v1";
 export const UCSD_DATA_RELEASE = "ucsd-data-2026-review-needed";
@@ -93,7 +94,7 @@ export async function listSelectableTargets(): Promise<SelectableTarget[]> {
       coverageTier: major.coverageTier,
       recognizesIgetc: institution?.recognizesIgetc ?? false,
       ingestionTier: institution?.ingestionTier ?? "2",
-      constraintNotes: major.constraintNotes,
+      constraintNotes: studentFacingConstraintNotes(major.constraintNotes),
     };
   });
 }

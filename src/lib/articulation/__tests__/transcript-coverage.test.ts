@@ -170,7 +170,7 @@ describe("Cal-GETC and counselor confirmation", () => {
           coverageTier: "full",
           recognizesIgetc: true,
           ingestionTier: "1",
-          constraintNotes: graph.targetMajorById.get(targetMajorId("uc_san_diego", "data_science"))?.constraintNotes ?? [],
+          constraintNotes: ["Production baseline pathway."],
         },
       ],
     });

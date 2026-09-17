@@ -6,6 +6,7 @@ import {
 } from "@/lib/articulation/student-history";
 import type { ArticulationGraph, MultiTargetPlanResult, VerificationTier } from "@/lib/articulation/types";
 import type { ProductionCourse, SelectableTarget } from "@/lib/production-types";
+import { studentFacingConstraintNotes } from "@/lib/student-facing-copy";
 
 export type CounselorConfirmationItem = {
   id: string;
@@ -83,7 +84,7 @@ export function buildCounselorConfirmationItems(input: {
 
   const selected = input.targets ?? [];
   for (const target of selected) {
-    for (const note of target.constraintNotes) {
+    for (const note of studentFacingConstraintNotes(target.constraintNotes)) {
       items.push({
         id: `note-${target.id}-${note.slice(0, 24)}`,
         kind: "petition",

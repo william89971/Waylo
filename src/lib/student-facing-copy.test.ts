@@ -13,6 +13,7 @@ import {
   courseWhySentence,
   isOfficialVerifiedSource,
   officialSourceLabel,
+  studentFacingConstraintNotes,
   targetCoverageNote,
 } from "@/lib/student-facing-copy";
 import type { SelectableTarget } from "@/lib/production-types";
@@ -121,5 +122,8 @@ describe("student-facing copy", () => {
       }),
     ).toBe(false);
     expect(officialSourceLabel("2025-26")).toBe("Official source · 2025-26");
+    expect(studentFacingConstraintNotes(["Production baseline pathway.", "Complete major prep by the spring before fall matriculation."])).toEqual([
+      "Complete major prep by the spring before fall matriculation.",
+    ]);
   });
 });
