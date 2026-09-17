@@ -29,12 +29,26 @@ export async function POST(request: Request) {
   try {
     const clerkUserId = await requireAuthenticatedUserId();
     const input = await parseJson(request, PlanActionSchema);
-    const workspace = await studentRepository.load(clerkUserId);
+    let workspace = await studentRepository.load(clerkUserId);
     if (!workspace.profile.onboardingCompleted) {
       throw new ApiError("onboarding_incomplete", "Complete onboarding before generating a plan.", 409);
     }
 
     if (!shouldUseLegacyUcsdPlanner(workspace)) {
+      if (input.action === "choose_route") {
+        await studentRepository.updatePreferences(clerkUserId, {
+          maxUnits: input.maxUnits,
+          summerEnrollment: input.summerEnrollment,
+          weeklyWorkHours: workspace.preferences.weeklyWorkHours,
+          targetTerm: workspace.preferences.targetTerm,
+        });
+        await studentRepository.updateTargets(clerkUserId, {
+          primaryTargetId: workspace.primaryTargetId,
+          secondaryTargetIds: workspace.secondaryTargetIds ?? [],
+          includeSecondaryDivergence: input.includeSecondaryDivergence,
+        });
+        workspace = await studentRepository.load(clerkUserId);
+      }
       const multi = await generateMultiTargetProductionPlan(workspace);
       if (input.action === "generate") {
         return Response.json(
@@ -71,6 +85,9 @@ export async function POST(request: Request) {
         },
         { headers: { "Cache-Control": "no-store" } },
       );
+    }
+    if (input.action === "choose_route") {
+      throw new ApiError("strategy_unavailable", "Route choices are not available on this planner.", 409);
     }
     const route = result.routes.find((candidate) => candidate.strategy === input.strategy);
     if (!route) throw new ApiError("strategy_unavailable", "That plan strategy is no longer available.", 409);

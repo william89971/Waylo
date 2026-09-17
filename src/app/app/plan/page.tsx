@@ -6,6 +6,7 @@ import { citationsFromAudit, CounselorPacket } from "@/components/counselor-pack
 import { EvidenceStatus } from "@/components/evidence-status";
 import { CounselorHandoff } from "@/components/counselor-handoff";
 import { PlanMatrixWorkspace } from "@/components/plan-matrix-workspace";
+import { PlanRoutePicker } from "@/components/plan-route-picker";
 import { SavePlanButton } from "@/components/save-plan-button";
 import { WaypointDrawPlayer } from "@/components/waypoint-draw-player";
 import { evidenceById, programById } from "@/lib/academic-data";
@@ -22,6 +23,7 @@ import { getAuthenticatedUserId } from "@/lib/server/auth";
 import {
   generateMultiTargetProductionPlan,
   generateProductionPlan,
+  listProductionRouteOptions,
   listSelectableTargets,
   productionEvidenceState,
   shouldUseLegacyUcsdPlanner,
@@ -54,9 +56,10 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
   const labelFor = (id: string) => formatSelectableTargetLabel(targets, id);
 
   if (!shouldUseLegacyUcsdPlanner(workspace)) {
-    const [multi, graph] = await Promise.all([
+    const [multi, graph, routes] = await Promise.all([
       generateMultiTargetProductionPlan(workspace),
       loadActiveArticulationGraph(),
+      listProductionRouteOptions(workspace),
     ]);
     const citations = citationsFromAudit(multi.auditSummary, graph, labelFor);
     const scheduleRows = multi.schedule.terms.flatMap((term) =>
@@ -125,6 +128,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             }}
           />
         </header>
+        <PlanRoutePicker options={routes} />
         {nextTerm ? (
           <section className="next-term-hero no-print" aria-label="Next semester recap">
             <div className="next-term-hero-badges">

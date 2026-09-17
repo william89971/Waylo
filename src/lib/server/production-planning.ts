@@ -7,6 +7,9 @@ import { planningEngine } from "@/lib/planning-engine";
 import type { StudentProfile } from "@/lib/domain";
 import type { SelectableTarget, StudentWorkspaceRecord } from "@/lib/production-types";
 import { studentFacingConstraintNotes } from "@/lib/student-facing-copy";
+import {
+  buildProductionRouteOptions,
+} from "@/lib/production-routes";
 
 export const WAYLO_ALGORITHM_VERSION = "planning-engine-v1";
 export const UCSD_DATA_RELEASE = "ucsd-data-2026-review-needed";
@@ -50,11 +53,8 @@ export function generateProductionPlan(workspace: StudentWorkspaceRecord) {
   });
 }
 
-export async function generateMultiTargetProductionPlan(workspace: StudentWorkspaceRecord) {
-  const graph = await loadActiveArticulationGraph();
-  const primaryTargetId = workspace.primaryTargetId || DEFAULT_PRIMARY_TARGET_ID;
-  const secondaryTargetIds = workspace.secondaryTargetIds ?? [];
-  const history = workspace.courses.flatMap((course) => {
+function historyFromWorkspace(workspace: StudentWorkspaceRecord, graph: Awaited<ReturnType<typeof loadActiveArticulationGraph>>) {
+  return workspace.courses.flatMap((course) => {
     const code = graphCodeForStudentCourse(course, graph);
     if (!code) return [];
     return [{
@@ -63,16 +63,29 @@ export async function generateMultiTargetProductionPlan(workspace: StudentWorksp
       completed: course.status === "completed",
     }];
   });
+}
 
+export async function generateMultiTargetProductionPlan(
+  workspace: StudentWorkspaceRecord,
+  overrides?: Partial<{ maxUnitsPerTerm: number; includeSummer: boolean; includeSecondaryDivergence: boolean }>,
+) {
+  const graph = await loadActiveArticulationGraph();
+  const primaryTargetId = workspace.primaryTargetId || DEFAULT_PRIMARY_TARGET_ID;
+  const secondaryTargetIds = workspace.secondaryTargetIds ?? [];
   return computeMultiTargetPlan({
-    history,
+    history: historyFromWorkspace(workspace, graph),
     primaryTargetId,
     secondaryTargetIds,
-    maxUnitsPerTerm: workspace.preferences.maxUnits,
-    includeSecondaryDivergence: workspace.includeSecondaryDivergence,
-    includeSummer: workspace.preferences.summerEnrollment,
+    maxUnitsPerTerm: overrides?.maxUnitsPerTerm ?? workspace.preferences.maxUnits,
+    includeSecondaryDivergence: overrides?.includeSecondaryDivergence ?? workspace.includeSecondaryDivergence,
+    includeSummer: overrides?.includeSummer ?? workspace.preferences.summerEnrollment,
     graph,
   });
+}
+
+export async function listProductionRouteOptions(workspace: StudentWorkspaceRecord) {
+  const graph = await loadActiveArticulationGraph();
+  return buildProductionRouteOptions(workspace, graph, historyFromWorkspace(workspace, graph));
 }
 
 export function productionEvidenceState() {
