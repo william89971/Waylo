@@ -1,6 +1,6 @@
 import type { AdmissionsStrategy } from "@/lib/admissions-strategy";
 import type { ArticulationSourceType, VerificationTier } from "@/lib/articulation/types";
-import { planBucketLabel, SOURCE_TYPE_LABEL, VERIFICATION_SHORT } from "@/lib/student-facing-copy";
+import { planBucketLabel, SOURCE_TYPE_LABEL, studentFacingDataRelease, VERIFICATION_SHORT } from "@/lib/student-facing-copy";
 
 export interface CounselorCitation {
   targetLabel: string;
@@ -29,8 +29,6 @@ export interface CounselorPacketProps {
   totalSemesterUnits: number;
   citations: CounselorCitation[];
   academicDataVersion: string;
-  algorithmVersion?: string;
-  evaluatedAt?: string;
   strategy?: AdmissionsStrategy | null;
 }
 
@@ -46,8 +44,6 @@ export function CounselorPacket({
   totalSemesterUnits,
   citations,
   academicDataVersion,
-  algorithmVersion,
-  evaluatedAt,
   strategy,
 }: CounselorPacketProps) {
   return (
@@ -144,9 +140,7 @@ export function CounselorPacket({
       ) : null}
 
       <p className="counselor-meta">
-        Release: {academicDataVersion}
-        {algorithmVersion ? ` · Algorithm: ${algorithmVersion}` : ""}
-        {evaluatedAt ? ` · Evaluated: ${evaluatedAt}` : ""}
+        Sources: {studentFacingDataRelease(academicDataVersion)}
       </p>
       <p className="counselor-disclaimer">
         Planning aid generated via Waylo. Not an official transcript, articulation agreement, or admission guarantee.

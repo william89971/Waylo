@@ -79,6 +79,10 @@ export function studentFacingConstraintNotes(notes: string[]) {
   return notes.filter((note) => !/production baseline/i.test(note.trim()));
 }
 
+export function studentFacingDataRelease(_version?: string) {
+  return "ASSIST 2025-26";
+}
+
 export const SOURCE_TYPE_LABEL: Record<ArticulationSourceType, string> = {
   assist_public: "Official ASSIST agreement",
   institutional_guide: "University transfer guide",

@@ -28,7 +28,7 @@ import {
   UCSD_DATA_RELEASE,
 } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
-import { formatCourseCode, formatSelectableTargetLabel, requirementProgressLabel } from "@/lib/student-facing-copy";
+import { formatCourseCode, formatSelectableTargetLabel, requirementProgressLabel, studentFacingDataRelease } from "@/lib/student-facing-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -224,7 +224,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           <div>
             <strong>Total planned</strong>
             <span>{multi.totalSemesterUnits} COC semester units</span>
-            <small>Academic data: {MULTI_TARGET_DATA_RELEASE}</small>
+            <small>{studentFacingDataRelease(MULTI_TARGET_DATA_RELEASE)}</small>
           </div>
           {showProposal ? (
             <SavePlanButton strategy="overlap" />
@@ -243,8 +243,6 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           totalSemesterUnits={multi.totalSemesterUnits}
           citations={citations}
           academicDataVersion={MULTI_TARGET_DATA_RELEASE}
-          algorithmVersion={multi.algorithmVersion}
-          evaluatedAt={multi.evidenceGraphSnapshot.evaluatedAt}
           strategy={strategy}
         />
       </div>
@@ -361,7 +359,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         <div>
           <strong>Estimated transfer</strong>
           <span>{route.estimatedTransferTerm}</span>
-          <small>Academic data: {UCSD_DATA_RELEASE}</small>
+          <small>{studentFacingDataRelease(UCSD_DATA_RELEASE)}</small>
         </div>
         {showProposal ? (
           <SavePlanButton strategy={route.strategy} />

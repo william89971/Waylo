@@ -31,10 +31,12 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await expect(page.getByRole("link", { name: "Take this to your counselor" })).toBeVisible();
   await page.getByRole("link", { name: "See all terms" }).click();
   await expect(page.getByRole("heading", { name: /All terms|Proposed sequence/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Review evidence" })).toBeVisible();
-  await page.getByRole("link", { name: "Review evidence" }).click();
-  await expect(page.getByRole("heading", { name: "Evidence behind your plan" })).toBeVisible();
-  await expect(page.getByText(/ASSIST or counselor confirmation needed/).first()).toBeVisible();
+  await expect(page.getByTestId("articulation-matrix")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "How each class counts" })).toBeVisible();
+  await expect(page.getByRole("list", { name: "Articulation status key" })).toContainText("Official");
+  await expect(page.locator("#counselor-packet")).toContainText("Take this to your counselor");
+  await expect(page.locator("#counselor-packet")).toContainText("ASSIST 2025-26");
+  await expect(page.locator("body")).not.toContainText(/ucsd-data-2026|seed-articulation|multi-target-csp|planning-engine-v1/i);
   await page.goto("/app");
   await expect(page.getByRole("link", { name: "Read the strategy note" })).toBeVisible();
   await page.getByRole("link", { name: "Read the strategy note" }).click();
