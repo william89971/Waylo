@@ -99,9 +99,10 @@ test("blocking a next-semester class moves it later and undo restores it", async
   const firstRow = page.locator(".home-appointment .course-row").first();
   const blockedCode = (await firstRow.locator("strong").innerText()).trim();
   expect(blockedCode).toMatch(/[A-Z]/);
+  const exactCode = new RegExp(`^${blockedCode.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
   await firstRow.getByRole("button", { name: `Can't take this: ${blockedCode}` }).click();
   await expect(page.getByText(`${blockedCode} · not this term`)).toBeVisible();
-  await expect(page.locator(".home-appointment .course-row strong").filter({ hasText: blockedCode })).toHaveCount(0);
+  await expect(page.locator(".home-appointment .course-row strong").filter({ hasText: exactCode })).toHaveCount(0);
 
   await page.getByRole("link", { name: "See all terms" }).click();
   await expect(page.getByRole("heading", { name: /All terms|Proposed sequence/ })).toBeVisible();
@@ -111,7 +112,7 @@ test("blocking a next-semester class moves it later and undo restores it", async
   await page.goto("/app");
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await page.getByRole("button", { name: `Take it after all: ${blockedCode}` }).click();
-  await expect(page.locator(".home-appointment .course-row strong").filter({ hasText: blockedCode })).toBeVisible();
+  await expect(page.locator(".home-appointment .course-row strong").filter({ hasText: exactCode })).toBeVisible();
   await expect(page.getByText(`${blockedCode} · not this term`)).toHaveCount(0);
 
   await context.close();
