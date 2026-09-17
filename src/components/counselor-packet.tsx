@@ -1,3 +1,4 @@
+import { WayloWordmark } from "@/components/waylo-wordmark";
 import type { AdmissionsStrategy } from "@/lib/admissions-strategy";
 import type { ArticulationGraph, ArticulationSourceType, TargetAuditSummary, VerificationTier } from "@/lib/articulation/types";
 import { planBucketLabel, SOURCE_TYPE_LABEL, studentFacingDataRelease, VERIFICATION_SHORT } from "@/lib/student-facing-copy";
@@ -73,6 +74,7 @@ export function CounselorPacket({
   return (
     <section className="counselor-packet" id="counselor-packet" aria-label="Counselor audit packet">
       <header className="counselor-packet-header">
+        <WayloWordmark />
         <strong>Take this to your counselor</strong>
         <span>Student: {preferredName || "Student"}</span>
         <span>College of the Canyons transfer plan</span>

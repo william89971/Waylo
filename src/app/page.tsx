@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { WayloWordmark } from "@/components/waylo-wordmark";
+import { WaypointO } from "@/components/waypoint-o";
+import { WaypointDrawPlayer } from "@/components/waypoint-draw-player";
+import { YellowFieldPlayer } from "@/components/yellow-field-player";
 
 export default function LandingPage() {
   return (
@@ -21,7 +24,10 @@ export default function LandingPage() {
         </div>
       </nav>
       <section className="production-hero">
-        <p className="production-kicker">College of the Canyons · transfer</p>
+        <p className="production-kicker">
+          <WaypointO className="kicker-o" />
+          College of the Canyons · transfer
+        </p>
         <h1>Know what to take next semester.</h1>
         <p className="production-lede">
           ASSIST is the official map, and it is a maze. Waylo reads those agreements and hands you a next-semester
@@ -35,6 +41,7 @@ export default function LandingPage() {
         </div>
       </section>
       <div className="waylo-well-band">
+        <YellowFieldPlayer />
         <section className="waylo-well" aria-label="Sample next semester">
           <figure className="waylo-specimen">
             <figcaption>
@@ -67,15 +74,24 @@ export default function LandingPage() {
       </div>
       <ol className="waylo-path" aria-label="How Waylo works">
         <li>
-          <strong>1</strong>
+          <span className="waylo-path-step">
+            <WaypointDrawPlayer playWhenVisible />
+            <strong>1</strong>
+          </span>
           Your classes
         </li>
         <li>
-          <strong>2</strong>
+          <span className="waylo-path-step">
+            <WaypointDrawPlayer playWhenVisible />
+            <strong>2</strong>
+          </span>
           What they count for
         </li>
         <li>
-          <strong>3</strong>
+          <span className="waylo-path-step">
+            <WaypointDrawPlayer playWhenVisible />
+            <strong>3</strong>
+          </span>
           What to take next
         </li>
       </ol>

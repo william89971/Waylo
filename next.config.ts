@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   // duplicate Next worker avoids a macOS/Turbopack worker deadlock observed
   // after compilation while preserving the same `tsc --noEmit` verification.
   typescript: { ignoreBuildErrors: true },
+  transpilePackages: ["remotion", "@remotion/player"],
   turbopack: {
     root: process.cwd(),
   },

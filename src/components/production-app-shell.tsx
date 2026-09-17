@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { BookOpen, CalendarDays, Home, LogOut } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { WayloWordmark } from "@/components/waylo-wordmark";
+import { WaypointO } from "@/components/waypoint-o";
 
 const nav = [
   { href: "/app", label: "What to take", icon: Home },
@@ -56,7 +57,7 @@ export function ProductionAppShell({
                 className={active ? "active" : ""}
                 aria-current={pathname === href ? "page" : undefined}
               >
-                <span className="nav-waypoint" aria-hidden="true" />
+                <WaypointO className="nav-waypoint" />
                 {label}
               </Link>
             );

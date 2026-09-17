@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { WaypointO } from "@/components/waypoint-o";
 
 function Mark() {
   return (
     <span className="waylo-wordmark" aria-hidden="true">
       <span className="waylo-letters">Wayl</span>
-      <span className="waylo-o" />
+      <WaypointO className="waylo-o" />
     </span>
   );
 }

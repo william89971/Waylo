@@ -6,6 +6,7 @@ import { CounselorHandoff } from "@/components/counselor-handoff";
 import { citationsFromAudit, CounselorPacket } from "@/components/counselor-packet";
 import type { CourseEvidencePayload } from "@/components/evidence-drawer";
 import { HomeSemesterList, type HomeSemesterCourse } from "@/components/home-semester-list";
+import { WaypointDrawPlayer } from "@/components/waypoint-draw-player";
 import { evidenceById } from "@/lib/academic-data";
 import { buildAdmissionsStrategy } from "@/lib/admissions-strategy";
 import { evaluateCalGetc } from "@/lib/articulation/cal-getc";
@@ -276,6 +277,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <div className="no-print">
       {saved ? (
         <div className="success-banner" role="status">
+          <WaypointDrawPlayer />
           Plan saved. You can come back to this list anytime.
         </div>
       ) : null}
@@ -288,7 +290,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </header>
       <section className="recommended-semester">
         <div className="section-heading">
-          <h2>Recommended semester</h2>
+          <h2>
+            <WaypointDrawPlayer />
+            Recommended semester
+          </h2>
         </div>
         <HomeSemesterList
           courses={nextCourses}

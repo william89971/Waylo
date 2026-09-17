@@ -7,6 +7,8 @@ import { EvidenceStatus } from "@/components/evidence-status";
 import { CounselorHandoff } from "@/components/counselor-handoff";
 import { PlanMatrixWorkspace } from "@/components/plan-matrix-workspace";
 import { SavePlanButton } from "@/components/save-plan-button";
+import { WaypointDrawPlayer } from "@/components/waypoint-draw-player";
+import { YellowFieldPlayer } from "@/components/yellow-field-player";
 import { evidenceById, programById } from "@/lib/academic-data";
 import { buildAdmissionsStrategy } from "@/lib/admissions-strategy";
 import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
@@ -162,7 +164,11 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         )}
         {nextTerm ? (
           <section className="next-term-hero no-print" aria-label="Next semester recap">
-            <h2>Next semester · {nextTerm.label}</h2>
+            <YellowFieldPlayer />
+            <h2>
+              <WaypointDrawPlayer />
+              Next semester · {nextTerm.label}
+            </h2>
             {nextTerm.courses.length ? (
               <ol className="next-term-codes">
                 {nextTerm.courses.map((course) => (
@@ -370,7 +376,11 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       ) : null}
       {route.terms[0] ? (
         <section className="next-term-hero no-print" aria-label="Next semester recap">
-          <h2>Next semester · {route.terms[0].label}</h2>
+          <YellowFieldPlayer />
+          <h2>
+            <WaypointDrawPlayer />
+            Next semester · {route.terms[0].label}
+          </h2>
           <ol className="next-term-codes">
             {route.terms[0].courses.map((course) => (
               <li key={course.courseId}>

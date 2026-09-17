@@ -75,7 +75,7 @@ a:hover { color: var(--p-ink-deep); }
 }
 .waylo-wordmark {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   color: var(--p-ink);
   font-family: var(--p-sans);
   font-size: 28px;
@@ -85,14 +85,13 @@ a:hover { color: var(--p-ink-deep); }
 }
 .waylo-letters { font: inherit; }
 .waylo-o {
-  display: inline-block;
-  width: 0.46em;
-  height: 0.46em;
-  margin: 0 0.02em 0.05em 0.04em;
-  border-radius: 50%;
-  background: var(--p-waypoint);
-  transform: translateY(0.03em);
+  width: 0.72em;
+  height: 0.72em;
+  display: block;
+  flex: none;
+  overflow: visible;
 }
+.waylo-o svg { display: block; width: 100%; height: 100%; }
 
 .production-button {
   min-height: 48px;
@@ -153,16 +152,14 @@ a:hover { color: var(--p-ink-deep); }
   font-size: 13px;
   font-weight: 650;
   letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
-.production-kicker::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 8px;
-  border-radius: 50%;
-  background: var(--p-waypoint);
-  transform: translateY(-1px);
+.production-kicker .kicker-o {
+  width: 11px;
+  height: 11px;
+  color: var(--p-ink);
 }
 .production-hero h1 {
   margin: 0;
@@ -209,14 +206,31 @@ a:hover { color: var(--p-ink-deep); }
   letter-spacing: -0.03em;
 }
 .waylo-path li strong {
+  position: relative;
+  z-index: 1;
   width: 36px;
   height: 36px;
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--p-waypoint);
+  background: transparent;
   color: var(--p-ink);
   font-size: 15px;
+}
+.waylo-path-step {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+}
+.waylo-path-step .waypoint-draw,
+.waylo-path-step strong {
+  grid-area: 1 / 1;
+}
+.waylo-path-step .waypoint-draw {
+  width: 36px;
+  height: 36px;
 }
 .waylo-specimen {
   width: 100%;
@@ -233,9 +247,31 @@ a:hover { color: var(--p-ink-deep); }
   padding-top: 12px;
   padding-bottom: 56px;
 }
+.waypoint-draw {
+  display: block;
+  line-height: 0;
+}
+.waypoint-draw-fallback {
+  width: 100%;
+  height: 100%;
+}
+.yellow-field-motion {
+  display: block;
+}
 .waylo-well-band {
+  position: relative;
+  overflow: hidden;
   background: var(--p-waypoint);
   padding: 56px 0;
+}
+.waylo-well-band .yellow-field-motion {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.waylo-well {
+  position: relative;
+  z-index: 1;
 }
 .waylo-specimen figcaption {
   display: flex;
@@ -426,15 +462,16 @@ a:hover { color: var(--p-ink-deep); }
 }
 .production-sidebar > .production-brand { padding: 0 8px 32px; }
 .production-sidebar nav { display: grid; gap: 6px; }
-.production-sidebar nav a .nav-waypoint { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--p-ink); background: transparent; flex: none; }
+.production-sidebar nav a .nav-waypoint { width: 14px; height: 14px; flex: none; color: var(--p-ink); }
+.production-sidebar nav a.active .nav-waypoint { color: var(--p-ink); }
 .production-sidebar nav a:hover { color: var(--p-ink); }
-.production-sidebar nav a.active .nav-waypoint { background: var(--p-ink); border-color: var(--p-ink); }
 .production-account { margin-top: auto; padding: 13px 8px 2px; }
 .local-sign-out { min-height: 44px; border: 0; background: transparent; display: flex; align-items: center; gap: 9px; color: var(--p-muted); cursor: pointer; }
 .production-page { max-width: 1080px; margin: auto; padding: 48px 44px 90px; }
 .production-page-header { margin-bottom: 28px; }
 .production-page-header p { margin: 12px 0 0; color: var(--p-ink); font-size: 18px; line-height: 1.45; max-width: 40em; }
-.success-banner { margin-bottom: 22px; padding: 12px 18px; border: 0; border-radius: var(--p-radius-pill); background: var(--p-waypoint); color: var(--p-ink); font-weight: 650; }
+.success-banner { margin-bottom: 22px; padding: 10px 16px 10px 12px; border: 0; border-radius: var(--p-radius-pill); background: var(--p-waypoint); color: var(--p-ink); font-weight: 650; display: flex; align-items: center; gap: 10px; }
+.success-banner .waypoint-draw { width: 22px; height: 22px; flex: none; }
 .dashboard-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
 .recommended-semester { min-width: 0; }
 .home-followups {
@@ -464,6 +501,13 @@ a:hover { color: var(--p-ink-deep); }
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--p-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.recommended-semester .section-heading .waypoint-draw {
+  width: 18px;
+  height: 18px;
 }
 .course-row-actions { display: grid; justify-items: end; gap: 4px; }
 .course-row-actions button, .course-row-actions a { font-size: 15px; font-weight: 650; text-decoration: none; background: none; border: 0; color: var(--p-ink); cursor: pointer; padding: 0; min-height: 0; }
@@ -688,6 +732,10 @@ a:hover { color: var(--p-ink-deep); }
   gap: 6px;
   margin-bottom: 18px;
 }
+.counselor-packet-header .waylo-wordmark {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
 
 .counselor-packet h2 {
   margin: 24px 0 10px;
@@ -735,6 +783,10 @@ a:hover { color: var(--p-ink-deep); }
 }
 
 @media print {
+  .yellow-field-motion,
+  .waypoint-draw {
+    display: none !important;
+  }
   html, body, .production-page, .counselor-packet {
     background: #ffffff !important;
     color: #111111 !important;
@@ -1169,6 +1221,8 @@ a:hover { color: var(--p-ink-deep); }
 .plan-secondary-note { margin: 0 0 18px; color: var(--p-muted); font-size: 16px; }
 
 .next-term-hero {
+  position: relative;
+  overflow: hidden;
   margin: 4px 0 20px;
   padding: 24px 28px;
   border: 0;
@@ -1176,12 +1230,32 @@ a:hover { color: var(--p-ink-deep); }
   background: var(--p-waypoint);
   box-shadow: none;
 }
+.next-term-hero .yellow-field-motion {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.next-term-hero h2,
+.next-term-hero .next-term-codes,
+.next-term-hero .next-term-hero-meta,
+.next-term-hero > p {
+  position: relative;
+  z-index: 1;
+}
 .next-term-hero h2 {
   margin: 0 0 10px;
   font-family: var(--p-display);
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.04em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.next-term-hero h2 .waypoint-draw {
+  width: 28px;
+  height: 28px;
+  flex: none;
 }
 .next-term-codes {
   list-style: none;
