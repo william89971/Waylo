@@ -11,7 +11,7 @@ import { WayloWordmark } from "@/components/waylo-wordmark";
 import type { StudentCatalogCourse } from "@/lib/articulation/student-catalog";
 import type { ProductionCourse, SelectableTarget, StudentWorkspaceRecord } from "@/lib/production-types";
 
-const STEP_LABELS = ["Schools and majors", "Your COC classes", "Schedule"];
+const STEP_LABELS = ["Schools and majors", "Your COC classes"];
 
 async function jsonRequest(url: string, init: RequestInit) {
   const response = await fetch(url, {
@@ -103,8 +103,8 @@ export function OnboardingFlow({
     return primary?.institutionId ?? "";
   });
 
-  const visibleStep = Math.min(3, Math.max(1, step - 1));
-  const progress = useMemo(() => `${Math.round((visibleStep / 3) * 100)}%`, [visibleStep]);
+  const visibleStep = Math.min(STEP_LABELS.length, Math.max(1, step - 1));
+  const progress = useMemo(() => `${Math.round((visibleStep / STEP_LABELS.length) * 100)}%`, [visibleStep]);
   const primaryTargetId = primaryInstitutionId ? (majorByInstitution[primaryInstitutionId] ?? "") : "";
   const secondaryTargetIds = useMemo(
     () =>
@@ -124,26 +124,6 @@ export function OnboardingFlow({
     selectedInstitutionIds.length > 0 &&
     Boolean(primaryInstitutionId && primaryTargetId) &&
     selectedInstitutionIds.every((institutionId) => Boolean(majorByInstitution[institutionId]));
-
-  const saveProfile = async (nextStep: number, completed = false) => {
-    setWorking(true);
-    setError("");
-    try {
-      const body = await jsonRequest("/api/me", {
-        method: "PATCH",
-        body: JSON.stringify({
-          section: "profile",
-          profile: { ...workspace.profile, onboardingStep: nextStep, onboardingCompleted: completed },
-        }),
-      });
-      setWorkspace(body.workspace);
-      setStep(nextStep);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Waylo could not continue.");
-    } finally {
-      setWorking(false);
-    }
-  };
 
   const saveTargetsAndContinue = async () => {
     setWorking(true);
@@ -361,23 +341,27 @@ export function OnboardingFlow({
         </Link>
       </header>
       <section className="onboarding-panel">
-        <div className="onboarding-progress" aria-label="Onboarding progress">
-          <div>
-            <strong>Step {visibleStep} of 3</strong>
-            <span>{STEP_LABELS[visibleStep - 1]}</span>
+        {step < 4 ? (
+          <div className="onboarding-progress" aria-label="Onboarding progress">
+            <div>
+              <strong>
+                Step {visibleStep} of {STEP_LABELS.length}
+              </strong>
+              <span>{STEP_LABELS[visibleStep - 1]}</span>
+            </div>
+            <div className="progress-track" aria-hidden="true">
+              <span style={{ width: progress }} />
+            </div>
+            <ol>
+              {STEP_LABELS.map((label, index) => (
+                <li key={label} className={index + 1 <= visibleStep ? "active" : ""}>
+                  {index + 1 < visibleStep ? <Check size={13} /> : index + 1}
+                  <span>{label}</span>
+                </li>
+              ))}
+            </ol>
           </div>
-          <div className="progress-track" aria-hidden="true">
-            <span style={{ width: progress }} />
-          </div>
-          <ol>
-            {STEP_LABELS.map((label, index) => (
-              <li key={label} className={index + 1 <= visibleStep ? "active" : ""}>
-                {index + 1 < visibleStep ? <Check size={13} /> : index + 1}
-                <span>{label}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
+        ) : null}
         {error ? (
           <div className="production-error" role="alert">
             {error}
@@ -665,9 +649,9 @@ export function OnboardingFlow({
               <button
                 className="production-button primary"
                 disabled={working}
-                onClick={() => void saveProfile(4, editing && workspace.profile.onboardingCompleted)}
+                onClick={() => void finish()}
               >
-                Continue
+                {working ? "Saving…" : "See next semester"}
               </button>
             </div>
           </div>
@@ -713,7 +697,10 @@ export function OnboardingFlow({
               <small>Transcript files are not stored. Unmatched, AP, and petition rows stay pending until a counselor confirms them.</small>
             </div>
             <div className="onboarding-actions">
-              <button className="production-button" onClick={() => setStep(3)}>
+              <button
+                className="production-button"
+                onClick={() => (editing ? router.push("/app") : setStep(3))}
+              >
                 Back
               </button>
               <button

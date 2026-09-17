@@ -368,8 +368,25 @@ a:hover { color: var(--p-ink-deep); }
 .production-page-header h1 { margin: 0; font-family: var(--font-newsreader), var(--p-display), Georgia, serif; font-size: 42px; font-weight: 500; line-height: 1.12; letter-spacing: -.03em; font-optical-sizing: auto; }
 .production-page-header p { margin: 12px 0 0; color: var(--p-ink); font-size: 18px; line-height: 1.45; max-width: 40em; }
 .success-banner { margin-bottom: 22px; padding: 0 0 14px; border: 0; border-bottom: 1px solid var(--p-border); background: transparent; color: var(--p-ink); font-weight: 650; }
-.dashboard-layout { display: grid; grid-template-columns: minmax(0, 1fr) 224px; gap: 28px; }
+.dashboard-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
 .recommended-semester { min-width: 0; }
+.home-followups {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+}
+.home-followups a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--p-muted);
+  font-size: 14px;
+  font-weight: 550;
+  text-decoration: none;
+}
+.home-followups a:hover { color: var(--p-ink); text-decoration: underline; }
+.recommended-semester .counselor-handoff { margin-top: 22px; }
 .section-heading h2 { margin: 0; font-family: var(--p-display); font-size: 24px; font-weight: 500; letter-spacing: -0.02em; }
 .section-heading p { margin: 5px 0 16px; color: var(--p-muted); font-size: 16px; }
 .recommended-semester .section-heading { margin-bottom: 4px; }

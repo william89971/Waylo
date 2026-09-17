@@ -14,15 +14,25 @@ async function continueToCourses(page: Page) {
 }
 
 async function finishToHome(page: Page) {
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
   await page.getByRole("button", { name: "See next semester", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
 }
 
 async function assertHomeInvariants(page: Page, opts?: { completedCodes?: string[] }) {
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Recommended semester" })).toBeVisible();
+  await expect(page.locator(".dashboard-rail")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Change unit limit" })).toBeVisible();
+  const pdf = page.getByRole("button", { name: "Download PDF" });
+  const alreadyFinished = page.getByRole("heading", { name: "Already finished" });
+  await expect(pdf).toBeVisible();
+  await expect(alreadyFinished).toBeVisible();
+  const pdfBox = await pdf.boundingBox();
+  const finishedBox = await alreadyFinished.boundingBox();
+  expect(pdfBox, "PDF handoff should sit above Already finished").toBeTruthy();
+  expect(finishedBox).toBeTruthy();
+  expect(pdfBox!.y).toBeLessThan(finishedBox!.y);
   await expect(page.locator("body")).not.toContainText(/Production baseline pathway/i);
   await expect(page.getByRole("heading", { name: "Cal-GETC / general education" })).toBeVisible();
   await expect(page.getByText("Waylo does not certify Cal-GETC.")).toBeVisible();
@@ -59,6 +69,11 @@ test("brand-new student still gets a next-semester answer with dated official so
   await finishToHome(page);
   await assertHomeInvariants(page);
   await expect(page.getByText("No finished classes yet")).toBeVisible();
+  await page.getByRole("link", { name: "Change unit limit" }).click();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
+  await expect(page.getByLabel("Weekly work hours")).toHaveCount(0);
+  await page.getByRole("button", { name: "See next semester", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Why this class?" }).first()).toBeVisible();
   const verifiedRow = page.locator(".course-row").filter({ has: page.getByRole("link", { name: /Official source · / }) }).first();
   await expect(verifiedRow).toBeVisible();

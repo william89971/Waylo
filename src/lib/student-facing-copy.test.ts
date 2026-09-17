@@ -87,16 +87,23 @@ describe("student-facing copy", () => {
 
   it("explains overlap the way a counselor would say it", () => {
     expect(courseCountsLine(["UC Berkeley Economics", "USC Business Administration (Marshall)"])).toBe(
-      "Counts toward UC Berkeley Economics and USC Business Administration (Marshall)",
+      "You take this for UC Berkeley Economics and USC Business Administration (Marshall)",
     );
+    expect(courseCountsLine(["UC Berkeley Economics"])).toBe("You take this for UC Berkeley Economics");
     expect(planBucketLabel("secondary_divergence")).toBe("Needed only for a second school");
     expect(targetCoverageNote("reviewed")).toMatch(/Official UC\/CSU/);
+    expect(courseWhySentence([{ school: "UC Berkeley Economics", requirement: "Calculus I" }])).toBe(
+      "You take this for Calculus I at UC Berkeley Economics.",
+    );
     expect(
       courseWhySentence([
         { school: "UC Berkeley Economics", requirement: "Calculus I" },
         { school: "USC Business Administration (Marshall)", requirement: "Business Calculus" },
       ]),
-    ).toBe("This covers Calculus I at UC Berkeley Economics and Business Calculus at USC Business Administration (Marshall).");
+    ).toBe(
+      "You take this for Calculus I at UC Berkeley Economics and Business Calculus at USC Business Administration (Marshall).",
+    );
+    expect(courseWhySentence([{ school: "UC Berkeley Economics" }])).toBe("You take this for UC Berkeley Economics.");
     expect(alreadyDoneLine("UC Berkeley Economics", ["Writing", "Statistics"])).toBe(
       "Writing and Statistics at UC Berkeley Economics are already done.",
     );
