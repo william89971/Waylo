@@ -6,6 +6,13 @@ import {
   WaypointDraw,
 } from "./WaypointDraw";
 import {
+  LANDING_STAGE_DURATION,
+  LANDING_STAGE_FPS,
+  LANDING_STAGE_HEIGHT,
+  LANDING_STAGE_WIDTH,
+  LandingStage,
+} from "./LandingStage";
+import {
   YELLOW_FIELD_DURATION,
   YELLOW_FIELD_FPS,
   YELLOW_FIELD_HEIGHT,
@@ -23,6 +30,14 @@ export function RemotionRoot() {
         fps={YELLOW_FIELD_FPS}
         width={YELLOW_FIELD_WIDTH}
         height={YELLOW_FIELD_HEIGHT}
+      />
+      <Composition
+        id="LandingStage"
+        component={LandingStage}
+        durationInFrames={LANDING_STAGE_DURATION}
+        fps={LANDING_STAGE_FPS}
+        width={LANDING_STAGE_WIDTH}
+        height={LANDING_STAGE_HEIGHT}
       />
       <Composition
         id="WaypointDraw"

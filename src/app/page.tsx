@@ -1,12 +1,24 @@
 import Link from "next/link";
 import { WayloWordmark } from "@/components/waylo-wordmark";
 import { WaypointO } from "@/components/waypoint-o";
-import { YellowFieldPlayer } from "@/components/yellow-field-player";
+import { LandingStagePlayer } from "@/components/landing-stage-player";
 
 const path = [
-  { index: "01", label: "Your classes" },
-  { index: "02", label: "What they count for" },
-  { index: "03", label: "What to take next" },
+  {
+    index: "01",
+    label: "Your classes",
+    note: "What is already on your College of the Canyons record.",
+  },
+  {
+    index: "02",
+    label: "What they count for",
+    note: "Official ASSIST agreements, or ask a counselor.",
+  },
+  {
+    index: "03",
+    label: "What to take next",
+    note: "A next-semester list, with units.",
+  },
 ] as const;
 
 export default function LandingPage() {
@@ -45,8 +57,27 @@ export default function LandingPage() {
           </Link>
         </div>
       </section>
-      <div className="waylo-well-band">
-        <YellowFieldPlayer />
+      <div className="waylo-stage">
+        <LandingStagePlayer />
+        <aside className="waylo-stage-satellite left" aria-hidden="true">
+          <p>Your classes</p>
+          <ul>
+            <li>
+              <strong className="font-mono tabular-nums">CHEM-201</strong>
+            </li>
+            <li>
+              <strong className="font-mono tabular-nums">MATH-211</strong>
+            </li>
+            <li>
+              <strong className="font-mono tabular-nums">ENGL-103</strong>
+            </li>
+          </ul>
+        </aside>
+        <aside className="waylo-stage-satellite right" aria-hidden="true">
+          <p>Fall 2026</p>
+          <em className="verified">Official agreement</em>
+          <em className="review">Ask a counselor</em>
+        </aside>
         <section className="waylo-well" aria-label="Sample next semester">
           <figure className="waylo-specimen">
             <figcaption>
@@ -84,7 +115,10 @@ export default function LandingPage() {
               <WaypointO className="waylo-path-o" />
               <span className="waylo-path-index">{step.index}</span>
             </span>
-            {step.label}
+            <span className="waylo-path-copy">
+              <strong className="waylo-path-label">{step.label}</strong>
+              <span className="waylo-path-note">{step.note}</span>
+            </span>
           </li>
         ))}
       </ol>
