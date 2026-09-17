@@ -9,7 +9,17 @@ import {
 
 const STORAGE_KEY = "waylo-counselor-email";
 
-export function CounselorHandoff({ email, children }: { email: CounselorEmailPayload; children?: ReactNode }) {
+export function CounselorHandoff({
+  email,
+  children,
+  status,
+  primaryAction,
+}: {
+  email: CounselorEmailPayload;
+  children?: ReactNode;
+  status?: string;
+  primaryAction?: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const [address, setAddress] = useState("");
   const [error, setError] = useState("");
@@ -52,9 +62,10 @@ export function CounselorHandoff({ email, children }: { email: CounselorEmailPay
 
   return (
     <div className="counselor-handoff no-print">
-      <p className="counselor-handoff-label">Take this to your counselor</p>
+      <p className="counselor-handoff-label">{status ?? "Take this to your counselor"}</p>
       <div className="counselor-handoff-actions">
-        <button type="button" className="production-button primary" onClick={downloadPdf}>
+        {primaryAction}
+        <button type="button" className={primaryAction ? "production-button" : "production-button primary"} onClick={downloadPdf}>
           Download PDF
         </button>
         <button

@@ -92,6 +92,11 @@ export function buildMatrixRows(
   return rows;
 }
 
+export function matrixRowKind(row: Pick<MatrixCourseRow, "cells">): "overlap" | "divergent" {
+  const required = Object.values(row.cells).filter((cell) => cell.status !== "unrequired").length;
+  return required >= 2 ? "overlap" : "divergent";
+}
+
 function campusEntryForCourse(
   course: ScheduledCourse,
   campusId: string,

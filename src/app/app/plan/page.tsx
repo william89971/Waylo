@@ -8,7 +8,6 @@ import { CounselorHandoff } from "@/components/counselor-handoff";
 import { PlanMatrixWorkspace } from "@/components/plan-matrix-workspace";
 import { SavePlanButton } from "@/components/save-plan-button";
 import { WaypointDrawPlayer } from "@/components/waypoint-draw-player";
-import { YellowFieldPlayer } from "@/components/yellow-field-player";
 import { evidenceById, programById } from "@/lib/academic-data";
 import { buildAdmissionsStrategy } from "@/lib/admissions-strategy";
 import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
@@ -18,7 +17,7 @@ import {
   buildMatrixCampuses,
   buildMatrixRows,
 } from "@/lib/articulation/matrix-view";
-import type { DivergencePoint, VerificationTier } from "@/lib/articulation/types";
+import type { VerificationTier } from "@/lib/articulation/types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
 import {
   generateMultiTargetProductionPlan,
@@ -31,7 +30,6 @@ import {
 } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
 import {
-  divergenceDisplay,
   formatCourseCode,
   formatSelectableTargetLabel,
   requirementProgressLabel,
@@ -42,32 +40,6 @@ export const dynamic = "force-dynamic";
 
 function legacyTier(status?: string): VerificationTier {
   return status === "verified" ? "VERIFIED_ASSIST" : "NEEDS_COUNSELOR_CONFIRMATION";
-}
-
-function DivergenceList({
-  points,
-  labelFor,
-}: {
-  points: DivergencePoint[];
-  labelFor: (id: string) => string;
-}) {
-  if (!points.length) return null;
-  return (
-    <section className="divergence-section no-print">
-      <h2>Schools want different classes</h2>
-      <ul className="divergence-list">
-        {points.map((point) => {
-          const { code, line } = divergenceDisplay(point, labelFor);
-          return (
-            <li key={point.id}>
-              <strong className="font-mono tabular-nums">{code}</strong>
-              <span>{line}</span>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
 }
 
 export default async function PlanPage({ searchParams }: { searchParams: Promise<{ new?: string; course?: string }> }) {
@@ -137,6 +109,8 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             </p>
           </div>
           <CounselorHandoff
+            status={showProposal ? "Proposed — not saved" : undefined}
+            primaryAction={showProposal ? <SavePlanButton strategy="overlap" /> : undefined}
             email={{
               studentName: workspace.profile.preferredName,
               primaryLabel: labelFor(multi.primaryTargetId),
@@ -151,18 +125,17 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             }}
           />
         </header>
-        {showProposal ? (
-          <div className="proposal-banner no-print">
-            <strong>Proposed — not saved</strong>
-            <span>Save it so next semester stays on Home.</span>
-          </div>
-        ) : null}
         {nextTerm ? (
           <section className="next-term-hero no-print" aria-label="Next semester recap">
-            <YellowFieldPlayer />
+            <div className="next-term-hero-badges">
+              <span className="next-term-badge">Next semester</span>
+              <span className="next-term-badge font-mono tabular-nums">
+                {nextTerm.totalSemesterUnits.toFixed(1)} COC units
+              </span>
+            </div>
             <h2>
               <WaypointDrawPlayer />
-              Next semester · {nextTerm.label}
+              {nextTerm.label}
             </h2>
             {nextTerm.courses.length ? (
               <ol className="next-term-codes">
@@ -178,16 +151,6 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             ) : (
               <p>No classes scheduled.</p>
             )}
-            <div className="next-term-hero-meta">
-              <p>{nextTerm.totalSemesterUnits} COC units</p>
-              {showProposal ? (
-                <SavePlanButton strategy="overlap" />
-              ) : (
-                <Link href="/app" className="production-text-link">
-                  Open on Home
-                </Link>
-              )}
-            </div>
           </section>
         ) : null}
         {!workspace.includeSecondaryDivergence ? (
@@ -197,7 +160,6 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           </div>
         ) : null}
         <CounselorConfirmationList items={counselorItems} />
-        <DivergenceList points={multi.divergencePoints} labelFor={labelFor} />
         <section className="no-print matrix-section" aria-label="Multi-campus articulation matrix">
           <div className="matrix-heading">
             <h2>How each class counts</h2>
@@ -206,9 +168,9 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             </p>
           </div>
           <ul className="status-legend" aria-label="Articulation status key">
-            <li className="verified">Official</li>
-            <li className="review">Ask a counselor</li>
-            <li className="unrequired">Not required</li>
+            <li><span className="matrix-pill verified">Official</span></li>
+            <li><span className="matrix-pill review">Ask a counselor</span></li>
+            <li><span className="matrix-pill unrequired">Not required</span></li>
           </ul>
           <p className="scroll-hint">Swipe sideways to compare campuses.</p>
           <PlanMatrixWorkspace
@@ -262,9 +224,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             <span>{multi.totalSemesterUnits} COC semester units</span>
             <small>{studentFacingDataRelease(MULTI_TARGET_DATA_RELEASE)}</small>
           </div>
-          {showProposal ? (
-            <SavePlanButton strategy="overlap" />
-          ) : (
+          {showProposal ? null : (
             <Link href="/app/plan?new=1" className="production-button">
               Rebuild this plan
             </Link>
@@ -343,6 +303,8 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           <p>For {labelFor(workspace.primaryTargetId)}.</p>
         </div>
         <CounselorHandoff
+          status={showProposal ? "Proposed — not saved" : undefined}
+          primaryAction={showProposal ? <SavePlanButton strategy={route.strategy} /> : undefined}
           email={{
             studentName: workspace.profile.preferredName,
             primaryLabel: labelFor(workspace.primaryTargetId),
@@ -357,18 +319,17 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           }}
         />
       </header>
-      {showProposal ? (
-        <div className="proposal-banner no-print">
-          <strong>Proposed — not saved</strong>
-          <span>Save it so next semester stays on Home.</span>
-        </div>
-      ) : null}
       {route.terms[0] ? (
         <section className="next-term-hero no-print" aria-label="Next semester recap">
-          <YellowFieldPlayer />
+          <div className="next-term-hero-badges">
+            <span className="next-term-badge">Next semester</span>
+            <span className="next-term-badge font-mono tabular-nums">
+              {route.terms[0].totalUnits.toFixed(1)} COC units
+            </span>
+          </div>
           <h2>
             <WaypointDrawPlayer />
-            Next semester · {route.terms[0].label}
+            {route.terms[0].label}
           </h2>
           <ol className="next-term-codes">
             {route.terms[0].courses.map((course) => (
@@ -380,14 +341,6 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               </li>
             ))}
           </ol>
-          <div className="next-term-hero-meta">
-            <p>{route.terms[0].totalUnits} COC units</p>
-            {showProposal ? <SavePlanButton strategy={route.strategy} /> : (
-              <Link href="/app" className="production-text-link">
-                Open on Home
-              </Link>
-            )}
-          </div>
         </section>
       ) : null}
       {productionEvidenceState() === "needs_review" ? (
@@ -401,8 +354,8 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         </div>
       ) : null}
       <ul className="status-legend no-print" aria-label="Course status key">
-        <li className="verified">Verified or planning suggestion</li>
-        <li className="review">Needs counselor confirmation</li>
+        <li><span className="matrix-pill verified">Official</span></li>
+        <li><span className="matrix-pill review">Ask a counselor</span></li>
       </ul>
       <p className="scroll-hint no-print">Swipe sideways to see later semesters.</p>
       <section id="requirements" className="semester-timeline no-print" aria-label="Semester-by-semester plan">
@@ -435,9 +388,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           <span>{route.estimatedTransferTerm}</span>
           <small>{studentFacingDataRelease(UCSD_DATA_RELEASE)}</small>
         </div>
-        {showProposal ? (
-          <SavePlanButton strategy={route.strategy} />
-        ) : (
+        {showProposal ? null : (
           <Link href="/app/plan?new=1" className="production-button">
             Rebuild this plan
           </Link>
