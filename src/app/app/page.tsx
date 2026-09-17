@@ -219,6 +219,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     ...Object.fromEntries((nextTerm?.courses ?? []).map((course) => [course.code, legacyEvidenceByCourse(course, primaryLabel)])),
     ...graphEvidence,
   });
+  for (const course of nextTerm?.courses ?? []) {
+    const graphCode = graphCodeForStudentCourse({ catalogCourseId: course.courseId, code: course.code }, graph);
+    const payload =
+      evidenceLookup(evidenceByCourseCode, graphCode ?? course.code) ??
+      evidenceLookup(evidenceByCourseCode, course.code);
+    if (!payload) continue;
+    evidenceByCourseCode[course.code] = payload;
+    if (graphCode) evidenceByCourseCode[graphCode] = payload;
+  }
   const nextCourses: HomeSemesterCourse[] = (nextTerm?.courses ?? []).map((course) => {
     const graphCode = graphCodeForStudentCourse({ catalogCourseId: course.courseId, code: course.code }, graph);
     const payload =
