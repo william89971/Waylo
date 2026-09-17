@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { WayloWordmark } from "@/components/waylo-wordmark";
 
 export default function ServiceUnavailablePage() {
   return (
     <main className="auth-page">
       <section className="auth-card">
-        <Link href="/" className="production-brand">Waylo</Link>
+        <WayloWordmark href="/" />
         <h1>Account services are being prepared</h1>
         <p>
           This environment is not connected to Waylo’s secure authentication and student database. No academic

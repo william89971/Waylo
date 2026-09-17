@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { WayloWordmark } from "@/components/waylo-wordmark";
 
 export default function LandingPage() {
   return (
@@ -7,38 +8,70 @@ export default function LandingPage() {
         Skip to sign up
       </a>
       <nav className="production-landing-nav" aria-label="Main navigation">
-        <Link href="/" className="production-brand">
-          Waylo
-        </Link>
-        <div className="production-nav-actions">
-          <Link href="/sign-in" className="production-text-link">
-            Sign in
-          </Link>
-          <Link href="/sign-up" className="production-button primary">
-            Sign up
-          </Link>
-        </div>
-      </nav>
-      <section className="production-hero">
-        <div>
-          <h1>Know what to take next semester.</h1>
-          <p>
-            Get a next-semester plan for one or more universities tonight. Bring it to a College of the Canyons
-            counselor before you enroll.
-          </p>
-          <div id="sign-up" className="production-hero-actions">
+        <div className="production-landing-nav-inner">
+          <WayloWordmark href="/" />
+          <div className="production-nav-actions">
+            <Link href="/sign-in" className="production-text-link">
+              Sign in
+            </Link>
             <Link href="/sign-up" className="production-button primary">
               Sign up
             </Link>
-            <Link href="/sign-in" className="production-button">
-              Sign in
-            </Link>
           </div>
-          <p className="production-disclaimer">
-            Waylo is a planning aid, not an official degree audit. Confirm anything marked for review in ASSIST or with
-            a counselor before you enroll.
-          </p>
         </div>
+      </nav>
+      <section className="production-hero">
+        <p className="production-kicker">College of the Canyons · transfer</p>
+        <h1>Know what to take next semester.</h1>
+        <p className="production-lede">
+          ASSIST is the official map, and it is a maze. Waylo reads those agreements and hands you a next-semester
+          list for the universities you are planning toward. Bring it to a College of the Canyons counselor before you
+          enroll.
+        </p>
+        <div id="sign-up" className="production-hero-actions">
+          <Link href="/sign-up" className="production-button primary">
+            Sign up
+          </Link>
+          <Link href="/sign-in" className="production-button">
+            Sign in
+          </Link>
+        </div>
+        <ol className="waylo-path" aria-label="How Waylo works">
+          <li>Your classes</li>
+          <li>What they count for</li>
+          <li>What to take next</li>
+        </ol>
+        <figure className="waylo-specimen">
+          <figcaption>
+            <span className="waylo-specimen-kicker">Next semester</span>
+            <strong>Fall 2026</strong>
+            <span className="waylo-specimen-units">13.0 COC units</span>
+          </figcaption>
+          <ol>
+            <li>
+              <strong className="font-mono tabular-nums">CHEM-201</strong>
+              <span>General Chemistry I</span>
+              <span className="tabular-nums">5.0</span>
+              <em className="verified">Official agreement</em>
+            </li>
+            <li>
+              <strong className="font-mono tabular-nums">MATH-211</strong>
+              <span>Calculus I</span>
+              <span className="tabular-nums">5.0</span>
+              <em className="verified">Official agreement</em>
+            </li>
+            <li>
+              <strong className="font-mono tabular-nums">ENGL-103</strong>
+              <span>Critical Reading, Writing and Thinking</span>
+              <span className="tabular-nums">3.0</span>
+              <em className="review">Ask a counselor</em>
+            </li>
+          </ol>
+        </figure>
+        <p className="production-disclaimer">
+          Waylo is a planning aid, not an official degree audit. Confirm anything marked for review in ASSIST or with
+          a counselor before you enroll.
+        </p>
       </section>
     </main>
   );
