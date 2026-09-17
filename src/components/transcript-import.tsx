@@ -31,14 +31,17 @@ export function TranscriptImport({
       setError("Paste transcript text or choose a PDF or image first.");
       return;
     }
+    if (file && !text.trim()) {
+      setError("Waylo cannot treat a PDF or image as your transcript here. Paste the course lines so you can confirm every row.");
+      return;
+    }
     setWorking(true);
     setError("");
     setExtraction(null);
     try {
       const form = new FormData();
       form.set("mode", "seeded");
-      if (file) form.set("file", file);
-      else form.set("text", text);
+      form.set("text", text);
       const response = await fetch("/api/transcripts/extract", { method: "POST", body: form });
       const body = await response.json();
       if (!response.ok) throw new Error(body?.error?.message ?? body?.message ?? "Waylo could not read that transcript.");
@@ -110,7 +113,7 @@ export function TranscriptImport({
         />
       </label>
       <label className="transcript-file">
-        Or upload a PDF or image
+        PDF or image upload
         <input
           type="file"
           accept="application/pdf,image/png,image/jpeg,image/webp"
@@ -119,6 +122,7 @@ export function TranscriptImport({
             setText("");
           }}
         />
+        <small>Paste the course lines from the file. Waylo will not guess a sample transcript from an unread PDF.</small>
       </label>
       <button type="button" className="production-button" disabled={working} onClick={() => void extract()}>
         {working && !extraction ? "Reading…" : "Read transcript"}

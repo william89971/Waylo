@@ -83,7 +83,7 @@ export const TARGET_MAJOR_SEED: TargetMajor[] = [
   major("ucla", "business_administration", "Pre-Business Economics", "B.A.", "reviewed", ["Pre-major GPA minimums are selective."]),
   major("ucla", "psychology", "Psychology", "B.A.", "reviewed", []),
   major("ucla", "data_science", "Statistics & Data Science", "B.S.", "reviewed", []),
-  major("uc_san_diego", "data_science", "Data Science", "B.S.", "full", ["Production baseline pathway."]),
+  major("uc_san_diego", "data_science", "Data Science", "B.S.", "full", []),
   major("uc_san_diego", "bioengineering", "Bioengineering", "B.S.", "reviewed", ["Chemistry series must be completed as a series."]),
   major("uc_san_diego", "psychology", "Psychology", "B.S.", "reviewed", []),
   major("usc", "business_administration", "Business Administration (Marshall)", "B.S.B.A.", "reviewed", ["IGETC does not clear USC foreign language or diversity."]),

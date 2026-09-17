@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { academicAIProvider, AIConfigurationError, AIWorkflowError, type TranscriptInput } from "@/lib/ai/provider";
 import { beginLiveRequest, LiveDemoError, type LiveAIRequestContext, type LiveRequestLease } from "@/lib/ai/live-demo";
-import { rematchTranscriptExtraction } from "@/lib/articulation/transcript-match";
+import { extractCoursesFromPlainText, rematchTranscriptExtraction } from "@/lib/articulation/transcript-match";
 import { TranscriptIngestionEventSchema, type TranscriptExtraction, type TranscriptIngestionEvent } from "@/lib/domain";
 import { seededTranscriptExtraction } from "@/lib/fixtures";
 import { createRequestId, jsonWithRequestId, logSanitizedRequest, readLimitedFormData, readLimitedJson, RequestSafetyError } from "@/lib/server/request-safety";
@@ -67,12 +67,23 @@ async function prepare(request: Request): Promise<PreparedRequest> {
 }
 
 async function runExtraction(prepared: PreparedRequest, liveContext?: LiveAIRequestContext): Promise<{ mode: "seeded" | "live"; extraction: TranscriptExtraction; fallback?: string }> {
-  if (prepared.mode === "seeded") return { mode: "seeded", extraction: rematchTranscriptExtraction(seededTranscriptExtraction) };
+  if (prepared.mode === "seeded") {
+    if (prepared.input?.kind === "text") {
+      return { mode: "seeded", extraction: extractCoursesFromPlainText(prepared.input.text) };
+    }
+    return { mode: "seeded", extraction: rematchTranscriptExtraction(seededTranscriptExtraction) };
+  }
   if (!prepared.input || !liveContext) throw new AIConfigurationError();
   try {
+    if (prepared.input.kind === "text") {
+      return { mode: "live", extraction: extractCoursesFromPlainText(prepared.input.text) };
+    }
     return { mode: "live", extraction: rematchTranscriptExtraction(await academicAIProvider.extractTranscript(prepared.input, liveContext)) };
   } catch (error) {
     if (!(error instanceof AIConfigurationError) && !(error instanceof AIWorkflowError)) throw error;
+    if (prepared.input.kind === "text") {
+      return { mode: "seeded", extraction: extractCoursesFromPlainText(prepared.input.text), fallback: codeFor(error) };
+    }
     return { mode: "seeded", extraction: rematchTranscriptExtraction(seededTranscriptExtraction), fallback: codeFor(error) };
   }
 }

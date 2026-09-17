@@ -99,11 +99,24 @@ test("transcript rows stay off the plan until the student confirms them", async 
   await page.getByRole("button", { name: "Read transcript" }).click();
   await expect(page.getByTestId("transcript-confirm")).toBeVisible();
   await expect(page.getByText(/Nothing is added to your plan until you confirm/)).toBeVisible();
+  await expect(page.getByTestId("transcript-confirm")).toContainText("ENGL C1000");
+  await expect(page.getByTestId("transcript-confirm")).not.toContainText("MATH 211");
+  await expect(page.getByTestId("transcript-confirm")).not.toContainText("COMP SCI 111");
   await page.getByRole("button", { name: "Discard" }).click();
   await expect(page.getByTestId("transcript-confirm")).toHaveCount(0);
   await expect(page.locator(".confirmed-course-list")).toContainText("No classes yet");
 
+  await page.getByLabel("PDF or image upload").setInputFiles({
+    name: "transcript.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4\n"),
+  });
   await page.getByRole("button", { name: "Read transcript" }).click();
+  await expect(page.getByText(/Paste the course lines/)).toBeVisible();
+  await expect(page.getByTestId("transcript-confirm")).toHaveCount(0);
+  await expect(page.locator(".confirmed-course-list")).toContainText("No classes yet");
+
+  await page.getByLabel("Paste transcript text").fill("ENGL C1000 Academic Reading and Writing A Fall 2025");
   await expect(page.getByTestId("transcript-confirm")).toBeVisible();
   await page.getByRole("button", { name: "Confirm and add to my record" }).click();
   await expect(page.locator(".confirmed-course-list")).toContainText("ENGL");

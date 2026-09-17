@@ -36,6 +36,14 @@ describe("API contracts", () => {
     expect(response.status).toBe(200); expect(body.mode).toBe("seeded"); expect(body.extraction.reviewFlags.length).toBeGreaterThan(0);
   });
 
+  it("does not invent seeded demo courses from a student's pasted transcript", async () => {
+    const request = new Request("http://localhost/api/transcripts/extract", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "seeded", text: "ENGL C1000 Academic Reading and Writing A Fall 2025" }) });
+    const response = await extract(request); const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.extraction.courses.map((row: { sourceCode: string }) => row.sourceCode)).toEqual(["ENGL C1000"]);
+    expect(body.extraction.courses.some((row: { sourceCode: string }) => /MATH 211|COMP SCI 111/i.test(row.sourceCode))).toBe(false);
+  });
+
   it("streams transcript progress and ends with a structured result", async () => {
     const request = new Request("http://localhost/api/transcripts/extract", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/x-ndjson" }, body: JSON.stringify({ mode: "seeded", text: "sample" }) });
     const response = await extract(request); const events = (await response.text()).trim().split("\n").map((line) => JSON.parse(line));

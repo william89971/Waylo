@@ -15,9 +15,9 @@ import { graphCodeForStudentCourse, unmatchedCompletedCourses } from "@/lib/arti
 import type { ArticulationGraph, VerificationTier } from "@/lib/articulation/types";
 import type { SavedPlan, SelectableTarget } from "@/lib/production-types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
-import { listSelectableTargets } from "@/lib/server/production-planning";
+import { generateMultiTargetProductionPlan, listSelectableTargets } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
-import { alreadyDoneLine, courseCountsLine, courseWhySentence, formatSelectableTargetLabel } from "@/lib/student-facing-copy";
+import { alreadyDoneLine, courseCountsLine, courseWhySentence, formatSelectableTargetLabel, isOfficialVerifiedSource, officialSourceLabel } from "@/lib/student-facing-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -28,10 +28,19 @@ function labelFor(targets: SelectableTarget[], id: string) {
 function scheduledFor(
   course: SavedPlan["route"]["terms"][number]["courses"][number],
   plan: SavedPlan,
+  auditPlan = plan.multiTargetPlan,
 ) {
-  return plan.multiTargetPlan?.schedule.terms
+  const dashed = course.code.replace(/\s+/g, "-").toUpperCase();
+  const spaced = course.code.replace(/-/g, " ");
+  return (auditPlan ?? plan.multiTargetPlan)?.schedule.terms
     .flatMap((term) => term.courses)
-    .find((item) => item.courseId === course.courseId || item.code === course.code);
+    .find(
+      (item) =>
+        item.courseId === course.courseId ||
+        item.code === course.code ||
+        item.code === dashed ||
+        item.code === spaced,
+    );
 }
 
 function whyThisClass(
@@ -40,8 +49,9 @@ function whyThisClass(
   targets: SelectableTarget[],
   graph: ArticulationGraph | null,
   primaryLabel: string,
+  auditPlan = plan.multiTargetPlan,
 ) {
-  const scheduled = scheduledFor(course, plan);
+  const scheduled = scheduledFor(course, plan, auditPlan);
   if (scheduled && graph) {
     const parts = scheduled.fulfillsTargetIds.map((id) => {
       const rule = pickRuleForCourse(graph.rulesByTargetMajorId.get(id) ?? [], scheduled.code);
@@ -58,8 +68,9 @@ function primaryEvidenceTier(
   plan: SavedPlan,
   graph: ArticulationGraph | null,
   primaryId: string,
+  auditPlan = plan.multiTargetPlan,
 ): VerificationTier | undefined {
-  const scheduled = scheduledFor(course, plan);
+  const scheduled = scheduledFor(course, plan, auditPlan);
   if (scheduled && graph) {
     const rule = pickRuleForCourse(graph.rulesByTargetMajorId.get(primaryId) ?? [], scheduled.code);
     return rule?.verificationTier ?? scheduled.verificationTier;
@@ -72,8 +83,9 @@ function courseEvidenceState(
   plan: SavedPlan,
   graph: ArticulationGraph | null,
   primaryId: string,
+  auditPlan = plan.multiTargetPlan,
 ): "verified" | "suggestion" | "review" {
-  const tier = primaryEvidenceTier(course, plan, graph, primaryId);
+  const tier = primaryEvidenceTier(course, plan, graph, primaryId, auditPlan);
   if (tier) {
     if (tier === "VERIFIED_ASSIST" || tier === "VERIFIED_INSTITUTIONAL_GUIDE") return "verified";
     if (tier === "NEEDS_COUNSELOR_CONFIRMATION") return "review";
@@ -88,6 +100,7 @@ function legacyEvidenceByCourse(
   primaryLabel: string,
 ): CourseEvidencePayload {
   const first = course.evidenceIds.map((id) => evidenceById.get(id)).find(Boolean);
+  const assistVerified = first?.provenance === "assist" && first.status === "verified";
   return {
     courseCode: course.code,
     courseTitle: course.title,
@@ -99,14 +112,34 @@ function legacyEvidenceByCourse(
         isPrimary: true,
         required: true,
         destinationRequirement: first?.title ?? course.title,
-        verificationTier: first?.status === "verified" ? "VERIFIED_ASSIST" : "NEEDS_COUNSELOR_CONFIRMATION",
+        verificationTier: assistVerified ? "VERIFIED_ASSIST" : "NEEDS_COUNSELOR_CONFIRMATION",
         sourceType: first?.provenance === "assist" ? "assist_public" : "institutional_guide",
-        sourceUrl: first?.url,
-        agreementYear: first?.effectiveYear,
+        sourceUrl: assistVerified ? first?.url : undefined,
+        agreementYear: assistVerified ? first?.effectiveYear : undefined,
         notes: first?.note,
       },
     ],
   };
+}
+
+function evidenceLookup(
+  byCode: Record<string, CourseEvidencePayload>,
+  code: string,
+) {
+  return byCode[code] ?? byCode[code.replace(/\s+/g, "-")] ?? byCode[code.replace(/-/g, " ")];
+}
+
+function aliasEvidence(byCode: Record<string, CourseEvidencePayload>) {
+  const aliased = { ...byCode };
+  for (const [code, payload] of Object.entries(byCode)) {
+    aliased[code.replace(/-/g, " ")] = payload;
+    aliased[code.replace(/\s+/g, "-")] = payload;
+  }
+  return aliased;
+}
+
+function officialCampus(payload: CourseEvidencePayload | undefined) {
+  return payload?.campuses.find((campus) => campus.required && isOfficialVerifiedSource(campus));
 }
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
@@ -118,25 +151,24 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   if (!plan) redirect("/app/plan?new=1");
   const route = plan.route;
   const nextTerm = route.terms[0];
-  const [targets, graph] = await Promise.all([
+  const [targets, graph, generatedAudit] = await Promise.all([
     listSelectableTargets(),
     loadActiveArticulationGraph(),
+    plan.multiTargetPlan ? Promise.resolve(undefined) : generateMultiTargetProductionPlan(workspace),
   ]);
+  const auditPlan = plan.multiTargetPlan ?? generatedAudit;
   const primaryId = plan.primaryTargetId ?? workspace.primaryTargetId;
   const secondaryIds = plan.secondaryTargetIds ?? workspace.secondaryTargetIds ?? [];
   const primaryLabel = labelFor(targets, primaryId);
   const secondaryLabels = secondaryIds.map((id) => labelFor(targets, id));
-  const sourceIds = [...new Set(route.terms.flatMap((term) => term.courses.flatMap((course) => course.evidenceIds)))];
-  const reviewCount = plan.multiTargetPlan
-    ? plan.multiTargetPlan.auditSummary.reduce(
-        (count, audit) =>
-          count +
-          audit.requirementStates.filter(
-            (requirement) => requirement.verificationTier === "NEEDS_COUNSELOR_CONFIRMATION" && !requirement.historySatisfied,
-          ).length,
-        0,
-      )
-    : sourceIds.filter((id) => evidenceById.get(id)?.status !== "verified").length;
+  const reviewCount = (auditPlan?.auditSummary ?? []).reduce(
+    (count, audit) =>
+      count +
+      audit.requirementStates.filter(
+        (requirement) => requirement.verificationTier === "NEEDS_COUNSELOR_CONFIRMATION" && !requirement.historySatisfied,
+      ).length,
+    0,
+  );
   const completedCount = workspace.courses.filter((course) => course.status === "completed").length;
   const strategy = buildAdmissionsStrategy(workspace, targets, {
     hasValidPlan: true,
@@ -144,7 +176,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     reviewItemCount: reviewCount,
   });
   const saved = (await searchParams).saved === "1";
-  const alreadyDone = (plan.multiTargetPlan?.auditSummary ?? [])
+  const alreadyDone = (auditPlan?.auditSummary ?? [])
     .map((audit) => {
       const labels = audit.requirementStates
         .filter((requirement) => requirement.historySatisfied)
@@ -153,7 +185,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       return alreadyDoneLine(labelFor(targets, audit.targetMajorId), labels);
     })
     .filter(Boolean);
-  const stillMissing = (plan.multiTargetPlan?.auditSummary ?? []).flatMap((audit) =>
+  const stillMissing = (auditPlan?.auditSummary ?? []).flatMap((audit) =>
     audit.requirementStates
       .filter((requirement) => !requirement.satisfied)
       .map((requirement) => {
@@ -166,12 +198,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   );
   const unmatched = unmatchedCompletedCourses(workspace.courses, graph);
   const inProgressCount = workspace.courses.filter((course) => course.status === "in_progress").length;
-  const juniorStandingMet = plan.multiTargetPlan?.auditSummary.some((audit) => audit.juniorStandingMet) ?? false;
+  const juniorStandingMet = auditPlan?.auditSummary.some((audit) => audit.juniorStandingMet) ?? false;
   const selectedTargets = targets.filter((target) => target.id === primaryId || secondaryIds.includes(target.id));
   const counselorItems = buildCounselorConfirmationItems({
     courses: workspace.courses,
     graph,
-    plan: plan.multiTargetPlan,
+    plan: auditPlan,
     targets: selectedTargets,
   });
   const completedCodes = new Set(
@@ -182,23 +214,31 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     }),
   );
   const calGetc = evaluateCalGetc(completedCodes);
-  const evidenceByCourseCode = plan.multiTargetPlan
-    ? buildEvidenceByCourseCode(plan.multiTargetPlan, graph)
-    : Object.fromEntries((nextTerm?.courses ?? []).map((course) => [course.code, legacyEvidenceByCourse(course, primaryLabel)]));
+  const graphEvidence = auditPlan ? buildEvidenceByCourseCode(auditPlan, graph) : {};
+  const evidenceByCourseCode = aliasEvidence({
+    ...Object.fromEntries((nextTerm?.courses ?? []).map((course) => [course.code, legacyEvidenceByCourse(course, primaryLabel)])),
+    ...graphEvidence,
+  });
   const nextCourses: HomeSemesterCourse[] = (nextTerm?.courses ?? []).map((course) => {
-    const scheduled = scheduledFor(course, plan);
-    const payload = evidenceByCourseCode[scheduled?.code ?? course.code];
-    const sourceCampus = payload?.campuses.find((campus) => campus.required && campus.sourceUrl);
+    const graphCode = graphCodeForStudentCourse({ catalogCourseId: course.courseId, code: course.code }, graph);
+    const payload =
+      evidenceLookup(evidenceByCourseCode, graphCode ?? course.code) ??
+      evidenceLookup(evidenceByCourseCode, course.code);
+    const sourceCampus = officialCampus(payload);
+    let state = courseEvidenceState(course, plan, graph, primaryId, auditPlan);
+    if (sourceCampus) state = "verified";
+    else if (state === "verified") state = "review";
+    const tier = sourceCampus?.verificationTier ?? primaryEvidenceTier(course, plan, graph, primaryId, auditPlan);
     return {
       courseId: course.courseId,
       code: course.code,
       title: course.title,
       units: course.units,
-      why: whyThisClass(course, plan, targets, graph, primaryLabel),
-      state: courseEvidenceState(course, plan, graph, primaryId),
-      tier: primaryEvidenceTier(course, plan, graph, primaryId),
+      why: whyThisClass(course, plan, targets, graph, primaryLabel, auditPlan),
+      state,
+      tier: state === "verified" ? tier : state === "review" ? "NEEDS_COUNSELOR_CONFIRMATION" : tier,
       sourceUrl: sourceCampus?.sourceUrl,
-      sourceLabel: sourceCampus?.agreementYear ? `Official source · ${sourceCampus.agreementYear}` : "Official source",
+      sourceLabel: sourceCampus?.agreementYear ? officialSourceLabel(sourceCampus.agreementYear) : undefined,
     };
   });
 

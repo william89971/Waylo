@@ -3,7 +3,7 @@ import { evaluateCalGetc } from "@/lib/articulation/cal-getc";
 import { buildCounselorConfirmationItems } from "@/lib/articulation/counselor-confirmation";
 import { getSeedArticulationGraph } from "@/lib/articulation/graph";
 import { productionStudentCatalog } from "@/lib/articulation/student-catalog";
-import { rematchTranscriptRow } from "@/lib/articulation/transcript-match";
+import { rematchTranscriptRow, extractCoursesFromPlainText } from "@/lib/articulation/transcript-match";
 import { computeMultiTargetPlan } from "@/lib/articulation/multi-target-plan";
 import { targetMajorId } from "@/lib/articulation/types";
 import type { ProductionCourse } from "@/lib/production-types";
@@ -77,6 +77,24 @@ describe("transcript rematch", () => {
     expect(catalog.some((item) => item.id === "coc-chem-201")).toBe(true);
     expect(catalog.some((item) => item.id === "ap:calc-ab")).toBe(true);
   });
+
+  it("extracts only course codes present in the pasted text", () => {
+    const extraction = extractCoursesFromPlainText("ENGL C1000 Academic Reading and Writing A Fall 2025");
+    expect(extraction.courses.map((row) => row.sourceCode)).toEqual(["ENGL C1000"]);
+    expect(extraction.courses.some((row) => /MATH 211|COMP SCI 111/i.test(row.sourceCode))).toBe(false);
+    expect(extraction.courses[0]?.normalizedCourseId).toBe("coc-engl-c1000");
+  });
+
+  it("keeps unmatched and AP rows out of the College of the Canyons catalog", () => {
+    const extraction = extractCoursesFromPlainText(
+      "ANTH 101 Physical Anthropology B Fall 2024\nAP Calculus AB 5 High School",
+    );
+    const codes = extraction.courses.map((row) => row.sourceCode);
+    expect(codes).toEqual(expect.arrayContaining(["ANTH 101", "AP Calculus AB"]));
+    expect(extraction.courses.find((row) => row.sourceCode === "ANTH 101")?.normalizedCourseId).toBeNull();
+    expect(extraction.courses.find((row) => row.sourceCode === "AP Calculus AB")?.normalizedCourseId).toBe("ap:calc-ab");
+    expect(extraction.courses.find((row) => row.sourceCode === "AP Calculus AB")?.reviewRequired).toBe(true);
+  });
 });
 
 describe("Cal-GETC and counselor confirmation", () => {
@@ -129,5 +147,33 @@ describe("Cal-GETC and counselor confirmation", () => {
     });
     expect(items.map((item) => item.kind)).toEqual(expect.arrayContaining(["ap_credit", "other_college", "petition", "unverified_articulation", "cal_getc"]));
     expect(items.every((item) => !/satisfied as fact/i.test(`${item.title} ${item.detail}`))).toBe(true);
+  });
+
+  it("does not surface internal production-baseline jargon as a counselor item", () => {
+    const items = buildCounselorConfirmationItems({
+      courses: [],
+      graph,
+      plan: computeMultiTargetPlan({
+        history: [],
+        primaryTargetId: targetMajorId("uc_san_diego", "data_science"),
+        maxUnitsPerTerm: 15,
+        graph,
+      }),
+      targets: [
+        {
+          id: targetMajorId("uc_san_diego", "data_science"),
+          institutionId: "uc_san_diego",
+          institutionName: "UC San Diego",
+          major: "data_science",
+          displayName: "Data Science",
+          degree: "B.S.",
+          coverageTier: "full",
+          recognizesIgetc: true,
+          ingestionTier: "1",
+          constraintNotes: graph.targetMajorById.get(targetMajorId("uc_san_diego", "data_science"))?.constraintNotes ?? [],
+        },
+      ],
+    });
+    expect(items.map((item) => `${item.title} ${item.detail}`).join("\n")).not.toMatch(/production baseline/i);
   });
 });

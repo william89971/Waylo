@@ -61,6 +61,20 @@ export function alreadyDoneLine(school: string, requirementLabels: string[]): st
   return `${formatList(requirementLabels)} at ${school} are already done.`;
 }
 
+export function isOfficialVerifiedSource(input: {
+  verificationTier?: VerificationTier;
+  sourceUrl?: string;
+  agreementYear?: string;
+}) {
+  const verified =
+    input.verificationTier === "VERIFIED_ASSIST" || input.verificationTier === "VERIFIED_INSTITUTIONAL_GUIDE";
+  return Boolean(verified && input.sourceUrl && input.agreementYear);
+}
+
+export function officialSourceLabel(agreementYear: string) {
+  return `Official source · ${agreementYear}`;
+}
+
 export const SOURCE_TYPE_LABEL: Record<ArticulationSourceType, string> = {
   assist_public: "Official ASSIST agreement",
   institutional_guide: "University transfer guide",

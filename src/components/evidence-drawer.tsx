@@ -4,7 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { ExternalLink, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ArticulationSourceType, VerificationTier } from "@/lib/articulation/types";
-import { SOURCE_TYPE_LABEL, VERIFICATION_EXPLAIN, VERIFICATION_SHORT } from "@/lib/student-facing-copy";
+import { isOfficialVerifiedSource, SOURCE_TYPE_LABEL, VERIFICATION_EXPLAIN, VERIFICATION_SHORT } from "@/lib/student-facing-copy";
 
 export type EvidenceCampusEntry = {
   targetMajorId: string;
@@ -209,14 +209,14 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                     </dl>
                   )}
 
-                  {campus.required && campus.sourceUrl ? (
+                  {campus.required && isOfficialVerifiedSource(campus) && campus.sourceUrl ? (
                     <a
                       href={campus.sourceUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="mt-3 inline-flex min-h-11 items-center gap-1.5 border border-border/40 px-3 text-[12px] font-medium text-slate-800 hover:bg-muted/40"
                     >
-                      View official source
+                      View official source · {campus.agreementYear}
                       <ExternalLink className="size-3.5" aria-hidden />
                     </a>
                   ) : null}

@@ -33,10 +33,7 @@ export function HomeSemesterList({
     <>
       <div className="course-table" role="table" aria-label="Recommended semester courses">
         {courses.map((course) => {
-          const payload = evidenceByCourseCode[course.code];
-          const sourceUrl =
-            course.sourceUrl ??
-            payload?.campuses.find((campus) => campus.required && campus.sourceUrl)?.sourceUrl;
+          const sourceUrl = course.state === "verified" ? course.sourceUrl : undefined;
           return (
             <div className="course-row" role="row" key={course.courseId}>
               <div className="course-identity">
@@ -51,9 +48,9 @@ export function HomeSemesterList({
                 <button type="button" className="production-text-link" onClick={() => setSelectedCode(course.code)}>
                   Why this class?
                 </button>
-                {sourceUrl ? (
+                {sourceUrl && course.sourceLabel ? (
                   <a href={sourceUrl} target="_blank" rel="noreferrer">
-                    {course.sourceLabel ?? "Official source"}
+                    {course.sourceLabel}
                   </a>
                 ) : null}
               </div>
