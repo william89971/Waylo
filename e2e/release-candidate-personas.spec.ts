@@ -14,15 +14,17 @@ async function continueToCourses(page: Page) {
 }
 
 async function finishToHome(page: Page) {
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /4 classes/ })).toHaveAttribute("aria-checked", "true");
   await page.getByRole("button", { name: "See next semester", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
 }
 
 async function assertHomeInvariants(page: Page, opts?: { completedCodes?: string[] }) {
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.locator(".dashboard-rail")).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Change unit limit" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Change class load" })).toBeVisible();
   const pdf = page.getByRole("button", { name: "Download PDF" });
   const alreadyFinished = page.getByRole("heading", { name: "Already finished" });
   await expect(pdf).toBeVisible();
@@ -62,14 +64,16 @@ test("brand-new student still gets a next-semester answer with dated official so
   await finishToHome(page);
   await assertHomeInvariants(page);
   await expect(page.getByText("No finished classes yet")).toBeVisible();
-  await page.getByRole("link", { name: "Change unit limit" }).click();
+  await page.getByRole("link", { name: "Change class load" }).click();
   await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
   await expect(page.getByLabel("Weekly work hours")).toHaveCount(0);
-  await expect(page.getByLabel("Semester load")).toBeVisible();
+  await expect(page.getByRole("radio", { name: /3 classes/ })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /4 classes/ })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /5 classes/ })).toBeVisible();
   await expect(page.getByLabel("When do you want to transfer?")).toBeVisible();
   await expect(page.locator(".preference-form input[type=number]")).toHaveCount(0);
   await expect(page.locator(".preference-form input[type=text]")).toHaveCount(0);
-  await page.getByLabel("Semester load").selectOption("12");
+  await page.getByRole("radio", { name: /3 classes/ }).click();
   const termSelect = page.getByLabel("When do you want to transfer?");
   const fallLabel = await termSelect.locator("option").evaluateAll((options) => {
     return options

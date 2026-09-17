@@ -22,27 +22,24 @@ export type StrategyContext = {
 const TARGET_TERM = /^(Fall|Spring|Summer) \d{4}$/;
 const RIGOR_PATTERN = /(MATH|CALC|COMP SCI|CHEM|PHYS|BIOSCI|STAT)/i;
 const TRANSFER_SEASONS = ["Spring", "Summer", "Fall"] as const;
-const TYPICAL_UNIT_CAPS = [12, 13, 14, 15, 16, 17, 18] as const;
-const UNIT_CAP_HINT: Record<number, string> = {
-  12: "lighter",
-  15: "typical",
-  18: "heavy",
-};
+
+export const CLASS_LOAD_OPTIONS = [
+  { classes: 3, units: 12, hint: "lighter" },
+  { classes: 4, units: 15, hint: "typical" },
+  { classes: 5, units: 18, hint: "heavy" },
+] as const;
+
+export type ClassLoadOption = (typeof CLASS_LOAD_OPTIONS)[number];
 
 export function isPreferredTransferTerm(value: string): boolean {
   return TARGET_TERM.test(value.trim());
 }
 
-export function listUnitCapOptions(current: number): number[] {
-  const caps = new Set<number>(TYPICAL_UNIT_CAPS);
-  const clamped = Number.isFinite(current) ? Math.max(6, Math.min(20, Math.round(current))) : 15;
-  caps.add(clamped);
-  return [...caps].sort((left, right) => left - right);
-}
-
-export function unitCapLabel(units: number): string {
-  const hint = UNIT_CAP_HINT[units];
-  return hint ? `${units} units · ${hint}` : `${units} units`;
+export function classLoadFromUnits(units: number): ClassLoadOption {
+  const current = Number.isFinite(units) ? units : 15;
+  return CLASS_LOAD_OPTIONS.reduce((best, option) =>
+    Math.abs(option.units - current) < Math.abs(best.units - current) ? option : best,
+  );
 }
 
 function seasonFromMonth(month: number): (typeof TRANSFER_SEASONS)[number] {

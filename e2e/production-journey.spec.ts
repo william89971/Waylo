@@ -17,8 +17,9 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await page.getByLabel("College of the Canyons class").selectOption({ index: 0 });
   await page.getByRole("button", { name: "Add course" }).click();
   await expect(page.locator(".confirmed-course-list")).not.toContainText("No classes yet");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
   await page.getByRole("button", { name: "See next semester", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.getByText("Plan saved."), "save confirmation should be visible").toBeVisible();
@@ -144,8 +145,9 @@ test("UCB Economics primary with USC Business secondary shows divergence badges"
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
   await page.getByLabel("College of the Canyons class").selectOption({ index: 0 });
   await page.getByRole("button", { name: "Add course" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
   await page.getByRole("button", { name: "See next semester", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await page.getByRole("link", { name: "See all terms" }).click();

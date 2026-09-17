@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, Trash2 } from "lucide-react";
 import {
+  CLASS_LOAD_OPTIONS,
+  classLoadFromUnits,
   isPreferredTransferTerm,
   listTransferTermChoices,
-  listUnitCapOptions,
-  unitCapLabel,
 } from "@/lib/admissions-strategy";
 import { targetCoverageNote } from "@/lib/student-facing-copy";
 import { TranscriptImport } from "@/components/transcript-import";
@@ -16,7 +16,7 @@ import { WayloWordmark } from "@/components/waylo-wordmark";
 import type { StudentCatalogCourse } from "@/lib/articulation/student-catalog";
 import type { ProductionCourse, SelectableTarget, StudentWorkspaceRecord } from "@/lib/production-types";
 
-const STEP_LABELS = ["Schools and majors", "Your COC classes"];
+const STEP_LABELS = ["Schools and majors", "Your COC classes", "Next semester"];
 
 async function jsonRequest(url: string, init: RequestInit) {
   const response = await fetch(url, {
@@ -75,6 +75,7 @@ export function OnboardingFlow({
   const [otherCollege, setOtherCollege] = useState("");
   const [petitionTitle, setPetitionTitle] = useState("");
   const [showMoreCredit, setShowMoreCredit] = useState(false);
+  const [showScheduleExtras, setShowScheduleExtras] = useState(editing);
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     headingRef.current?.focus();
@@ -108,7 +109,7 @@ export function OnboardingFlow({
 
   const visibleStep = Math.min(STEP_LABELS.length, Math.max(1, step - 1));
   const progress = useMemo(() => `${Math.round((visibleStep / STEP_LABELS.length) * 100)}%`, [visibleStep]);
-  const unitCapOptions = useMemo(() => listUnitCapOptions(maxUnits), [maxUnits]);
+  const selectedClassLoad = classLoadFromUnits(maxUnits);
   const transferTermOptions = useMemo(() => listTransferTermChoices(targetTerm), [targetTerm]);
   const primaryTargetId = primaryInstitutionId ? (majorByInstitution[primaryInstitutionId] ?? "") : "";
   const secondaryTargetIds = useMemo(
@@ -345,7 +346,7 @@ export function OnboardingFlow({
         </Link>
       </header>
       <section className="onboarding-panel">
-        {!editing && step < 4 ? (
+        {!editing ? (
           <div className="onboarding-progress" aria-label="Onboarding progress">
             <div>
               <strong>
@@ -642,9 +643,9 @@ export function OnboardingFlow({
               <button
                 className="production-button primary"
                 disabled={working}
-                onClick={() => void finish()}
+                onClick={() => (editing ? void finish() : setStep(4))}
               >
-                {working ? "Saving…" : "See next semester"}
+                {working ? "Saving…" : editing ? "See next semester" : "Continue"}
               </button>
             </div>
           </div>
@@ -653,41 +654,57 @@ export function OnboardingFlow({
         {step === 4 ? (
           <div className="onboarding-question preference-question">
             <h1 ref={headingRef} tabIndex={-1}>How heavy can next semester be?</h1>
-            <p>Waylo will not skip a required class to stay under this cap.</p>
-            <div className="preference-form">
-              <label>
-                Semester load
-                <select
-                  value={String(maxUnits)}
-                  onChange={(event) => setMaxUnits(Number(event.target.value))}
-                >
-                  {unitCapOptions.map((units) => (
-                    <option key={units} value={units}>
-                      {unitCapLabel(units)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                When do you want to transfer?
-                <select value={targetTerm} onChange={(event) => setTargetTerm(event.target.value)}>
-                  <option value="">Not sure yet</option>
-                  {transferTermOptions.map((term) => (
-                    <option key={term} value={term}>
-                      {term}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={summerEnrollment}
-                  onChange={(event) => setSummerEnrollment(event.target.checked)}
-                />
-                Include summer sessions at COC
-              </label>
+            <p>Pick a class count. Waylo will not skip a required class to stay under it.</p>
+            <div className="selection-group" role="radiogroup" aria-label="Classes next semester" data-testid="class-load-options">
+              {CLASS_LOAD_OPTIONS.map((option) => {
+                const selected = option.classes === selectedClassLoad.classes;
+                return (
+                  <button
+                    key={option.classes}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    className={`selection-row ${selected ? "selected" : ""}`}
+                    onClick={() => setMaxUnits(option.units)}
+                  >
+                    <span>
+                      <strong>{option.classes} classes</strong>
+                      <small className="font-mono tabular-nums">
+                        {option.units} units{option.hint === "typical" ? " · typical" : ""}
+                      </small>
+                    </span>
+                    {selected ? <Check /> : null}
+                  </button>
+                );
+              })}
             </div>
+            {showScheduleExtras ? (
+              <div className="preference-form preference-extras">
+                <label>
+                  When do you want to transfer?
+                  <select value={targetTerm} onChange={(event) => setTargetTerm(event.target.value)}>
+                    <option value="">Not sure yet</option>
+                    {transferTermOptions.map((term) => (
+                      <option key={term} value={term}>
+                        {term}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={summerEnrollment}
+                    onChange={(event) => setSummerEnrollment(event.target.checked)}
+                  />
+                  Include summer sessions at COC
+                </label>
+              </div>
+            ) : (
+              <button type="button" className="production-text-link preference-extras-link" onClick={() => setShowScheduleExtras(true)}>
+                Add a transfer term or summer
+              </button>
+            )}
             <div className="onboarding-actions">
               <button
                 className="production-button"

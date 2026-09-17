@@ -22,8 +22,9 @@ async function onboardMultiTargetPlan(page: Page, testUser: string) {
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
   await page.getByLabel("College of the Canyons class").selectOption({ index: 0 });
   await page.getByRole("button", { name: "Add course" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
   await page.getByRole("button", { name: "See next semester", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
 }

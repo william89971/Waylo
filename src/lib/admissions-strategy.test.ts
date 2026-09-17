@@ -1,11 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   buildAdmissionsStrategy,
+  classLoadFromUnits,
   isPreferredTransferTerm,
   listTransferTermChoices,
   listTransferTermOptions,
-  listUnitCapOptions,
-  unitCapLabel,
 } from "@/lib/admissions-strategy";
 import type { SelectableTarget, StudentWorkspaceRecord } from "@/lib/production-types";
 
@@ -136,11 +135,11 @@ describe("admissions strategy", () => {
     expect(isPreferredTransferTerm("soon")).toBe(false);
   });
 
-  it("lists unit caps as a dropdown set with typical full-time loads", () => {
-    expect(listUnitCapOptions(15)).toEqual([12, 13, 14, 15, 16, 17, 18]);
-    expect(listUnitCapOptions(9)).toEqual([9, 12, 13, 14, 15, 16, 17, 18]);
-    expect(unitCapLabel(15)).toBe("15 units · typical");
-    expect(unitCapLabel(16)).toBe("16 units");
+  it("maps unit caps to a 3, 4, or 5 class load", () => {
+    expect(classLoadFromUnits(15)).toMatchObject({ classes: 4, units: 15 });
+    expect(classLoadFromUnits(12)).toMatchObject({ classes: 3, units: 12 });
+    expect(classLoadFromUnits(9)).toMatchObject({ classes: 3, units: 12 });
+    expect(classLoadFromUnits(18)).toMatchObject({ classes: 5, units: 18 });
   });
 
   it("lists upcoming transfer terms instead of free text", () => {
