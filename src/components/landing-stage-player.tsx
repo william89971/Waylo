@@ -1,23 +1,14 @@
-"use client";
-
-import { MotionPlayer } from "@/components/motion-player";
-import {
-  LANDING_STAGE_DURATION,
-  LANDING_STAGE_HEIGHT,
-  LANDING_STAGE_WIDTH,
-  LandingStage,
-} from "@/remotion/LandingStage";
+import { WaypointO } from "@/components/waypoint-o";
 
 export function LandingStagePlayer({ className = "" }: { className?: string }) {
   return (
-    <MotionPlayer
-      className={`waylo-stage-motion ${className}`.trim()}
-      component={LandingStage}
-      durationInFrames={LANDING_STAGE_DURATION}
-      compositionWidth={LANDING_STAGE_WIDTH}
-      compositionHeight={LANDING_STAGE_HEIGHT}
-      playWhenVisible={false}
-      loop
-    />
+    <div className={`waylo-stage-motion ${className}`.trim()} aria-hidden="true">
+      <span className="stage-o-drift a">
+        <WaypointO className="stage-o-ring" />
+      </span>
+      <span className="stage-o-drift b">
+        <WaypointO className="stage-o-ring" />
+      </span>
+    </div>
   );
 }
