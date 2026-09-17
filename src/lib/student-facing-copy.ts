@@ -40,8 +40,8 @@ export function planBucketLabel(bucket?: string): string {
 }
 
 export function courseCountsLine(schoolLabels: string[]): string {
-  if (schoolLabels.length > 1) return `Counts toward ${formatList(schoolLabels)}`;
-  if (schoolLabels.length === 1) return `Needed for ${schoolLabels[0]}`;
+  if (schoolLabels.length > 1) return `You take this for ${formatList(schoolLabels)}`;
+  if (schoolLabels.length === 1) return `You take this for ${schoolLabels[0]}`;
   return "Not required by your first-choice school";
 }
 
@@ -49,10 +49,11 @@ export function courseWhySentence(parts: Array<{ school: string; requirement?: s
   if (!parts.length) return "Not required by your first-choice school.";
   const named = parts.filter((part) => part.requirement);
   if (named.length === parts.length) {
-    if (parts.length === 1) return `This is ${parts[0].requirement} for ${parts[0].school}.`;
-    return `This covers ${formatList(parts.map((part) => `${part.requirement} at ${part.school}`))}.`;
+    if (parts.length === 1) return `You take this for ${parts[0].requirement} at ${parts[0].school}.`;
+    return `You take this for ${formatList(parts.map((part) => `${part.requirement} at ${part.school}`))}.`;
   }
-  return `${courseCountsLine(parts.map((part) => part.school))}.`;
+  const counts = courseCountsLine(parts.map((part) => part.school));
+  return counts.endsWith(".") ? counts : `${counts}.`;
 }
 
 export function alreadyDoneLine(school: string, requirementLabels: string[]): string {

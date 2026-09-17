@@ -1,5 +1,5 @@
 import type { AdmissionsStrategy } from "@/lib/admissions-strategy";
-import type { ArticulationSourceType, VerificationTier } from "@/lib/articulation/types";
+import type { ArticulationGraph, ArticulationSourceType, TargetAuditSummary, VerificationTier } from "@/lib/articulation/types";
 import { planBucketLabel, SOURCE_TYPE_LABEL, studentFacingDataRelease, VERIFICATION_SHORT } from "@/lib/student-facing-copy";
 
 export interface CounselorCitation {
@@ -30,6 +30,30 @@ export interface CounselorPacketProps {
   citations: CounselorCitation[];
   academicDataVersion: string;
   strategy?: AdmissionsStrategy | null;
+}
+
+export function citationsFromAudit(
+  auditSummary: TargetAuditSummary[] | undefined,
+  graph: ArticulationGraph,
+  labelFor: (id: string) => string,
+): CounselorCitation[] {
+  return (auditSummary ?? []).flatMap((audit) =>
+    audit.requirementStates.map((requirement) => {
+      const rule = graph.rules.find(
+        (item) => item.targetMajorId === audit.targetMajorId && item.requirementKey === requirement.requirementKey,
+      );
+      return {
+        targetLabel: labelFor(audit.targetMajorId),
+        requirementKey: requirement.requirementKey,
+        label: requirement.label,
+        verificationTier: requirement.verificationTier,
+        effectiveYear: rule?.effectiveYear ?? "—",
+        sourceType: rule?.sourceType ?? "—",
+        satisfied: requirement.satisfied,
+        historySatisfied: requirement.historySatisfied,
+      };
+    }),
+  );
 }
 
 /**

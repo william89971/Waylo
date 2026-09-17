@@ -23,10 +23,8 @@ async function onboardMultiTargetPlan(page: Page, testUser: string) {
   await page.getByLabel("College of the Canyons class").selectOption({ index: 0 });
   await page.getByLabel("Grade").fill("A");
   await page.getByRole("button", { name: "Add course" }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-
-  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
   await page.getByRole("button", { name: "See next semester", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
 }
@@ -115,7 +113,7 @@ test("multi-target Save this plan reaches the dashboard and shows strategy", asy
   await expect(homeDrawer).toHaveAttribute("data-state", "closed");
   await expect(page.getByText(/UC Berkeley Economics/).first()).toBeVisible();
   await expect(page.locator(".course-why").first()).toBeVisible();
-  await expect(page.locator(".course-why").first()).toHaveText(/This is |This covers |Counts toward |Needed for /);
+  await expect(page.locator(".course-why").first()).toHaveText(/You take |Not required/);
   await expect(page.getByRole("heading", { name: "Already finished" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Read the strategy note" })).toBeVisible();
   await page.getByRole("link", { name: "Read the strategy note" }).click();

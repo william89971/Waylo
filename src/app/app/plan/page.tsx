@@ -2,9 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdmissionsStrategyPanel } from "@/components/admissions-strategy-panel";
 import { CounselorConfirmationList } from "@/components/counselor-confirmation-list";
-import { CounselorPacket } from "@/components/counselor-packet";
+import { citationsFromAudit, CounselorPacket } from "@/components/counselor-packet";
 import { EvidenceStatus } from "@/components/evidence-status";
-import { ExportCounselorPacketButton } from "@/components/export-counselor-packet-button";
+import { CounselorHandoff } from "@/components/counselor-handoff";
 import { PlanMatrixWorkspace } from "@/components/plan-matrix-workspace";
 import { SavePlanButton } from "@/components/save-plan-button";
 import { evidenceById, programById } from "@/lib/academic-data";
@@ -85,24 +85,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       generateMultiTargetProductionPlan(workspace),
       loadActiveArticulationGraph(),
     ]);
-    const citations = multi.auditSummary.flatMap((audit) =>
-      audit.requirementStates.map((requirement) => {
-        const rule = graph.rules.find(
-          (item) =>
-            item.targetMajorId === audit.targetMajorId && item.requirementKey === requirement.requirementKey,
-        );
-        return {
-          targetLabel: labelFor(audit.targetMajorId),
-          requirementKey: requirement.requirementKey,
-          label: requirement.label,
-          verificationTier: requirement.verificationTier,
-          effectiveYear: rule?.effectiveYear ?? "—",
-          sourceType: rule?.sourceType ?? "—",
-          satisfied: requirement.satisfied,
-          historySatisfied: requirement.historySatisfied,
-        };
-      }),
-    );
+    const citations = citationsFromAudit(multi.auditSummary, graph, labelFor);
     const scheduleRows = multi.schedule.terms.flatMap((term) =>
       term.courses.map((course) => ({
         termLabel: term.label,
@@ -152,7 +135,20 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               .
             </p>
           </div>
-          <ExportCounselorPacketButton />
+          <CounselorHandoff
+            email={{
+              studentName: workspace.profile.preferredName,
+              primaryLabel: labelFor(multi.primaryTargetId),
+              secondaryLabels: multi.secondaryTargetIds.map(labelFor),
+              nextTermLabel: nextTerm?.label ?? "Next term",
+              courses: (nextTerm?.courses ?? []).map((course) => ({
+                code: course.code,
+                title: course.title,
+                units: course.semesterUnits,
+              })),
+              totalUnits: nextTerm?.totalSemesterUnits ?? 0,
+            }}
+          />
         </header>
         {showProposal ? (
           <div className="proposal-banner no-print">
@@ -351,7 +347,20 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           <h1>{showProposal ? "Proposed sequence" : "All terms"}</h1>
           <p>For {labelFor(workspace.primaryTargetId)}.</p>
         </div>
-        <ExportCounselorPacketButton />
+        <CounselorHandoff
+          email={{
+            studentName: workspace.profile.preferredName,
+            primaryLabel: labelFor(workspace.primaryTargetId),
+            secondaryLabels: [],
+            nextTermLabel: route.terms[0]?.label ?? "Next term",
+            courses: (route.terms[0]?.courses ?? []).map((course) => ({
+              code: course.code,
+              title: course.title,
+              units: course.units,
+            })),
+            totalUnits: route.terms[0]?.totalUnits ?? 0,
+          }}
+        />
       </header>
       {showProposal ? (
         <div className="proposal-banner no-print">

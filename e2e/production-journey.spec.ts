@@ -18,17 +18,18 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await page.getByLabel("Grade").fill("A");
   await page.getByRole("button", { name: "Add course" }).click();
   await expect(page.locator(".confirmed-course-list")).toContainText("A");
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-
-  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
-  await expect(page.getByLabel("Weekly work hours")).toHaveCount(0);
   await page.getByRole("button", { name: "See next semester", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.getByText("Plan saved."), "save confirmation should be visible").toBeVisible();
   await expect(page.locator(".saved-meta")).toContainText("version 1");
   await expect(page.getByRole("button", { name: "Why this class?" }).first()).toBeVisible();
-  await expect(page.getByRole("link", { name: "Take this to your counselor" })).toBeVisible();
+  await expect(page.getByText("Take this to your counselor").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Download PDF" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Email counselor" })).toBeVisible();
+  await page.getByRole("button", { name: "Email counselor" }).click();
+  await expect(page.getByLabel("Counselor's email")).toBeVisible();
   await page.getByRole("link", { name: "See all terms" }).click();
   await expect(page.getByRole("heading", { name: /All terms|Proposed sequence/ })).toBeVisible();
   await expect(page.getByTestId("articulation-matrix")).toBeVisible();
@@ -155,10 +156,8 @@ test("UCB Economics primary with USC Business secondary shows divergence badges"
   await page.getByLabel("College of the Canyons class").selectOption({ index: 0 });
   await page.getByLabel("Grade").fill("A");
   await page.getByRole("button", { name: "Add course" }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-
-  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
   await page.getByRole("button", { name: "See next semester", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await page.getByRole("link", { name: "See all terms" }).click();
@@ -172,7 +171,8 @@ test("UCB Economics primary with USC Business secondary shows divergence badges"
   await expect(mathCode.first()).toHaveClass(/font-mono/);
   await expect(mathCode.first()).toHaveClass(/tabular-nums/);
   await expect(page.getByRole("heading", { name: "What's left at each school" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Take this to your counselor" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Download PDF" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Email counselor" })).toBeVisible();
   await context.close();
 });
 

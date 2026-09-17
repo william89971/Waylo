@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CalGetcPanel } from "@/components/cal-getc-panel";
 import { CounselorConfirmationList } from "@/components/counselor-confirmation-list";
+import { CounselorHandoff } from "@/components/counselor-handoff";
+import { citationsFromAudit, CounselorPacket } from "@/components/counselor-packet";
 import type { CourseEvidencePayload } from "@/components/evidence-drawer";
 import { HomeSemesterList, type HomeSemesterCourse } from "@/components/home-semester-list";
 import { evidenceById } from "@/lib/academic-data";
@@ -15,9 +17,9 @@ import { graphCodeForStudentCourse, unmatchedCompletedCourses } from "@/lib/arti
 import type { ArticulationGraph, VerificationTier } from "@/lib/articulation/types";
 import type { SavedPlan, SelectableTarget } from "@/lib/production-types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
-import { generateMultiTargetProductionPlan, listSelectableTargets } from "@/lib/server/production-planning";
+import { generateMultiTargetProductionPlan, listSelectableTargets, MULTI_TARGET_DATA_RELEASE } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
-import { alreadyDoneLine, courseCountsLine, courseWhySentence, formatSelectableTargetLabel, isOfficialVerifiedSource, officialSourceLabel } from "@/lib/student-facing-copy";
+import { alreadyDoneLine, courseWhySentence, formatSelectableTargetLabel, isOfficialVerifiedSource, officialSourceLabel } from "@/lib/student-facing-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +62,7 @@ function whyThisClass(
     return courseWhySentence(parts);
   }
   const schoolLabels = scheduled ? scheduled.fulfillsTargetIds.map((id) => formatSelectableTargetLabel(targets, id)) : [primaryLabel];
-  return courseCountsLine(schoolLabels);
+  return courseWhySentence(schoolLabels.map((school) => ({ school })));
 }
 
 function primaryEvidenceTier(
@@ -197,8 +199,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       }),
   );
   const unmatched = unmatchedCompletedCourses(workspace.courses, graph);
-  const inProgressCount = workspace.courses.filter((course) => course.status === "in_progress").length;
-  const juniorStandingMet = auditPlan?.auditSummary.some((audit) => audit.juniorStandingMet) ?? false;
   const selectedTargets = targets.filter((target) => target.id === primaryId || secondaryIds.includes(target.id));
   const counselorItems = buildCounselorConfirmationItems({
     courses: workspace.courses,
@@ -250,9 +250,30 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       sourceLabel: sourceCampus?.agreementYear ? officialSourceLabel(sourceCampus.agreementYear) : undefined,
     };
   });
+  const scheduleRows =
+    auditPlan?.schedule.terms.flatMap((term) =>
+      term.courses.map((course) => ({
+        termLabel: term.label,
+        code: course.code,
+        title: course.title,
+        semesterUnits: course.semesterUnits,
+        bucket: course.bucket,
+      })),
+    ) ??
+    route.terms.flatMap((term) =>
+      term.courses.map((course) => ({
+        termLabel: term.label,
+        code: course.code,
+        title: course.title,
+        semesterUnits: course.units,
+      })),
+    );
+  const citations = citationsFromAudit(auditPlan?.auditSummary, graph, (id) => labelFor(targets, id));
+  const packetUnits = auditPlan?.totalSemesterUnits ?? route.terms.reduce((sum, term) => sum + term.totalUnits, 0);
 
   return (
     <div className="production-page dashboard-page">
+      <div className="no-print">
       {saved ? (
         <div className="success-banner" role="status">
           Plan saved. You can come back to this list anytime.
@@ -260,111 +281,93 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       ) : null}
       <header className="production-page-header">
         <h1>What to take next semester</h1>
-              <p>
-                {nextTerm?.label ?? "Next term"} · {primaryLabel}
-                {secondaryLabels.length ? ` · also ${secondaryLabels.join(", ")}` : ""}
-              </p>
+        <p>
+          {nextTerm?.label ?? "Next term"} · {primaryLabel}
+          {secondaryLabels.length ? ` · also ${secondaryLabels.join(", ")}` : ""}
+        </p>
       </header>
-      <div className="dashboard-layout">
-        <section className="recommended-semester">
-          <div className="section-heading">
-            <h2>Recommended semester</h2>
-          </div>
-          <HomeSemesterList
-            courses={nextCourses}
-            totalUnits={nextTerm?.totalUnits ?? 0}
-            evidenceByCourseCode={evidenceByCourseCode}
-          />
-          <div className="already-counted">
-            <h2>Already finished</h2>
-            {alreadyDone.length ? (
-              <ul>
-                {alreadyDone.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>
-                {completedCount
-                  ? "Your finished classes are saved. None of them close a listed major-prep requirement yet."
-                  : "No finished classes yet. Add them under Your classes if you have already taken College of the Canyons courses."}
-              </p>
-            )}
-            {unmatched.length ? (
-              <p>
-                Not matched to a listed requirement:{" "}
-                {unmatched.map((course) => `${course.code} ${course.title}`).join("; ")}. Ask a counselor.
-              </p>
-            ) : null}
-          </div>
-          {stillMissing.length ? (
-            <div className="already-counted">
-              <h2>Still missing after this plan</h2>
-              <ul>
-                {stillMissing.slice(0, 4).map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-          <CalGetcPanel areas={calGetc} />
-          <CounselorConfirmationList items={counselorItems} />
-          <div className="dashboard-actions">
-            <Link href="/app/plan#counselor-packet" className="production-button primary">
-              Take this to your counselor
-            </Link>
-            <Link href="/app/plan" className="production-button">
-              See all terms
-            </Link>
-          </div>
-        </section>
-        <aside className="dashboard-rail">
-          {counselorItems.length ? (
-            <section className="rail-review">
-              <strong>{counselorItems.length}</strong>
-              <span>
-                {counselorItems.length === 1 ? "item needs counselor confirmation" : "items need counselor confirmation"}
-              </span>
-              <p>Unverified information is never treated as fact.</p>
-              <a href="#counselor-confirm-title">See the list</a>
-            </section>
-          ) : (
-            <section>
-              <strong>Ready to confirm</strong>
-              <span>Bring this list to a counselor before you enroll. Waylo is not an official degree audit.</span>
-            </section>
-          )}
-          <section>
-            <strong>{completedCount}</strong>
-            <span>
-              {completedCount === 1 ? "finished class on your record" : "finished classes on your record"}
-              {inProgressCount ? ` · ${inProgressCount} in progress` : ""}
-            </span>
-            <Link href="/app/courses">Update your classes</Link>
-          </section>
-          {juniorStandingMet ? (
-            <section>
-              <strong>{route.estimatedTransferTerm}</strong>
-              <span>earliest term this plan finishes listed major prep — not an admission date</span>
-            </section>
-          ) : (
-            <section>
-              <strong>Junior standing not met</strong>
-              <span>
-                This plan tracks major prep. It does not estimate a transfer term until unit minimums are actually met.
-              </span>
-            </section>
-          )}
+      <section className="recommended-semester">
+        <div className="section-heading">
+          <h2>Recommended semester</h2>
+        </div>
+        <HomeSemesterList
+          courses={nextCourses}
+          totalUnits={nextTerm?.totalUnits ?? 0}
+          evidenceByCourseCode={evidenceByCourseCode}
+        />
+        <CounselorHandoff
+          email={{
+            studentName: workspace.profile.preferredName,
+            primaryLabel,
+            secondaryLabels,
+            nextTermLabel: nextTerm?.label ?? "Next term",
+            courses: nextCourses.map((course) => ({
+              code: course.code,
+              title: course.title,
+              units: course.units,
+            })),
+            totalUnits: nextTerm?.totalUnits ?? 0,
+          }}
+        >
+          <Link href="/app/plan" className="production-button">
+            See all terms
+          </Link>
+        </CounselorHandoff>
+        <nav className="home-followups" aria-label="Plan details">
           {strategy ? (
-            <section>
-              <Link href="/app/plan#admissions-strategy">Read the strategy note</Link>
-            </section>
+            <Link href="/app/plan#admissions-strategy">Read the strategy note</Link>
           ) : null}
-        </aside>
-      </div>
+          <Link href="/onboarding?units=1">Change unit limit</Link>
+        </nav>
+        <div className="already-counted">
+          <h2>Already finished</h2>
+          {alreadyDone.length ? (
+            <ul>
+              {alreadyDone.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>
+              {completedCount
+                ? "Your finished classes are saved. None of them close a listed major-prep requirement yet."
+                : "No finished classes yet. Add them under Your classes if you have already taken College of the Canyons courses."}
+            </p>
+          )}
+          {unmatched.length ? (
+            <p>
+              Not matched to a listed requirement:{" "}
+              {unmatched.map((course) => `${course.code} ${course.title}`).join("; ")}. Ask a counselor.
+            </p>
+          ) : null}
+        </div>
+        {stillMissing.length ? (
+          <div className="already-counted">
+            <h2>Still missing after this plan</h2>
+            <ul>
+              {stillMissing.slice(0, 4).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        <CalGetcPanel areas={calGetc} />
+        <CounselorConfirmationList items={counselorItems} />
+      </section>
       <p className="saved-meta">
         Saved plan version {plan.version}
       </p>
+      </div>
+      <CounselorPacket
+        preferredName={workspace.profile.preferredName}
+        primaryLabel={primaryLabel}
+        secondaryLabels={secondaryLabels}
+        scheduleRows={scheduleRows}
+        totalSemesterUnits={packetUnits}
+        citations={citations}
+        academicDataVersion={MULTI_TARGET_DATA_RELEASE}
+        strategy={strategy}
+      />
     </div>
   );
 }
