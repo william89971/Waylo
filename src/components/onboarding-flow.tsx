@@ -654,7 +654,7 @@ export function OnboardingFlow({
         {step === 4 ? (
           <div className="onboarding-question preference-question">
             <h1 ref={headingRef} tabIndex={-1}>How heavy can next semester be?</h1>
-            <p>Pick a class count. Waylo will not skip a required class to stay under it.</p>
+            <p>Pick how many classes you can take. Waylo will not skip a required class.</p>
             <div className="selection-group" role="radiogroup" aria-label="Classes next semester" data-testid="class-load-options">
               {CLASS_LOAD_OPTIONS.map((option) => {
                 const selected = option.classes === selectedClassLoad.classes;
