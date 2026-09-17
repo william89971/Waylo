@@ -11,9 +11,17 @@ test("landing previews a real destination before account creation", async ({ pag
   await expect(page.getByText("Paste or upload a transcript, or pick from a list.")).toBeVisible();
   await expect(page.getByText(/Engineered to match official ASSIST\.org articulations/)).toBeVisible();
 
+  const overflow = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  }));
+  expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
+
   const school = page.locator('select[name="target-school"]');
   const major = page.locator('select[name="target-major"]');
   const preview = page.locator(".landing-teaser-preview");
+  const cta = page.locator(".landing-teaser a.production-button");
+  await expect(cta).toHaveAttribute("href", "/sign-up");
   await expect(preview).toContainText("MATH-211");
   await major.selectOption({ label: "Bioengineering" });
   await expect(preview).toContainText("CHEM-201");
@@ -21,4 +29,6 @@ test("landing previews a real destination before account creation", async ({ pag
   await expect(major).toHaveValue("ucla:business_administration");
   await expect(preview).toContainText("MATH-211");
   await expect(preview).toContainText("MATH-212");
+  await cta.click();
+  await expect(page).toHaveURL(/\/sign-up/);
 });
