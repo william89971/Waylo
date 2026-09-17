@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 const VIEW = 32;
 const CX = 16;
 const CY = 16;
@@ -33,6 +35,12 @@ export function WaypointO({
       viewBox={`0 0 ${VIEW} ${VIEW}`}
       aria-hidden="true"
       fill="none"
+      style={
+        {
+          "--ring": String(circumference),
+          "--arc": String(visible),
+        } as CSSProperties
+      }
     >
       <circle
         cx={CX}

@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { WayloWordmark } from "@/components/waylo-wordmark";
 import { WaypointO } from "@/components/waypoint-o";
-import { WaypointDrawPlayer } from "@/components/waypoint-draw-player";
 import { YellowFieldPlayer } from "@/components/yellow-field-player";
+
+const path = [
+  { index: "01", label: "Your classes" },
+  { index: "02", label: "What they count for" },
+  { index: "03", label: "What to take next" },
+] as const;
 
 export default function LandingPage() {
   return (
@@ -73,27 +78,15 @@ export default function LandingPage() {
         </section>
       </div>
       <ol className="waylo-path" aria-label="How Waylo works">
-        <li>
-          <span className="waylo-path-step">
-            <WaypointDrawPlayer />
-            <strong>1</strong>
-          </span>
-          Your classes
-        </li>
-        <li>
-          <span className="waylo-path-step">
-            <WaypointDrawPlayer />
-            <strong>2</strong>
-          </span>
-          What they count for
-        </li>
-        <li>
-          <span className="waylo-path-step">
-            <WaypointDrawPlayer />
-            <strong>3</strong>
-          </span>
-          What to take next
-        </li>
+        {path.map((step) => (
+          <li key={step.index}>
+            <span className="waylo-path-mark">
+              <WaypointO className="waylo-path-o" />
+              <span className="waylo-path-index">{step.index}</span>
+            </span>
+            {step.label}
+          </li>
+        ))}
       </ol>
       <p className="production-disclaimer">
         Waylo is a planning aid, not an official degree audit. Confirm anything marked for review in ASSIST or with

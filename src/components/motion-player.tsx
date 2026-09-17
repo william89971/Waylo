@@ -23,6 +23,7 @@ export function MotionPlayer({
   inputProps,
   className = "",
   playWhenVisible = false,
+  loop = false,
   fallback = null,
 }: {
   component: ComponentType;
@@ -32,6 +33,7 @@ export function MotionPlayer({
   inputProps?: Record<string, unknown>;
   className?: string;
   playWhenVisible?: boolean;
+  loop?: boolean;
   fallback?: ReactNode;
 }) {
   const reduced = usePrefersReducedMotion();
@@ -45,28 +47,82 @@ export function MotionPlayer({
 
   useEffect(() => {
     if (!mounted || reduced) return;
-    const instance = player.current;
-    if (!instance) return;
 
-    if (playWhenVisible) {
-      const node = host.current;
-      if (!node) return;
-      const observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0]?.isIntersecting) instance.play();
-        },
-        { threshold: 0.4 },
-      );
-      observer.observe(node);
-      return () => observer.disconnect();
-    }
+    let cancelled = false;
+    let raf = 0;
+    let running = false;
+    let frame = 0;
+    let lastTime = 0;
+    let lastSeek = -1;
+    let instance: PlayerRef | null = null;
+    let observer: IntersectionObserver | null = null;
 
-    instance.play();
-    const timer = window.setTimeout(() => {
-      if (instance.getCurrentFrame() < 2) instance.seekTo(Math.max(0, durationInFrames - 1));
-    }, 400);
-    return () => window.clearTimeout(timer);
-  }, [durationInFrames, mounted, playWhenVisible, reduced]);
+    const stop = () => {
+      running = false;
+      lastTime = 0;
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+    };
+
+    const tick = (now: number) => {
+      if (cancelled || !running || !instance) return;
+      if (!lastTime) lastTime = now;
+      frame += ((now - lastTime) / 1000) * 30;
+      lastTime = now;
+      if (loop) {
+        const duration = Math.max(1, durationInFrames);
+        frame %= duration;
+        if (frame < 0) frame += duration;
+      } else if (frame >= durationInFrames - 1) {
+        instance.seekTo(durationInFrames - 1);
+        stop();
+        return;
+      }
+      const next = Math.min(durationInFrames - 1, Math.max(0, Math.floor(frame)));
+      if (next !== lastSeek) {
+        lastSeek = next;
+        instance.seekTo(next);
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    const start = () => {
+      if (cancelled || running || !instance) return;
+      running = true;
+      lastTime = 0;
+      raf = requestAnimationFrame(tick);
+    };
+
+    const attach = () => {
+      if (cancelled) return;
+      instance = player.current;
+      if (!instance) {
+        raf = requestAnimationFrame(attach);
+        return;
+      }
+      if (playWhenVisible) {
+        const node = host.current;
+        if (!node) return;
+        observer = new IntersectionObserver(
+          (entries) => {
+            if (entries[0]?.isIntersecting) start();
+            else stop();
+          },
+          { threshold: 0.2 },
+        );
+        observer.observe(node);
+        return;
+      }
+      start();
+    };
+
+    attach();
+    return () => {
+      cancelled = true;
+      observer?.disconnect();
+      stop();
+    };
+  }, [durationInFrames, loop, mounted, playWhenVisible, reduced]);
 
   if (reduced || !mounted) return <>{fallback}</>;
 
@@ -80,7 +136,7 @@ export function MotionPlayer({
         compositionWidth={compositionWidth}
         compositionHeight={compositionHeight}
         fps={30}
-        autoPlay={!playWhenVisible}
+        autoPlay={false}
         loop={false}
         controls={false}
         clickToPlay={false}

@@ -92,6 +92,21 @@ a:hover { color: var(--p-ink-deep); }
   overflow: visible;
 }
 .waylo-o svg { display: block; width: 100%; height: 100%; }
+.waylo-o circle,
+.kicker-o circle,
+.waylo-path-o circle {
+  animation: waylo-o-draw 3.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+.kicker-o circle { animation-duration: 3.8s; animation-delay: 0.35s; }
+.waylo-path li:nth-child(1) .waylo-path-o circle { animation-delay: 0.15s; }
+.waylo-path li:nth-child(2) .waylo-path-o circle { animation-delay: 0.4s; }
+.waylo-path li:nth-child(3) .waylo-path-o circle { animation-delay: 0.65s; }
+@keyframes waylo-o-draw {
+  0%, 8% { stroke-dashoffset: 54.1; }
+  34% { stroke-dashoffset: 0; }
+  58% { stroke-dashoffset: 0; }
+  84%, 100% { stroke-dashoffset: 54.1; }
+}
 
 .production-button {
   min-height: 48px;
@@ -142,12 +157,12 @@ a:hover { color: var(--p-ink-deep); }
 .production-hero {
   max-width: 1120px;
   margin: auto;
-  padding: 72px 32px 48px;
+  padding: 36px 32px 24px;
   display: grid;
   justify-items: start;
 }
 .production-kicker {
-  margin: 0 0 18px;
+  margin: 0 0 12px;
   color: var(--p-ink);
   font-size: 13px;
   font-weight: 650;
@@ -160,92 +175,80 @@ a:hover { color: var(--p-ink-deep); }
   width: 11px;
   height: 11px;
   color: var(--p-ink);
+  overflow: visible;
 }
 .production-hero h1 {
   margin: 0;
   max-width: 12ch;
   font-family: var(--p-display);
-  font-size: clamp(48px, 8vw, 84px);
+  font-size: clamp(40px, 6.2vw, 68px);
   font-weight: 700;
   letter-spacing: -0.055em;
   line-height: 0.95;
 }
 .production-lede {
-  max-width: 38em;
-  margin: 24px 0 0;
+  max-width: 36em;
+  margin: 14px 0 0;
   color: var(--p-muted);
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.5;
 }
-.production-hero-actions { margin-top: 32px; }
-.waylo-well {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 32px 48px;
-}
+.production-hero-actions { margin-top: 22px; }
 .waylo-path {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   list-style: none;
-  padding: 0 32px 56px;
+  padding: 28px 32px 56px;
   margin: 0 auto;
   max-width: 1120px;
 }
 .waylo-path li {
   display: grid;
-  gap: 10px;
-  min-height: 140px;
-  padding: 24px;
+  align-content: start;
+  gap: 18px;
+  padding: 26px 24px 24px;
   border-radius: var(--p-radius);
   background: var(--p-paper);
   box-shadow: var(--p-shadow);
   color: var(--p-ink);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 650;
   letter-spacing: -0.03em;
+  animation: waylo-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-.waylo-path li strong {
-  position: relative;
-  z-index: 1;
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: transparent;
+.waylo-path li:nth-child(1) { animation-delay: 0.12s; }
+.waylo-path li:nth-child(2) { animation-delay: 0.22s; }
+.waylo-path li:nth-child(3) { animation-delay: 0.32s; }
+.waylo-path-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  padding-bottom: 8px;
+  border-bottom: 3px solid var(--p-waypoint);
+}
+.waylo-path-o {
+  width: 22px;
+  height: 22px;
+  overflow: visible;
   color: var(--p-ink);
-  font-size: 15px;
 }
-.waylo-path-step {
-  position: relative;
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-}
-.waylo-path-step .waypoint-draw,
-.waylo-path-step strong {
-  grid-area: 1 / 1;
-}
-.waylo-path-step .waypoint-draw {
-  width: 36px;
-  height: 36px;
+.waylo-path-index {
+  font-family: var(--p-mono);
+  font-size: 12px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  color: var(--p-muted);
 }
 .waylo-specimen {
-  width: 100%;
+  width: min(100%, 720px);
   margin: 0;
-  padding: 28px 32px;
+  padding: 24px 28px;
   border-radius: 28px;
   background: var(--p-paper);
   box-shadow: var(--p-shadow);
-}
-.waylo-well .waylo-specimen {
-  background: var(--p-paper);
-}
-.waylo-well {
-  padding-top: 12px;
-  padding-bottom: 56px;
 }
 .waypoint-draw {
   display: block;
@@ -264,7 +267,7 @@ a:hover { color: var(--p-ink-deep); }
   position: relative;
   overflow: hidden;
   background: var(--p-waypoint);
-  padding: 56px 0;
+  padding: 40px 0;
 }
 .waylo-well-band .yellow-field-motion {
   position: absolute;
@@ -274,6 +277,13 @@ a:hover { color: var(--p-ink-deep); }
 .waylo-well {
   position: relative;
   z-index: 1;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+@keyframes waylo-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
 }
 .waylo-specimen figcaption {
   display: flex;
@@ -317,7 +327,11 @@ a:hover { color: var(--p-ink-deep); }
   padding: 12px 0;
   border-bottom: 1px solid var(--p-border);
   font-size: 14px;
+  animation: waylo-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+.waylo-specimen li:nth-child(1) { animation-delay: 0.08s; }
+.waylo-specimen li:nth-child(2) { animation-delay: 0.16s; }
+.waylo-specimen li:nth-child(3) { animation-delay: 0.24s; }
 .waylo-specimen li strong {
   font-family: var(--p-mono);
   font-size: 13px;
@@ -589,7 +603,8 @@ a:hover { color: var(--p-ink-deep); }
 .evidence-disclaimer p { margin: 7px 0 0; color: var(--p-muted); line-height: 1.55; }
 
 @media (max-width: 1000px) {
-  .production-hero { padding-top: 40px; }
+  .production-hero { padding: 32px 32px 20px; }
+  .waylo-specimen { width: 100%; }
   .dashboard-layout { grid-template-columns: 1fr; }
   .dashboard-rail { grid-template-columns: repeat(3, 1fr); }
   .dashboard-rail section:first-child { grid-column: 1 / -1; }
@@ -599,11 +614,11 @@ a:hover { color: var(--p-ink-deep); }
 @media (max-width: 720px) {
   .production-landing-nav-inner { height: 72px; padding: 0 18px; }
   .production-nav-actions .production-text-link { display: none; }
-  .production-hero { display: block; padding: 36px 20px 48px; }
-  .production-hero h1 { font-size: 42px; max-width: none; }
+  .production-hero { display: block; padding: 28px 20px 20px; }
+  .production-hero h1 { font-size: 36px; max-width: none; }
   .production-lede { font-size: 17px; }
   .waylo-well { padding: 0 20px; }
-  .waylo-well-band { padding: 32px 0; }
+  .waylo-well-band { padding: 28px 0; }
   .waylo-specimen { padding: 20px; }
   .waylo-specimen li { grid-template-columns: 6.4rem minmax(0, 1fr) 2.6rem; }
   .waylo-specimen li em { grid-column: 1 / -1; justify-self: start; }
@@ -651,6 +666,18 @@ a:hover { color: var(--p-ink-deep); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .waylo-o circle,
+  .kicker-o circle,
+  .waylo-path-o circle,
+  .waylo-specimen li,
+  .waylo-path li {
+    animation: none !important;
+  }
+  .waylo-o circle,
+  .kicker-o circle,
+  .waylo-path-o circle {
+    stroke-dashoffset: 0 !important;
+  }
 }
 
 
@@ -785,6 +812,12 @@ a:hover { color: var(--p-ink-deep); }
 }
 
 @media print {
+  .waylo-o circle,
+  .kicker-o circle,
+  .waylo-path-o circle {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
   .yellow-field-motion,
   .waypoint-draw {
     display: none !important;

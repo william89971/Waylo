@@ -17,6 +17,7 @@ export function YellowFieldPlayer({ className = "" }: { className?: string }) {
       compositionWidth={YELLOW_FIELD_WIDTH}
       compositionHeight={YELLOW_FIELD_HEIGHT}
       playWhenVisible={false}
+      loop
     />
   );
 }
