@@ -1,4 +1,4 @@
-import type { ArticulationGraph, ArticulationSourceType, VerificationTier } from "@/lib/articulation/types";
+import type { ArticulationGraph, ArticulationSourceType, DivergencePoint, VerificationTier } from "@/lib/articulation/types";
 import type { SelectableTarget } from "@/lib/production-types";
 
 const PLACEHOLDER_COURSE_CODES = new Set(["NEEDS-COUNSELOR"]);
@@ -118,6 +118,26 @@ export function formatMatrixCampusLabel(graph: ArticulationGraph, targetMajorId:
 
 export function formatCourseCode(graph: ArticulationGraph, courseIdOrCode: string): string {
   return graph.courseById.get(courseIdOrCode)?.code ?? graph.courseByCode.get(courseIdOrCode)?.code ?? courseIdOrCode;
+}
+
+export function divergenceDisplay(
+  point: DivergencePoint,
+  labelFor: (id: string) => string,
+): { code: string; line: string } {
+  const code = point.primaryCourseCodes[0] ?? point.secondaryCourseCodes[0] ?? "";
+  const schools = formatList(point.secondaryTargetIds.map(labelFor).filter(Boolean));
+  if (point.kind === "secondary_only") {
+    const plural = point.secondaryTargetIds.length > 1;
+    return { code: point.secondaryCourseCodes[0] ?? code, line: `Only ${schools} ${plural ? "need" : "needs"} this.` };
+  }
+  if (point.kind === "superset_excess") {
+    const plural = point.secondaryTargetIds.length > 1;
+    return { code, line: `${schools} ${plural ? "do" : "does"} not need this.` };
+  }
+  return {
+    code: point.secondaryCourseCodes[0] ?? code,
+    line: "These calculus sequences do not match. Waylo keeps the sequence your first-choice school needs.",
+  };
 }
 
 export function requirementProgressLabel(requirement: {

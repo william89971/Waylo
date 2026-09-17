@@ -191,7 +191,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       .map((requirement) => {
         const school = labelFor(targets, audit.targetMajorId);
         if (requirement.verificationTier === "NEEDS_COUNSELOR_CONFIRMATION") {
-          return `${requirement.label} at ${school} — ask a counselor. Waylo cannot verify this.`;
+          return `${requirement.label} at ${school} — ask a counselor.`;
         }
         return `${requirement.label} at ${school} is still open.`;
       }),
@@ -260,18 +260,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       ) : null}
       <header className="production-page-header">
         <h1>What to take next semester</h1>
-        <p>
-          {nextTerm?.label ?? "Next term"} · {primaryLabel}
-          {secondaryLabels.length ? ` · Also planning: ${secondaryLabels.join(", ")}` : ""}
-        </p>
+              <p>
+                {nextTerm?.label ?? "Next term"} · {primaryLabel}
+                {secondaryLabels.length ? ` · also ${secondaryLabels.join(", ")}` : ""}
+              </p>
       </header>
       <div className="dashboard-layout">
         <section className="recommended-semester">
           <div className="section-heading">
-            <div>
-              <h2>Recommended semester</h2>
-              <p>These classes move every selected school forward, inside your unit limit.</p>
-            </div>
+            <h2>Recommended semester</h2>
           </div>
           <HomeSemesterList
             courses={nextCourses}
@@ -295,9 +292,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             )}
             {unmatched.length ? (
               <p>
-                Saved but not matched to a listed requirement:{" "}
-                {unmatched.map((course) => `${course.code} ${course.title}`).join("; ")}. Ask a counselor whether
-                those count.
+                Not matched to a listed requirement:{" "}
+                {unmatched.map((course) => `${course.code} ${course.title}`).join("; ")}. Ask a counselor.
               </p>
             ) : null}
           </div>

@@ -16,6 +16,7 @@ import {
   studentFacingConstraintNotes,
   studentFacingDataRelease,
   targetCoverageNote,
+  divergenceDisplay,
 } from "@/lib/student-facing-copy";
 import type { SelectableTarget } from "@/lib/production-types";
 
@@ -126,6 +127,41 @@ describe("student-facing copy", () => {
     expect(studentFacingConstraintNotes(["Production baseline pathway.", "Complete major prep by the spring before fall matriculation."])).toEqual([
       "Complete major prep by the spring before fall matriculation.",
     ]);
+  });
+
+  it("compresses school disagreements into a course code and one line", () => {
+    expect(
+      divergenceDisplay(
+        {
+          id: "secondary",
+          kind: "secondary_only",
+          message: "ECON-201 is required only for University of Southern California Business Administration (Marshall), not your first-choice campus.",
+          primaryCourseCodes: [],
+          secondaryCourseCodes: ["ECON-201"],
+          secondaryTargetIds: ["usc:business_administration"],
+        },
+        (id) => formatSelectableTargetLabel(targets, id),
+      ),
+    ).toEqual({
+      code: "ECON-201",
+      line: "Only University of Southern California Business Administration (Marshall) needs this.",
+    });
+    expect(
+      divergenceDisplay(
+        {
+          id: "excess",
+          kind: "superset_excess",
+          message: "PHYSIC-220 is required for your first-choice campus and is not required for University of Southern California Business Administration (Marshall).",
+          primaryCourseCodes: ["PHYSIC-220"],
+          secondaryCourseCodes: [],
+          secondaryTargetIds: ["usc:business_administration"],
+        },
+        (id) => formatSelectableTargetLabel(targets, id),
+      ),
+    ).toEqual({
+      code: "PHYSIC-220",
+      line: "University of Southern California Business Administration (Marshall) does not need this.",
+    });
   });
 
   it("never prints internal data-release ids to students", () => {
