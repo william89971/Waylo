@@ -65,6 +65,19 @@ test("brand-new student still gets a next-semester answer with dated official so
   await page.getByRole("link", { name: "Change unit limit" }).click();
   await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
   await expect(page.getByLabel("Weekly work hours")).toHaveCount(0);
+  await expect(page.getByLabel("Semester load")).toBeVisible();
+  await expect(page.getByLabel("When do you want to transfer?")).toBeVisible();
+  await expect(page.locator(".preference-form input[type=number]")).toHaveCount(0);
+  await expect(page.locator(".preference-form input[type=text]")).toHaveCount(0);
+  await page.getByLabel("Semester load").selectOption("12");
+  const termSelect = page.getByLabel("When do you want to transfer?");
+  const fallLabel = await termSelect.locator("option").evaluateAll((options) => {
+    return options
+      .map((option) => (option as HTMLOptionElement).label)
+      .find((label) => /^Fall \d{4}$/.test(label));
+  });
+  expect(fallLabel).toBeTruthy();
+  await termSelect.selectOption({ label: fallLabel! });
   await page.getByRole("button", { name: "See next semester", exact: true }).click();
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Why this class?" }).first()).toBeVisible();

@@ -21,9 +21,62 @@ export type StrategyContext = {
 
 const TARGET_TERM = /^(Fall|Spring|Summer) \d{4}$/;
 const RIGOR_PATTERN = /(MATH|CALC|COMP SCI|CHEM|PHYS|BIOSCI|STAT)/i;
+const TRANSFER_SEASONS = ["Spring", "Summer", "Fall"] as const;
+const TYPICAL_UNIT_CAPS = [12, 13, 14, 15, 16, 17, 18] as const;
+const UNIT_CAP_HINT: Record<number, string> = {
+  12: "lighter",
+  15: "typical",
+  18: "heavy",
+};
 
 export function isPreferredTransferTerm(value: string): boolean {
   return TARGET_TERM.test(value.trim());
+}
+
+export function listUnitCapOptions(current: number): number[] {
+  const caps = new Set<number>(TYPICAL_UNIT_CAPS);
+  const clamped = Number.isFinite(current) ? Math.max(6, Math.min(20, Math.round(current))) : 15;
+  caps.add(clamped);
+  return [...caps].sort((left, right) => left - right);
+}
+
+export function unitCapLabel(units: number): string {
+  const hint = UNIT_CAP_HINT[units];
+  return hint ? `${units} units · ${hint}` : `${units} units`;
+}
+
+function seasonFromMonth(month: number): (typeof TRANSFER_SEASONS)[number] {
+  if (month < 5) return "Spring";
+  if (month < 7) return "Summer";
+  return "Fall";
+}
+
+export function listTransferTermOptions(now = new Date(), count = 12): string[] {
+  let year = now.getFullYear();
+  let seasonIndex = TRANSFER_SEASONS.indexOf(seasonFromMonth(now.getMonth())) + 1;
+  if (seasonIndex > 2) {
+    seasonIndex = 0;
+    year += 1;
+  }
+  const options: string[] = [];
+  for (let i = 0; i < count; i += 1) {
+    options.push(`${TRANSFER_SEASONS[seasonIndex]} ${year}`);
+    seasonIndex += 1;
+    if (seasonIndex > 2) {
+      seasonIndex = 0;
+      year += 1;
+    }
+  }
+  return options;
+}
+
+export function listTransferTermChoices(current: string, now = new Date()): string[] {
+  const options = listTransferTermOptions(now);
+  const trimmed = current.trim();
+  if (trimmed && isPreferredTransferTerm(trimmed) && !options.includes(trimmed)) {
+    return [trimmed, ...options];
+  }
+  return options;
 }
 
 function selectedTargets(workspace: StudentWorkspaceRecord, targets: SelectableTarget[]) {

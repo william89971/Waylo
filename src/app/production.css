@@ -629,7 +629,7 @@ a:hover { color: var(--p-ink-deep); }
 .selection-row.selected { background: var(--p-waypoint); box-shadow: none; }
 .selection-row svg { color: var(--p-ink); }
 .course-entry-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; padding: 8px 0 4px; border: 0; background: transparent; }
-.course-entry-grid input, .course-entry-grid select, .preference-form input, .counselor-email-form input {
+.course-entry-grid input, .course-entry-grid select, .preference-form input, .preference-form select, .counselor-email-form input {
   width: 100%;
   min-height: 48px;
   border: 1.5px solid var(--p-border-strong);
@@ -668,7 +668,8 @@ a:hover { color: var(--p-ink-deep); }
 .confirmed-course-list span { display: grid; gap: 4px; }
 .confirmed-course-list small { color: var(--p-muted); font-size: 15px; }
 .confirmed-course-list button { min-width: 44px; min-height: 44px; border: 0; background: transparent; color: var(--p-muted); cursor: pointer; }
-.preference-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+.preference-form { display: grid; grid-template-columns: 1fr; gap: 22px; max-width: 28rem; }
+.preference-form select { cursor: pointer; }
 .checkbox-row { display: flex; align-items: center; gap: 10px; color: var(--p-ink); font-size: 16px; cursor: pointer; }
 .checkbox-row input { width: 18px; min-height: 18px; accent-color: var(--p-ink); }
 .preference-form .checkbox-row { grid-column: 1 / -1; }

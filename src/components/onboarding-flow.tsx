@@ -4,7 +4,12 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, Trash2 } from "lucide-react";
-import { isPreferredTransferTerm } from "@/lib/admissions-strategy";
+import {
+  isPreferredTransferTerm,
+  listTransferTermChoices,
+  listUnitCapOptions,
+  unitCapLabel,
+} from "@/lib/admissions-strategy";
 import { targetCoverageNote } from "@/lib/student-facing-copy";
 import { TranscriptImport } from "@/components/transcript-import";
 import { WayloWordmark } from "@/components/waylo-wordmark";
@@ -103,6 +108,8 @@ export function OnboardingFlow({
 
   const visibleStep = Math.min(STEP_LABELS.length, Math.max(1, step - 1));
   const progress = useMemo(() => `${Math.round((visibleStep / STEP_LABELS.length) * 100)}%`, [visibleStep]);
+  const unitCapOptions = useMemo(() => listUnitCapOptions(maxUnits), [maxUnits]);
+  const transferTermOptions = useMemo(() => listTransferTermChoices(targetTerm), [targetTerm]);
   const primaryTargetId = primaryInstitutionId ? (majorByInstitution[primaryInstitutionId] ?? "") : "";
   const secondaryTargetIds = useMemo(
     () =>
@@ -624,6 +631,10 @@ export function OnboardingFlow({
                 </form>
               </>
             ) : null}
+            <div className="privacy-note">
+              <strong>Confirmed classes are saved to your account.</strong>
+              <small>Transcript files are not stored. Unmatched, AP, and petition rows stay pending until a counselor confirms them.</small>
+            </div>
             <div className="onboarding-actions">
               <button className="production-button" onClick={() => (editing ? router.push("/app") : setStep(2))}>
                 Back
@@ -645,25 +656,34 @@ export function OnboardingFlow({
             <p>Waylo will not skip a required class to stay under this cap.</p>
             <div className="preference-form">
               <label>
-                Maximum units per semester
-                <input
-                  type="number"
-                  min="6"
-                  max="20"
-                  value={maxUnits}
+                Semester load
+                <select
+                  value={String(maxUnits)}
                   onChange={(event) => setMaxUnits(Number(event.target.value))}
-                />
+                >
+                  {unitCapOptions.map((units) => (
+                    <option key={units} value={units}>
+                      {unitCapLabel(units)}
+                    </option>
+                  ))}
+                </select>
+                <small>12 is lighter. 18 is a heavy load.</small>
               </label>
               <label>
-                Preferred transfer term
-                <input
+                When do you want to transfer?
+                <select
                   value={targetTerm}
-                  placeholder="Optional · Spring 2029"
                   aria-describedby="target-term-hint"
-                  aria-invalid={Boolean(targetTerm.trim()) && !isPreferredTransferTerm(targetTerm)}
                   onChange={(event) => setTargetTerm(event.target.value)}
-                />
-                <small id="target-term-hint">Fall, Spring, or Summer plus a year. Optional.</small>
+                >
+                  <option value="">Not sure yet</option>
+                  {transferTermOptions.map((term) => (
+                    <option key={term} value={term}>
+                      {term}
+                    </option>
+                  ))}
+                </select>
+                <small id="target-term-hint">Optional. You can change this later.</small>
               </label>
               <label className="checkbox-row">
                 <input
@@ -671,12 +691,8 @@ export function OnboardingFlow({
                   checked={summerEnrollment}
                   onChange={(event) => setSummerEnrollment(event.target.checked)}
                 />
-                Include summer courses
+                Include summer sessions at COC
               </label>
-            </div>
-            <div className="privacy-note">
-              <strong>Confirmed classes are saved to your account.</strong>
-              <small>Transcript files are not stored. Unmatched, AP, and petition rows stay pending until a counselor confirms them.</small>
             </div>
             <div className="onboarding-actions">
               <button
