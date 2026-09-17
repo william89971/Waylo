@@ -30,6 +30,7 @@ export function LandingTargetTeaser({
           <span>School</span>
           <select
             name="target-school"
+            aria-label="School"
             value={institutionId}
             onChange={(event) => {
               const nextSchool = event.target.value;
@@ -49,6 +50,7 @@ export function LandingTargetTeaser({
           <span>Major</span>
           <select
             name="target-major"
+            aria-label="Major"
             value={selectedMajor?.id ?? ""}
             onChange={(event) => setMajorId(event.target.value)}
           >

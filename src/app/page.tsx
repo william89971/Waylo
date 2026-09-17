@@ -99,9 +99,7 @@ export default async function LandingPage() {
                   <strong className="font-mono tabular-nums">{course.code}</strong>
                   <span className="waylo-specimen-copy">
                     {course.title}
-                    {course.overlap ? (
-                      <small aria-label={course.overlapLabel ?? course.overlap}>{course.overlapLabel ?? course.overlap}</small>
-                    ) : null}
+                    {course.overlap ? <small>{course.overlapLabel ?? course.overlap}</small> : null}
                   </span>
                   <span className="tabular-nums">{course.units}</span>
                   <em className={course.status}>{course.statusLabel}</em>
