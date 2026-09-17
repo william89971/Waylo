@@ -64,6 +64,7 @@ export function PlanRoutePicker({ options }: { options: ProductionRouteOption[] 
                 </span>
                 <span>
                   Finishes {option.finishTerm}
+                  {option.summerTerm ? ` · includes ${option.summerTerm}` : ""}
                   {option.targetTerm
                     ? option.reachesTarget
                       ? ` · by ${option.targetTerm}`

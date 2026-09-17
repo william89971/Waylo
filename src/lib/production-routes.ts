@@ -18,6 +18,7 @@ export type ProductionRouteOption = {
   nextTermCodes: string[];
   nextTermUnits: number;
   finishTerm: string;
+  summerTerm: string | null;
   targetTerm: string | null;
   reachesTarget: boolean | null;
 };
@@ -101,6 +102,7 @@ export function toRouteOption(
 ): ProductionRouteOption {
   const next = plan.schedule.terms[0];
   const finishTerm = plan.schedule.terms.at(-1)?.label ?? next?.label ?? "Unscheduled";
+  const summerTerm = plan.schedule.terms.find((term) => term.season === "summer")?.label ?? null;
   return {
     id: routePreferenceId(knobs),
     title: routeTitle(knobs, current),
@@ -110,6 +112,7 @@ export function toRouteOption(
     nextTermCodes: next?.courses.map((course) => course.code) ?? [],
     nextTermUnits: next?.totalSemesterUnits ?? 0,
     finishTerm,
+    summerTerm,
     targetTerm,
     reachesTarget: reachesPreferredTerm(finishTerm, targetTerm),
   };
