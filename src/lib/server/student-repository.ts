@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { neon } from "@neondatabase/serverless";
 import { courseById } from "@/lib/academic-data";
 import { AP_EXAMS } from "@/lib/articulation/external-credit";
 import { getSeedArticulationGraph } from "@/lib/articulation/graph";
 import { courseClosesListedPrep } from "@/lib/articulation/student-history";
 import { externalCatalogId } from "@/lib/articulation/transcript-match";
-import type { MultiTargetPlanResult } from "@/lib/articulation/types";
+import type { DivergencePoint, MultiTargetPlanResult, PlanSchedule, TargetAuditSummary } from "@/lib/articulation/types";
 import type { RouteCandidate } from "@/lib/domain";
 import type { OnboardingProfile, PlanningPreferencesInput, ProductionCourse, ProductionCourseInput, SavedPlan, StudentWorkspaceRecord } from "@/lib/production-types";
 import { uniqueBlockedNextTermCodes } from "@/lib/next-term-blocks";
@@ -123,6 +123,24 @@ function asBlockedNextTermCodes(value: unknown): string[] {
   return uniqueBlockedNextTermCodes(raw);
 }
 
+function isMissingColumn(error: unknown, column: string) {
+  const parts: string[] = [];
+  let current: unknown = error;
+  for (let step = 0; step < 5 && current; step += 1) {
+    if (current instanceof Error) {
+      parts.push(current.message);
+      const code = "code" in current ? String(current.code) : "";
+      if (code) parts.push(code);
+      current = "cause" in current ? current.cause : undefined;
+    } else {
+      parts.push(String(current));
+      break;
+    }
+  }
+  const blob = parts.join(" ");
+  return (blob.includes("42703") || /column .* does not exist/i.test(blob)) && blob.includes(column);
+}
+
 const DEFAULT_PREFERENCES: PlanningPreferencesInput = {
   maxUnits: 15,
   summerEnrollment: false,
@@ -164,9 +182,46 @@ async function ensureDatabaseUser(clerkUserId: string) {
   await Promise.all([
     db.insert(studentProfiles).values({ userId: user.id }).onConflictDoNothing({ target: studentProfiles.userId }),
     db.insert(transferGoals).values({ userId: user.id, pathwayId: "ucsd-data", primaryTargetId: "uc_san_diego:data_science", secondaryTargetIds: [], includeSecondaryDivergence: true, coverageTier: "reviewed" }).onConflictDoNothing({ target: transferGoals.userId }),
-    db.insert(planningPreferences).values({ userId: user.id }).onConflictDoNothing({ target: planningPreferences.userId }),
   ]);
+  try {
+    await db.insert(planningPreferences).values({ userId: user.id }).onConflictDoNothing({ target: planningPreferences.userId });
+  } catch (error) {
+    if (!isMissingColumn(error, "blocked_next_term_codes")) throw error;
+    const sql = neon(process.env.DATABASE_URL!);
+    await sql`insert into planning_preferences (user_id) values (${user.id}) on conflict (user_id) do nothing`;
+  }
   return user;
+}
+
+function asSavedMultiTarget(saved: typeof plans.$inferSelect): Pick<SavedPlan, "primaryTargetId" | "secondaryTargetIds" | "multiTargetPlan"> {
+  if (!saved.primaryTargetId) return {};
+  const schedule = saved.schedule as PlanSchedule | null | undefined;
+  if (!schedule || !Array.isArray(schedule.terms)) return {};
+  const snapshot = saved.evidenceGraphSnapshot as MultiTargetPlanResult["evidenceGraphSnapshot"] | null | undefined;
+  return {
+    primaryTargetId: saved.primaryTargetId,
+    secondaryTargetIds: saved.secondaryTargetIds ?? [],
+    multiTargetPlan: {
+      primaryTargetId: saved.primaryTargetId,
+      secondaryTargetIds: saved.secondaryTargetIds ?? [],
+      schedule: {
+        unitSystem: "semester",
+        maxUnitsPerTerm: schedule.maxUnitsPerTerm ?? 15,
+        terms: schedule.terms,
+        includeSecondaryDivergence: schedule.includeSecondaryDivergence ?? true,
+      },
+      auditSummary: (saved.auditSummary ?? []) as unknown as TargetAuditSummary[],
+      divergencePoints: (saved.divergencePoints ?? []) as unknown as DivergencePoint[],
+      evidenceGraphSnapshot: snapshot ?? {
+        releaseId: saved.academicDataVersion,
+        evaluatedAt: saved.createdAt.toISOString(),
+        ruleIds: [],
+        verificationTiers: [],
+      },
+      totalSemesterUnits: saved.totalPlannedUnits,
+      algorithmVersion: saved.algorithmVersion,
+    },
+  };
 }
 
 async function loadSavedPlan(userId: string): Promise<SavedPlan | undefined> {
@@ -175,8 +230,10 @@ async function loadSavedPlan(userId: string): Promise<SavedPlan | undefined> {
   const [saved] = await db.select().from(plans).where(and(eq(plans.userId, userId), eq(plans.active, true))).orderBy(desc(plans.version)).limit(1);
   if (!saved) return undefined;
   const terms = await db.select().from(planTerms).where(eq(planTerms.planId, saved.id)).orderBy(asc(planTerms.position));
-  const termIds = new Set(terms.map((term) => term.id));
-  const items = termIds.size ? (await db.select().from(planCourses).orderBy(asc(planCourses.position))).filter((item) => termIds.has(item.planTermId)) : [];
+  const termIds = terms.map((term) => term.id);
+  const items = termIds.length
+    ? await db.select().from(planCourses).where(inArray(planCourses.planTermId, termIds)).orderBy(asc(planCourses.position))
+    : [];
   const route: RouteCandidate = {
     id: saved.id,
     pathwayId: saved.pathwayId,
@@ -216,6 +273,7 @@ async function loadSavedPlan(userId: string): Promise<SavedPlan | undefined> {
     academicDataVersion: saved.academicDataVersion,
     evidenceState: saved.evidenceState as "verified" | "needs_review",
     createdAt: saved.createdAt.toISOString(),
+    ...asSavedMultiTarget(saved),
   };
 }
 
@@ -229,13 +287,34 @@ export const studentRepository = {
     }
     const user = await ensureDatabaseUser(clerkUserId);
     if (!user) throw new ApiError("database_unavailable", "Student storage is unavailable.", 503, true);
-    const [[profile], courseRows, [goal], [preferences], activePlan] = await Promise.all([
+    const [[profile], courseRows, [goal], activePlan] = await Promise.all([
       db.select().from(studentProfiles).where(eq(studentProfiles.userId, user.id)).limit(1),
       db.select().from(studentCourses).where(eq(studentCourses.userId, user.id)).orderBy(asc(studentCourses.createdAt)),
       db.select().from(transferGoals).where(eq(transferGoals.userId, user.id)).limit(1),
-      db.select().from(planningPreferences).where(eq(planningPreferences.userId, user.id)).limit(1),
       loadSavedPlan(user.id),
     ]);
+    let preferences: {
+      maxUnits?: number;
+      summerEnrollment?: boolean;
+      weeklyWorkHours?: number;
+      blockedNextTermCodes?: string[];
+    } | undefined;
+    try {
+      const [row] = await db.select().from(planningPreferences).where(eq(planningPreferences.userId, user.id)).limit(1);
+      preferences = row;
+    } catch (error) {
+      if (!isMissingColumn(error, "blocked_next_term_codes")) throw error;
+      const sql = neon(process.env.DATABASE_URL!);
+      const rows = await sql`
+        select max_units as "maxUnits",
+          summer_enrollment as "summerEnrollment",
+          weekly_work_hours as "weeklyWorkHours"
+        from planning_preferences
+        where user_id = ${user.id}
+        limit 1
+      ` as Array<{ maxUnits: number; summerEnrollment: boolean; weeklyWorkHours: number }>;
+      preferences = rows[0] ? { ...rows[0], blockedNextTermCodes: [] } : undefined;
+    }
     return {
       userId: user.id,
       profile: {
@@ -314,10 +393,17 @@ export const studentRepository = {
     }
     const user = await ensureDatabaseUser(clerkUserId);
     if (!user) throw new ApiError("database_unavailable", "Student storage is unavailable.", 503, true);
-    await db.update(planningPreferences).set({
-      blockedNextTermCodes,
-      updatedAt: new Date(),
-    }).where(eq(planningPreferences.userId, user.id));
+    try {
+      await db.update(planningPreferences).set({
+        blockedNextTermCodes,
+        updatedAt: new Date(),
+      }).where(eq(planningPreferences.userId, user.id));
+    } catch (error) {
+      if (isMissingColumn(error, "blocked_next_term_codes")) {
+        throw new ApiError("schema_unavailable", "Waylo could not save that skip yet.", 503, true);
+      }
+      throw error;
+    }
     return this.load(clerkUserId);
   },
 

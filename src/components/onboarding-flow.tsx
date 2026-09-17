@@ -333,6 +333,7 @@ export function OnboardingFlow({
       router.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Waylo could not finish onboarding.");
+    } finally {
       setWorking(false);
     }
   };

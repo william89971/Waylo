@@ -37,25 +37,32 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await expect(page.locator("#counselor-packet")).toContainText("Take this to your counselor");
   await expect(page.locator("#counselor-packet")).toContainText("ASSIST 2025-26");
   await expect(page.locator("body")).not.toContainText(/ucsd-data-2026|seed-articulation|multi-target-csp|planning-engine-v1/i);
-  await expect(page.getByRole("heading", { name: "Routes" })).toBeVisible();
-  await expect(page.getByRole("radio", { name: /Your route/ })).toHaveAttribute("aria-checked", "true");
-  const summerRoute = page.getByRole("radio", { name: /Add summer sessions/ });
-  const choseSummer = (await summerRoute.count()) > 0;
-  if (choseSummer) {
-    await summerRoute.click();
-    await expect(page.getByRole("radio", { name: /Your route/ })).toContainText(/summer/i);
+  const routesHeading = page.getByRole("heading", { name: "Routes" });
+  const hasRoutes = (await routesHeading.count()) > 0;
+  if (hasRoutes) {
+    await expect(page.getByRole("radio", { name: /Your route/ })).toHaveAttribute("aria-checked", "true");
+    const summerRoute = page.getByRole("radio", { name: /Add summer sessions/ });
+    const choseSummer = (await summerRoute.count()) > 0;
+    if (choseSummer) {
+      await summerRoute.click();
+      await expect(page.getByRole("radio", { name: /Your route/ })).toContainText(/summer/i);
+    } else {
+      await page.getByRole("radio", { name: /3 classes/ }).click();
+      await expect(page.getByRole("radio", { name: /Your route/ })).toContainText(/3 classes/);
+    }
+    await page.goto("/app");
+    await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
+    if (choseSummer) {
+      await expect(page.locator(".production-page-header")).toContainText(/summer/);
+    } else {
+      await expect(page.locator(".production-page-header")).toContainText(/3 classes/);
+    }
+    await expect(page.getByRole("link", { name: "See other routes" })).toBeVisible();
   } else {
-    await page.getByRole("radio", { name: /3 classes/ }).click();
-    await expect(page.getByRole("radio", { name: /Your route/ })).toContainText(/3 classes/);
+    await page.goto("/app");
+    await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "See other routes" })).toHaveCount(0);
   }
-  await page.goto("/app");
-  await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
-  if (choseSummer) {
-    await expect(page.locator(".production-page-header")).toContainText(/summer/);
-  } else {
-    await expect(page.locator(".production-page-header")).toContainText(/3 classes/);
-  }
-  await expect(page.getByRole("link", { name: "See other routes" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Read the strategy note" })).toBeVisible();
   await page.getByRole("link", { name: "Read the strategy note" }).click();
   await expect(page.locator("#admissions-strategy")).toBeVisible();
@@ -103,6 +110,12 @@ test("blocking a next-semester class moves it later and undo restores it", async
   await firstRow.getByRole("button", { name: `Can't take this: ${blockedCode}` }).click();
   await expect(page.getByText(`${blockedCode} · not this term`)).toBeVisible();
   await expect(page.locator(".home-appointment .course-row strong").filter({ hasText: exactCode })).toHaveCount(0);
+  if (blockedCode === "CMPSCI-111" || blockedCode === "CMPSCI-111L") {
+    await expect(page.locator(".home-appointment .course-row strong").filter({ hasText: /^CMPSCI-111$/ })).toHaveCount(0);
+    await expect(page.locator(".home-appointment .course-row strong").filter({ hasText: /^CMPSCI-111L$/ })).toHaveCount(0);
+    await expect(page.getByText("CMPSCI-111 · not this term")).toBeVisible();
+    await expect(page.getByText("CMPSCI-111L · not this term")).toBeVisible();
+  }
 
   await page.getByRole("link", { name: "See all terms" }).click();
   await expect(page.getByRole("heading", { name: /All terms|Proposed sequence/ })).toBeVisible();

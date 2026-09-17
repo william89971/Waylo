@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ edit?: string; units?: string }> }) {
   const clerkUserId = await getAuthenticatedUserId();
-  if (!clerkUserId) redirect("/sign-up");
+  if (!clerkUserId) redirect("/sign-in");
   const workspace = await studentRepository.load(clerkUserId);
   const params = await searchParams;
   const editingCourses = params.edit === "1";

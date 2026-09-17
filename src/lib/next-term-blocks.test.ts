@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getSeedArticulationGraph } from "@/lib/articulation/graph";
-import { computeMultiTargetPlan } from "@/lib/articulation/multi-target-plan";
+import { computeMultiTargetPlan, expandLabPairCourseCodes } from "@/lib/articulation/multi-target-plan";
 import { targetMajorId } from "@/lib/articulation/types";
 import {
   blockedNextTermChipLabel,
@@ -47,6 +47,20 @@ describe("next-term blocks", () => {
     expect(blockedNextTermCounselorLine(placements)).toBe(
       `Not this term (student): ${firstCode} — on the plan in ${placements[0]!.laterTermLabel}.`,
     );
+  });
+
+  it("names the later term for a lecture and its lab when either is skipped", () => {
+    const blocked = computeMultiTargetPlan({
+      history: [],
+      primaryTargetId: ucsdData,
+      maxUnitsPerTerm: 15,
+      unavailableNextTermCodes: ["CMPSCI-111"],
+      graph,
+    });
+    const placements = blockedNextTermPlacements(blocked, expandLabPairCourseCodes(["CMPSCI-111"], graph));
+    expect(placements.map((placement) => placement.code).sort()).toEqual(["CMPSCI-111", "CMPSCI-111L"]);
+    expect(new Set(placements.map((placement) => placement.laterTermLabel)).size).toBe(1);
+    expect(placements[0]?.laterTermLabel).toMatch(/^(Fall|Spring|Summer) \d{4}$/);
   });
 
   it("does not invent a later term when the class never lands", () => {

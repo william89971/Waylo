@@ -18,7 +18,8 @@ import { graphCodeForStudentCourse, unmatchedCompletedCourses } from "@/lib/arti
 import type { ArticulationGraph, VerificationTier } from "@/lib/articulation/types";
 import type { SavedPlan, SelectableTarget } from "@/lib/production-types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
-import { generateMultiTargetProductionPlan, listSelectableTargets, MULTI_TARGET_DATA_RELEASE } from "@/lib/server/production-planning";
+import { expandLabPairCourseCodes } from "@/lib/articulation/multi-target-plan";
+import { generateMultiTargetProductionPlan, listProductionRouteOptions, listSelectableTargets, MULTI_TARGET_DATA_RELEASE } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
 import { courseWhySentence, formatSelectableTargetLabel, isOfficialVerifiedSource, officialSourceLabel } from "@/lib/student-facing-copy";
 import { loadPhrase } from "@/lib/production-routes";
@@ -154,10 +155,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   if (!workspace.profile.onboardingCompleted) redirect("/onboarding");
   const plan = workspace.activePlan;
   if (!plan) redirect("/app/plan?new=1");
-  const [targets, graph, live] = await Promise.all([
+  const [targets, graph, live, routes] = await Promise.all([
     listSelectableTargets(),
     loadActiveArticulationGraph(),
     generateMultiTargetProductionPlan(workspace),
+    listProductionRouteOptions(workspace),
   ]);
   const auditPlan = live;
   const liveNext = live.schedule.terms[0];
@@ -289,7 +291,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     );
   const citations = citationsFromAudit(auditPlan?.auditSummary, graph, (id) => labelFor(targets, id));
   const packetUnits = auditPlan?.totalSemesterUnits ?? route.terms.reduce((sum, term) => sum + term.totalUnits, 0);
-  const nextTermBlocks = blockedNextTermPlacements(auditPlan, workspace.blockedNextTermCodes);
+  const nextTermBlocks = blockedNextTermPlacements(
+    auditPlan,
+    expandLabPairCourseCodes(workspace.blockedNextTermCodes, graph),
+  );
   const nextTermBlockLine = blockedNextTermCounselorLine(nextTermBlocks);
 
   return (
@@ -341,7 +346,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {strategy ? (
             <Link href="/app/plan#admissions-strategy">Read the strategy note</Link>
           ) : null}
-          <Link href="/app/plan#routes">See other routes</Link>
+          {routes.length >= 2 ? (
+            <Link href="/app/plan#routes">See other routes</Link>
+          ) : null}
           <Link href="/onboarding?units=1">Change class load</Link>
         </nav>
         <div className="already-counted">

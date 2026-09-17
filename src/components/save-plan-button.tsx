@@ -9,11 +9,26 @@ export function SavePlanButton({ strategy }: { strategy: RouteStrategy }) {
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const save = async () => {
-    setWorking(true); setError("");
-    const response = await fetch("/api/me/plan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save", strategy }) });
-    const body = await response.json();
-    if (!response.ok) { setError(body?.error?.message ?? "Waylo could not save this plan."); setWorking(false); return; }
-    router.push("/app?saved=1"); router.refresh();
+    setWorking(true);
+    setError("");
+    try {
+      const response = await fetch("/api/me/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save", strategy }),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        setError(body?.error?.message ?? "Waylo could not save this plan.");
+        return;
+      }
+      router.push("/app?saved=1");
+      router.refresh();
+    } catch {
+      setError("Waylo could not save this plan.");
+    } finally {
+      setWorking(false);
+    }
   };
   return (
     <span className="plan-save">

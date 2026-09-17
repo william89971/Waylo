@@ -63,7 +63,7 @@ export function HomeSemesterList({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, code }),
       });
-      const body = await response.json();
+      const body = await response.json().catch(() => null);
       if (!response.ok) throw new Error(body?.error?.message ?? "Waylo could not update next semester.");
       router.refresh();
     } catch (caught) {

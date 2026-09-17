@@ -170,6 +170,33 @@ function prereqClosure(courseId: string, graph: ArticulationGraph, completedIds:
   into.add(courseId);
 }
 
+function nextSeason(
+  season: "fall" | "spring" | "summer",
+  year: number,
+  includeSummer: boolean,
+): { season: "fall" | "spring" | "summer"; year: number } {
+  if (season === "fall") return { season: "spring", year };
+  if (season === "spring") {
+    return includeSummer ? { season: "summer", year } : { season: "fall", year: year + 1 };
+  }
+  return { season: "fall", year: year + 1 };
+}
+
+function expandLabPairCodes(codes: Set<string>, graph: ArticulationGraph): Set<string> {
+  const expanded = new Set(codes);
+  for (const course of graph.courseById.values()) {
+    if (!codes.has(planCourseCodeKey(course.code))) continue;
+    const pair = course.labPairCourseId ? graph.courseById.get(course.labPairCourseId) : undefined;
+    if (pair?.code) expanded.add(planCourseCodeKey(pair.code));
+  }
+  return expanded;
+}
+
+/** Lecture + lab ASSIST bundles: skipping either skips both. */
+export function expandLabPairCourseCodes(codes: Iterable<string>, graph: ArticulationGraph): string[] {
+  return [...expandLabPairCodes(new Set([...codes].map(planCourseCodeKey).filter(Boolean)), graph)];
+}
+
 function toScheduledCourse(course: CandidateCourse): ScheduledCourse {
   return {
     courseId: course.courseId,
@@ -241,36 +268,57 @@ function topoSchedule(
       .filter((course) => course.offeredTerms.includes(season))
       .sort((left, right) => right.weight - left.weight || left.code.localeCompare(right.code));
     const packable = ready.filter((course) => !blockedThisTerm(course));
+    const packableIds = new Set(packable.map((course) => course.courseId));
+
+    const remainingPair = (course: CandidateCourse) => {
+      const pairId = graph.courseById.get(course.courseId)?.labPairCourseId;
+      if (!pairId || !remaining.has(pairId)) return undefined;
+      return candidateById.get(pairId);
+    };
+    const pairReadyThisTerm = (pair: CandidateCourse | undefined): pair is CandidateCourse =>
+      Boolean(pair && packableIds.has(pair.courseId) && !blockedThisTerm(pair));
 
     const selected: ScheduledCourse[] = [];
     let units = 0;
     const overflowTradeoffs: string[] = [];
 
-    for (const course of packable) {
-      if (units + course.semesterUnits > maxUnitsPerTerm) {
-        if (course.bucket === "secondary_divergence") overflowTradeoffs.push(course.courseId);
-        continue;
-      }
+    const takeCourse = (course: CandidateCourse, pair?: CandidateCourse) => {
       selected.push(toScheduledCourse(course));
       units += course.semesterUnits;
       remaining.delete(course.courseId);
       done.add(course.courseId);
+      if (!pair) return;
+      selected.push(toScheduledCourse(pair));
+      units += pair.semesterUnits;
+      remaining.delete(pair.courseId);
+      done.add(pair.courseId);
+    };
+
+    for (const course of packable) {
+      if (!remaining.has(course.courseId)) continue;
+      const pair = remainingPair(course);
+      if (pair && !pairReadyThisTerm(pair)) continue;
+      const pairedUnits = course.semesterUnits + (pair ? pair.semesterUnits : 0);
+      if (units + pairedUnits > maxUnitsPerTerm) {
+        if (course.bucket === "secondary_divergence") overflowTradeoffs.push(course.courseId);
+        continue;
+      }
+      takeCourse(course, pair);
     }
 
     if (selected.length === 0) {
-      if (firstTerm) {
-        // Leave the first term empty rather than forcing a blocked class or a later prereq.
-      } else {
-        const forced =
-          ready[0] ??
-          [...remaining]
-            .map((id) => candidateById.get(id)!)
-            .sort((left, right) => right.weight - left.weight)[0];
-        if (!forced) break;
-        selected.push(toScheduledCourse(forced));
-        remaining.delete(forced.courseId);
-        done.add(forced.courseId);
-        units = forced.semesterUnits;
+      const overflow = packable.find((course) => {
+        if (!remaining.has(course.courseId)) return false;
+        const pair = remainingPair(course);
+        return !pair || pairReadyThisTerm(pair);
+      });
+      if (overflow) {
+        const pair = remainingPair(overflow);
+        units = 0;
+        takeCourse(overflow, pairReadyThisTerm(pair) ? pair : undefined);
+      } else if (!firstTerm) {
+        ({ season, year } = nextSeason(season, year, includeSummer));
+        continue;
       }
     }
 
@@ -290,14 +338,7 @@ function topoSchedule(
         : [],
     });
 
-    if (season === "fall") season = "spring";
-    else if (season === "spring") {
-      season = includeSummer ? "summer" : "fall";
-      if (!includeSummer) year += 1;
-    } else {
-      season = "fall";
-      year += 1;
-    }
+    ({ season, year } = nextSeason(season, year, includeSummer));
   }
 
   return terms;
@@ -433,8 +474,9 @@ export function computeMultiTargetPlan(input: MultiTargetPlanInput): MultiTarget
     candidates = candidates.filter((item) => item.bucket !== "secondary_divergence");
   }
 
-  const unavailableNextTermCodes = new Set(
-    (input.unavailableNextTermCodes ?? []).map(planCourseCodeKey).filter(Boolean),
+  const unavailableNextTermCodes = expandLabPairCodes(
+    new Set((input.unavailableNextTermCodes ?? []).map(planCourseCodeKey).filter(Boolean)),
+    graph,
   );
   const terms = topoSchedule(
     candidates,
