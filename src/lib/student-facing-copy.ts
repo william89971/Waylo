@@ -79,8 +79,9 @@ export function studentFacingConstraintNotes(notes: string[]) {
   return notes.filter((note) => !/production baseline/i.test(note.trim()));
 }
 
-export function studentFacingDataRelease(_version?: string) {
-  return "ASSIST 2025-26";
+export function studentFacingDataRelease(version?: string) {
+  const year = version?.match(/20\d{2}-\d{2}/)?.[0];
+  return year ? `ASSIST ${year}` : "ASSIST 2025-26";
 }
 
 export const SOURCE_TYPE_LABEL: Record<ArticulationSourceType, string> = {

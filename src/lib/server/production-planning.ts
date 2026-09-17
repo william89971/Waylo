@@ -103,6 +103,7 @@ export async function listSelectableTargets(): Promise<SelectableTarget[]> {
  * The legacy UCSD planner is retired for students. It labeled the same next-semester
  * classes as "Ask a counselor" while Home showed official ASSIST sources.
  */
-export function shouldUseLegacyUcsdPlanner(_workspace?: StudentWorkspaceRecord): boolean {
+export function shouldUseLegacyUcsdPlanner(workspace?: StudentWorkspaceRecord): boolean {
+  void workspace;
   return false;
 }
