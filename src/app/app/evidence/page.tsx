@@ -1,6 +1,9 @@
 import { ExternalLink } from "lucide-react";
+import { redirect } from "next/navigation";
 import { EvidenceFocus } from "@/components/evidence-focus";
 import { courses, evidence } from "@/lib/academic-data";
+import { getAuthenticatedUserId } from "@/lib/server/auth";
+import { studentRepository } from "@/lib/server/student-repository";
 
 function matchingSourceIds(courseQuery?: string) {
   if (!courseQuery) return new Set<string>();
@@ -31,7 +34,14 @@ function matchingSourceIds(courseQuery?: string) {
 }
 
 export default async function EvidencePage({ searchParams }: { searchParams: Promise<{ course?: string }> }) {
+  const clerkUserId = await getAuthenticatedUserId();
+  if (!clerkUserId) redirect("/sign-in");
+  const workspace = await studentRepository.load(clerkUserId);
   const courseQuery = (await searchParams).course;
+  if (workspace.profile.onboardingCompleted && !shouldStayOnLegacyEvidence(workspace.primaryTargetId, workspace.secondaryTargetIds)) {
+    const focus = courseQuery ? `?course=${encodeURIComponent(courseQuery)}` : "";
+    redirect(`/app/plan${focus}`);
+  }
   const sources = evidence.filter((source) => source.pathwayId === "ucsd-data" || source.institutionId === "coc");
   const highlightIds = matchingSourceIds(courseQuery);
   const focusId = sources.find((source) => highlightIds.has(source.id))?.id;
@@ -41,10 +51,13 @@ export default async function EvidencePage({ searchParams }: { searchParams: Pro
       <EvidenceFocus targetId={focusId ? `source-${focusId}` : undefined} />
       <header className="production-page-header">
         <h1>Evidence behind your plan</h1>
-        <p>Every important academic claim carries its source and verification state.</p>
+        <p>
+          ASSIST is the official California site for UC and CSU transfer agreements. Each item below is a source Waylo
+          used. If it says a counselor is needed, confirm it before you enroll.
+        </p>
       </header>
       <div className="evidence-key" aria-label="Evidence status key">
-        <span className="verified">Verified</span>
+        <span className="verified">Official source</span>
         <span className="suggestion">Planning suggestion</span>
         <span className="review">ASSIST or counselor confirmation needed</span>
       </div>
@@ -60,22 +73,22 @@ export default async function EvidencePage({ searchParams }: { searchParams: Pro
             >
               <div>
                 <span className={`source-status ${source.status}`}>
-                  {source.status === "verified" ? "Verified source" : "Confirmation needed"}
+                  {source.status === "verified" ? "Official source" : "Ask a counselor"}
                 </span>
                 <h2>{source.title}</h2>
                 <p>{source.note}</p>
               </div>
               <dl>
                 <div>
-                  <dt>Effective period</dt>
+                  <dt>Agreement year</dt>
                   <dd>{source.effectiveYear}</dd>
                 </div>
                 <div>
-                  <dt>Retrieved</dt>
+                  <dt>Checked</dt>
                   <dd>{source.retrievedAt}</dd>
                 </div>
                 <div>
-                  <dt>Provenance</dt>
+                  <dt>Where it came from</dt>
                   <dd>{source.provenance.replaceAll("_", " ")}</dd>
                 </div>
               </dl>
@@ -87,12 +100,16 @@ export default async function EvidencePage({ searchParams }: { searchParams: Pro
         })}
       </div>
       <div className="evidence-disclaimer">
-        <strong>Important limitation</strong>
+        <strong>Waylo does not replace a counselor</strong>
         <p>
-          Waylo validates internal prerequisite order and scheduling against its reviewed dataset. Exact COC-to-UCSD
-          articulations still require confirmation in the applicable ASSIST agreement or with a counselor where marked.
+          This list explains the sources behind your next-semester plan. Confirm anything marked for review in ASSIST
+          or with a College of the Canyons counselor before you enroll.
         </p>
       </div>
     </div>
   );
+}
+
+function shouldStayOnLegacyEvidence(primaryTargetId: string, secondaryTargetIds?: string[]) {
+  return primaryTargetId === "uc_san_diego:data_science" && !(secondaryTargetIds?.length);
 }

@@ -3,6 +3,7 @@
 import { AlertCircle, Check, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VerificationTier } from "@/lib/articulation/types";
+import { VERIFICATION_SHORT } from "@/lib/student-facing-copy";
 
 export type MatrixCampusColumn = {
   targetMajorId: string;
@@ -45,7 +46,7 @@ function StatusGlyph({ cell }: { cell: MatrixCampusCell }) {
     return (
       <span
         className="inline-flex items-center gap-1.5 text-amber-700"
-        title={cell.verificationTier ?? "Needs counselor review"}
+        title={cell.verificationTier ? VERIFICATION_SHORT[cell.verificationTier] : "Needs counselor review"}
       >
         <AlertCircle className="size-4 shrink-0" aria-hidden />
         <span className="sr-only">Needs counselor review</span>
@@ -59,7 +60,7 @@ function StatusGlyph({ cell }: { cell: MatrixCampusCell }) {
   return (
     <span
       className="inline-flex items-center gap-1.5 text-emerald-700"
-      title={cell.verificationTier ?? "Verified"}
+      title={cell.verificationTier ? VERIFICATION_SHORT[cell.verificationTier] : "Verified"}
     >
       <Check className="size-4 shrink-0" strokeWidth={2.5} aria-hidden />
       <span className="sr-only">Verified</span>
@@ -81,7 +82,7 @@ export function MultiCampusMatrix({
       <div className="overflow-x-auto overflow-y-hidden overscroll-x-contain border border-border/40 bg-background" data-testid="articulation-matrix">
       <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
         <caption className="sr-only whitespace-normal">
-          Articulation matrix. Select a course row to open evidence.
+          How each class counts. Select a course row to see why it is on the plan.
         </caption>
         <thead>
           <tr className="border-b border-border/40">

@@ -15,14 +15,16 @@ export type PlanMatrixWorkspaceProps = {
   campuses: MatrixCampusColumn[];
   rows: MatrixCourseRow[];
   evidenceByCourseCode: Record<string, CourseEvidencePayload>;
+  initialCourseCode?: string | null;
 };
 
 export function PlanMatrixWorkspace({
   campuses,
   rows,
   evidenceByCourseCode,
+  initialCourseCode = null,
 }: PlanMatrixWorkspaceProps) {
-  const [selectedCourseCode, setSelectedCourseCode] = useState<string | null>(null);
+  const [selectedCourseCode, setSelectedCourseCode] = useState<string | null>(initialCourseCode);
   const evidence = selectedCourseCode ? evidenceByCourseCode[selectedCourseCode] ?? null : null;
 
   const closeDrawer = useCallback(() => {

@@ -26,6 +26,7 @@ import {
   UCSD_DATA_RELEASE,
 } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
+import { formatCourseCode, formatSelectableTargetLabel, requirementProgressLabel } from "@/lib/student-facing-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -33,14 +34,16 @@ function legacyTier(status?: string): VerificationTier {
   return status === "verified" ? "VERIFIED_ASSIST" : "NEEDS_COUNSELOR_CONFIRMATION";
 }
 
-export default async function PlanPage({ searchParams }: { searchParams: Promise<{ new?: string }> }) {
+export default async function PlanPage({ searchParams }: { searchParams: Promise<{ new?: string; course?: string }> }) {
   const clerkUserId = await getAuthenticatedUserId();
   if (!clerkUserId) redirect("/sign-in");
   const workspace = await studentRepository.load(clerkUserId);
   if (!workspace.profile.onboardingCompleted) redirect("/onboarding");
-  const showProposal = (await searchParams).new === "1" || !workspace.activePlan;
+  const params = await searchParams;
+  const showProposal = params.new === "1" || !workspace.activePlan;
+  const focusCourse = params.course?.trim() || null;
   const targets = await listSelectableTargets();
-  const labelFor = (id: string) => targets.find((target) => target.id === id)?.displayName ?? id;
+  const labelFor = (id: string) => formatSelectableTargetLabel(targets, id);
 
   if (!shouldUseLegacyUcsdPlanner(workspace)) {
     const [multi, graph] = await Promise.all([
@@ -61,6 +64,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           effectiveYear: rule?.effectiveYear ?? "—",
           sourceType: rule?.sourceType ?? "—",
           satisfied: requirement.satisfied,
+          historySatisfied: requirement.historySatisfied,
         };
       }),
     );
@@ -94,11 +98,11 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       <div className="production-page plan-page">
         <header className="production-page-header plan-header-actions">
           <div>
-            <h1>{showProposal ? "Review your multi-target plan" : "Your multi-target plan"}</h1>
+            <h1>{showProposal ? "Review this plan" : "Your plan"}</h1>
             <p>
-              Primary: {labelFor(multi.primaryTargetId)}
+              First choice: {labelFor(multi.primaryTargetId)}
               {multi.secondaryTargetIds.length
-                ? ` · Secondary: ${multi.secondaryTargetIds.map(labelFor).join(", ")}`
+                ? ` · Also planning: ${multi.secondaryTargetIds.map(labelFor).join(", ")}`
                 : ""}
             </p>
           </div>
@@ -107,20 +111,18 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         {showProposal ? (
           <div className="proposal-banner no-print">
             <strong>Proposed — not saved</strong>
-            <span>
-              Semester packing uses College of the Canyons units. Destination audits convert units only below.
-            </span>
+            <span>Check the next-semester list, then save it so you can come back before you enroll.</span>
           </div>
         ) : null}
         {!workspace.includeSecondaryDivergence ? (
           <div className="review-banner no-print">
-            <strong>Secondary divergence courses are omitted.</strong>
-            <span>Enable secondary major prep to include secondary-only requirements in the schedule.</span>
+            <strong>Classes that only the second school needs are left off this schedule.</strong>
+            <span>Turn that option back on if you want one plan that covers every selected school.</span>
           </div>
         ) : null}
         {multi.divergencePoints.length ? (
           <div className="review-banner no-print">
-            <strong>Divergence trade-offs</strong>
+            <strong>Where the schools disagree</strong>
             <ul>
               {multi.divergencePoints.map((point) => (
                 <li key={point.id}>{point.message}</li>
@@ -131,9 +133,9 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         <section className="no-print matrix-section" aria-label="Multi-campus articulation matrix">
           <div className="matrix-heading">
             <div>
-              <h2>Articulation matrix</h2>
+              <h2>How each class counts</h2>
               <p>
-                Each row is a planned College of the Canyons course. Select a row to see why it is verified or still needs review. First choice is your primary campus.
+                Each row is a College of the Canyons class. Tap a row to see why it is on the plan, and which school still needs a counselor.
               </p>
             </div>
             <p className="matrix-totals">
@@ -141,8 +143,8 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             </p>
           </div>
           <ul className="status-legend" aria-label="Articulation status key">
-            <li className="verified">Verified</li>
-            <li className="review">Needs counselor review</li>
+            <li className="verified">Official</li>
+            <li className="review">Ask a counselor</li>
             <li className="unrequired">Not required</li>
           </ul>
           <p className="scroll-hint">Swipe sideways to compare campuses.</p>
@@ -150,14 +152,15 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             campuses={matrixCampuses}
             rows={matrixRows}
             evidenceByCourseCode={evidenceByCourseCode}
+            initialCourseCode={focusCourse}
           />
           {multi.schedule.terms.some((term) => term.conflicts.length > 0) ? (
             <ul className="space-y-1 text-sm text-amber-800" role="status">
               {multi.schedule.terms.flatMap((term) =>
                 term.conflicts.map((conflict, index) => (
                   <li key={`${term.id}-conflict-${index}`}>
-                    {term.label}: {conflict.message} Trade-off courses:{" "}
-                    {conflict.tradeoffCourseIds.join(", ")}
+                    {term.label}: {conflict.message} Courses held for a later term:{" "}
+                    {conflict.tradeoffCourseIds.map((id) => formatCourseCode(graph, id)).join(", ")}
                   </li>
                 )),
               )}
@@ -166,8 +169,8 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         </section>
         <section id="requirements" className="audit-section no-print" aria-label="Destination audit summaries">
           <div className="section-heading">
-            <h2>Destination audits</h2>
-            <p>How each campus counts these courses. Green is confirmed; amber still needs a counselor.</p>
+            <h2>What&apos;s left at each school</h2>
+            <p>Green is an official agreement. Amber means ask a counselor before you enroll.</p>
           </div>
           {multi.auditSummary.map((audit) => (
             <article className="audit-block" key={audit.targetMajorId}>
@@ -175,15 +178,14 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                 <strong>{labelFor(audit.targetMajorId)}</strong>
                 <span>
                   {audit.articulatedUnits} / {audit.juniorStandingUnits} {audit.unitSystem} units
-                  {audit.juniorStandingMet ? " · junior standing met" : " · junior standing in progress"}
+                  {audit.juniorStandingMet ? " · enough units for junior standing" : " · still building junior standing"}
                 </span>
               </header>
               <ul>
                 {audit.requirementStates.map((requirement) => (
                   <li key={requirement.requirementKey}>
                     <span>
-                      {requirement.label}:{" "}
-                      {requirement.satisfied ? "satisfied" : `missing ${requirement.missingCourseCodes.join(", ")}`}
+                      {requirement.label}: {requirementProgressLabel(requirement)}
                     </span>
                     <EvidenceStatus tier={requirement.verificationTier} />
                   </li>
@@ -202,7 +204,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             <SavePlanButton strategy="overlap" />
           ) : (
             <Link href="/app/plan?new=1" className="production-button">
-              Generate a fresh proposal
+              Rebuild this plan
             </Link>
           )}
         </div>
@@ -321,7 +323,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                     <span>{course.title}</span>
                     <small>{course.units} units</small>
                     <EvidenceStatus state={needsReview ? "review" : "suggestion"} />
-                    <Link href={`/app/evidence?course=${course.courseId}`}>View source</Link>
+                    <Link href={`/app/evidence?course=${course.courseId}`}>Why this class</Link>
                   </section>
                 );
               })}
@@ -339,17 +341,11 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           <SavePlanButton strategy={route.strategy} />
         ) : (
           <Link href="/app/plan?new=1" className="production-button">
-            Generate a fresh proposal
+            Rebuild this plan
           </Link>
         )}
       </div>
       {strategy ? <AdmissionsStrategyPanel strategy={strategy} /> : null}
-      <section id="what-if" className="what-if-placeholder no-print">
-        <p>What-if planning is not available yet.</p>
-        <button className="production-button" disabled>
-          What-if planning
-        </button>
-      </section>
       <CounselorPacket
         preferredName={workspace.profile.preferredName}
         primaryLabel={labelFor(workspace.primaryTargetId)}

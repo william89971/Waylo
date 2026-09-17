@@ -1,4 +1,4 @@
-import { collectCourseCodes } from "@/lib/articulation/expression";
+import { pickRuleForCourse } from "@/lib/articulation/rules";
 import type {
   ArticulationGraph,
   ArticulationRule,
@@ -15,6 +15,7 @@ import type {
   MatrixCampusColumn,
   MatrixCourseRow,
 } from "@/components/multi-campus-matrix";
+import { formatGraphTargetLabel, formatMatrixCampusLabel } from "@/lib/student-facing-copy";
 
 const REVIEW_TIERS = new Set<VerificationTier>([
   "NEEDS_COUNSELOR_CONFIRMATION",
@@ -37,27 +38,15 @@ function compactEquivalency(rule: ArticulationRule | undefined): string | undefi
   return rule.requirementKey.replace(/_/g, " ").toUpperCase();
 }
 
-function pickRuleForCourse(
-  rules: ArticulationRule[],
-  courseCode: string,
-): ArticulationRule | undefined {
-  const matching = rules.filter((rule) =>
-    collectCourseCodes(rule.expression).includes(courseCode),
-  );
-  if (matching.length === 0) return undefined;
-  return matching.find((rule) => rule.verificationTier === "VERIFIED_ASSIST") ?? matching[0];
-}
-
 export function buildMatrixCampuses(
   plan: MultiTargetPlanResult,
   graph: ArticulationGraph,
 ): MatrixCampusColumn[] {
   const ids = [plan.primaryTargetId, ...plan.secondaryTargetIds];
   return ids.map((targetMajorId) => {
-    const major = graph.targetMajorById.get(targetMajorId);
     return {
       targetMajorId,
-      label: major?.displayName ?? targetMajorId,
+      label: formatMatrixCampusLabel(graph, targetMajorId),
       isPrimary: targetMajorId === plan.primaryTargetId,
     };
   });
@@ -109,12 +98,11 @@ function campusEntryForCourse(
   isPrimary: boolean,
   graph: ArticulationGraph,
 ): EvidenceCampusEntry {
-  const major = graph.targetMajorById.get(campusId);
   const fulfills = course.fulfillsTargetIds.includes(campusId);
   if (!fulfills) {
     return {
       targetMajorId: campusId,
-      campusLabel: major?.displayName ?? campusId,
+      campusLabel: formatGraphTargetLabel(graph, campusId),
       isPrimary,
       required: false,
     };
@@ -126,7 +114,7 @@ function campusEntryForCourse(
   );
   return {
     targetMajorId: campusId,
-    campusLabel: major?.displayName ?? campusId,
+    campusLabel: formatGraphTargetLabel(graph, campusId),
     isPrimary,
     required: true,
     destinationRequirement: rule?.label ?? rule?.requirementKey,

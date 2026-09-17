@@ -3,12 +3,9 @@ import { expect, test, type Page } from "@playwright/test";
 async function onboardMultiTargetPlan(page: Page, testUser: string) {
   await page.goto(`/sign-up?testUser=${testUser}`);
   await page.getByRole("button", { name: "Create test account" }).click();
-  await expect(page.getByRole("heading", { name: "What college do you attend?" })).toBeVisible({
+  await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible({
     timeout: 60_000,
   });
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-
-  await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible();
   // Clear the default UCSD selection so this journey is UCB primary + USC secondary only.
   const ucsd = page.getByTestId("university-list").getByRole("button", { name: /UC San Diego/ });
   if (await ucsd.getAttribute("aria-pressed") === "true") {
@@ -19,7 +16,7 @@ async function onboardMultiTargetPlan(page: Page, testUser: string) {
   await page.getByTestId("campus-majors-uc_berkeley").getByLabel("Primary school").check();
   await page.getByTestId("university-list").getByRole("button", { name: /University of Southern California/ }).click();
   await page.getByTestId("campus-majors-usc").getByRole("radio", { name: /Business/ }).click();
-  await expect(page.getByText(/Include secondary major prep/i)).toBeVisible();
+  await expect(page.getByText(/Also plan classes that only the second school needs/i)).toBeVisible();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
@@ -28,10 +25,10 @@ async function onboardMultiTargetPlan(page: Page, testUser: string) {
   await page.getByRole("button", { name: "Add course" }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: "Schedule preferences" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
   await page.getByRole("button", { name: "View proposed schedule", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: /multi-target plan/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Review this plan|Your plan/ })).toBeVisible();
   await expect(page.getByTestId("articulation-matrix")).toBeVisible();
   const overflow = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
@@ -72,9 +69,11 @@ test.describe("multi-target articulation matrix and evidence drawer", () => {
     await expect(drawer).toHaveAttribute("data-state", "open");
     await expect(drawer).toBeVisible();
     await expect(drawer).toContainText("MATH-211");
-    await expect(drawer.getByText("VERIFIED_ASSIST").first()).toBeVisible();
-    await expect(drawer.getByText("TARGET INSTITUTION").first()).toBeVisible();
-    await expect(drawer.getByText("DESTINATION REQUIREMENT").first()).toBeVisible();
+    await expect(drawer.getByText("Confirmed in an official ASSIST agreement.").first()).toBeVisible();
+    await expect(drawer.getByText("Campus").first()).toBeVisible();
+    await expect(drawer.getByText("Requirement").first()).toBeVisible();
+    await expect(page.getByText(/usc:business_administration/)).toHaveCount(0);
+    await expect(page.getByText(/UC Berkeley Economics/).first()).toBeVisible();
 
     await page.keyboard.press("Escape");
     await expect(drawer).toHaveAttribute("data-state", "closed");
@@ -108,6 +107,9 @@ test("multi-target Save this plan reaches the dashboard and shows strategy", asy
   await expect(page.getByText("Plan saved.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Review semester plan" })).toHaveCount(1);
   await expect(page.getByText(/UC Berkeley Economics/).first()).toBeVisible();
+  await expect(page.locator(".course-why").first()).toBeVisible();
+  await expect(page.locator(".course-why").first()).toHaveText(/This is |This covers |Counts toward |Needed for /);
+  await expect(page.getByRole("heading", { name: "Already finished" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Read the strategy note" })).toBeVisible();
   await page.getByRole("link", { name: "Read the strategy note" }).click();
   await expect(page.locator("#admissions-strategy")).toBeVisible();
