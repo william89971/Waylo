@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdmissionsStrategyPanel } from "@/components/admissions-strategy-panel";
+import { CounselorConfirmationList } from "@/components/counselor-confirmation-list";
 import { CounselorPacket } from "@/components/counselor-packet";
 import { EvidenceStatus } from "@/components/evidence-status";
 import { ExportCounselorPacketButton } from "@/components/export-counselor-packet-button";
@@ -9,6 +10,7 @@ import { SavePlanButton } from "@/components/save-plan-button";
 import { evidenceById, programById } from "@/lib/academic-data";
 import { buildAdmissionsStrategy } from "@/lib/admissions-strategy";
 import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
+import { buildCounselorConfirmationItems } from "@/lib/articulation/counselor-confirmation";
 import {
   buildEvidenceByCourseCode,
   buildMatrixCampuses,
@@ -80,6 +82,16 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
     const matrixCampuses = buildMatrixCampuses(multi, graph);
     const matrixRows = buildMatrixRows(multi, graph);
     const evidenceByCourseCode = buildEvidenceByCourseCode(multi, graph);
+    const selectedTargets = targets.filter(
+      (target) => target.id === multi.primaryTargetId || multi.secondaryTargetIds.includes(target.id),
+    );
+    const counselorItems = buildCounselorConfirmationItems({
+      courses: workspace.courses,
+      graph,
+      plan: multi,
+      targets: selectedTargets,
+    });
+    const nextTerm = multi.schedule.terms[0];
     const strategy = buildAdmissionsStrategy(workspace, targets, {
       hasValidPlan: true,
       plannedCourseCodes: multi.schedule.terms.flatMap((term) => term.courses.map((course) => course.code)),
@@ -98,9 +110,9 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       <div className="production-page plan-page">
         <header className="production-page-header plan-header-actions">
           <div>
-            <h1>{showProposal ? "Review this plan" : "Your plan"}</h1>
+            <h1>{showProposal ? "Proposed sequence" : "All terms"}</h1>
             <p>
-              First choice: {labelFor(multi.primaryTargetId)}
+              Detailed view of every term. Next semester is on Home. First choice: {labelFor(multi.primaryTargetId)}
               {multi.secondaryTargetIds.length
                 ? ` · Also planning: ${multi.secondaryTargetIds.map(labelFor).join(", ")}`
                 : ""}
@@ -111,9 +123,13 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         {showProposal ? (
           <div className="proposal-banner no-print">
             <strong>Proposed — not saved</strong>
-            <span>Check the next-semester list, then save it so you can come back before you enroll.</span>
+            <span>Check next semester on Home after you save. This page is the full sequence.</span>
           </div>
-        ) : null}
+        ) : (
+          <p className="plan-secondary-note no-print">
+            This is the detailed sequence. <Link href="/app">Next semester is on Home.</Link>
+          </p>
+        )}
         {!workspace.includeSecondaryDivergence ? (
           <div className="review-banner no-print">
             <strong>Classes that only the second school needs are left off this schedule.</strong>
@@ -130,6 +146,16 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             </ul>
           </div>
         ) : null}
+        {nextTerm ? (
+          <section className="already-counted no-print" aria-label="Next semester recap">
+            <h2>Next semester · {nextTerm.label}</h2>
+            <p>
+              {nextTerm.courses.map((course) => course.code).join(" · ") || "No classes scheduled"} · {nextTerm.totalSemesterUnits} COC units.{" "}
+              <Link href="/app">Open on Home</Link>
+            </p>
+          </section>
+        ) : null}
+        <CounselorConfirmationList items={counselorItems} />
         <section className="no-print matrix-section" aria-label="Multi-campus articulation matrix">
           <div className="matrix-heading">
             <div>
@@ -279,9 +305,9 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
     <div className="production-page plan-page">
       <header className="production-page-header plan-header-actions">
         <div>
-          <h1>{showProposal ? "Review your transfer plan" : "Your transfer plan"}</h1>
+          <h1>{showProposal ? "Proposed sequence" : "All terms"}</h1>
           <p>
-            {labelFor(workspace.primaryTargetId)} · {route.label}
+            {labelFor(workspace.primaryTargetId)} · detailed view. Next semester is on Home.
           </p>
         </div>
         <ExportCounselorPacketButton />

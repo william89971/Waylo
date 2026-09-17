@@ -8,7 +8,7 @@ import { UserButton } from "@clerk/nextjs";
 const nav = [
   { href: "/app", label: "What to take", icon: Home },
   { href: "/app/courses", label: "Your classes", icon: BookOpen },
-  { href: "/app/plan", label: "Full plan", icon: CalendarDays },
+  { href: "/app/plan", label: "All terms", icon: CalendarDays },
 ];
 
 function LocalSignOut() {
@@ -69,7 +69,7 @@ export function ProductionAppShell({
       </main>
       <nav className="production-mobile-nav" aria-label="Mobile navigation">
         {nav.map(({ href, icon: Icon }) => {
-          const shortLabel = href === "/app" ? "Home" : href === "/app/plan" ? "Plan" : "Classes";
+          const shortLabel = href === "/app" ? "Home" : href === "/app/plan" ? "Terms" : "Classes";
           return (
             <Link key={href} href={href} className={pathname === href ? "active" : ""} aria-current={pathname === href ? "page" : undefined}>
               <Icon size={20} aria-hidden="true" />

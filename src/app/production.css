@@ -95,7 +95,7 @@ a { color: var(--p-blue); }
 .confirmed-course-list span { display: grid; gap: 4px; }
 .confirmed-course-list small { color: var(--p-muted); }
 .confirmed-course-list button { min-width: 44px; min-height: 44px; border: 0; background: transparent; color: var(--p-muted); cursor: pointer; }
-.preference-form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.preference-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
 .checkbox-row { display: flex; align-items: center; gap: 10px; color: var(--p-ink); font-size: 14px; cursor: pointer; }
 .checkbox-row input { width: 18px; min-height: 18px; accent-color: var(--p-blue); }
 .preference-form .checkbox-row { grid-column: 1 / -1; }
@@ -123,6 +123,8 @@ a { color: var(--p-blue); }
 .section-heading p { margin: 5px 0 16px; color: var(--p-muted); font-size: 13px; }
 .course-table { border: 1px solid var(--p-border); border-radius: var(--p-radius); overflow: hidden; }
 .course-row { min-height: 78px; display: grid; grid-template-columns: minmax(190px, 1fr) minmax(190px, .7fr) auto; gap: 13px; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--p-border); }
+.course-row-actions { display: grid; justify-items: end; gap: 4px; }
+.course-row-actions button, .course-row-actions a { font-size: 12px; font-weight: 650; text-decoration: none; background: none; border: 0; color: var(--p-blue); cursor: pointer; padding: 0; min-height: 0; }
 .course-identity { display: grid; gap: 5px; }
 .course-identity small { color: var(--p-muted); }
 .course-identity .course-why { margin: 0; color: var(--p-ink); font-size: 13px; line-height: 1.4; }
@@ -218,7 +220,7 @@ a { color: var(--p-blue); }
   .onboarding-progress li { justify-content: center; }
   .onboarding-question { margin-top: 34px; }
   .onboarding-question h1 { font-size: 29px; }
-  .course-entry-grid, .preference-form { grid-template-columns: 1fr; }
+  .course-entry-grid, .preference-form, .other-college-grid, .petition-grid { grid-template-columns: 1fr; }
   .preference-form .checkbox-row { grid-column: auto; }
   .onboarding-actions .production-button.primary { flex: 1; }
   .production-sidebar { display: none; }
@@ -230,7 +232,7 @@ a { color: var(--p-blue); }
   .production-page-header h1 { font-size: 28px; }
   .course-row { grid-template-columns: minmax(0, 1fr) auto; padding: 16px 13px; }
   .course-row .evidence-state { grid-column: 1; }
-  .course-row > a { grid-column: 2; grid-row: 2; }
+  .course-row > a, .course-row-actions { grid-column: 2; grid-row: 2; }
   .course-total { padding: 13px; }
   .dashboard-actions { display: grid; }
   .dashboard-actions .production-button { width: 100%; }
@@ -724,6 +726,25 @@ a { color: var(--p-blue); }
   display: grid;
   gap: 6px;
 }
+.counselor-confirm { margin-top: 22px; }
+.counselor-confirm h2 { margin: 0 0 8px; font-size: 15px; }
+.counselor-confirm > p { margin: 0 0 10px; color: #3d4b5f; font-size: 13px; line-height: 1.5; }
+.counselor-confirm ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.counselor-confirm li { padding: 10px 0 10px 12px; box-shadow: inset 3px 0 0 var(--p-amber); display: grid; gap: 3px; }
+.counselor-confirm strong { font-size: 13px; }
+.counselor-confirm span { color: #3d4b5f; font-size: 13px; line-height: 1.45; }
+.cal-getc-note { color: #3d4b5f; font-weight: 400; }
+.plan-secondary-note { margin: 0 0 18px; color: var(--p-muted); font-size: 13px; }
+.transcript-import { margin: 0 0 28px; padding-bottom: 22px; border-bottom: 1px solid var(--p-border); display: grid; gap: 12px; }
+.transcript-import textarea { width: 100%; min-height: 96px; border: 1px solid var(--p-border-strong); border-radius: 2px; padding: 10px 11px; font: inherit; }
+.transcript-import .transcript-file { display: grid; gap: 7px; color: var(--p-muted); font-size: 12px; font-weight: 650; }
+.transcript-confirm { display: grid; gap: 10px; }
+.transcript-confirm h3 { margin: 8px 0 0; font-size: 16px; }
+.transcript-confirm ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.transcript-confirm li label { display: flex; gap: 10px; align-items: flex-start; }
+.transcript-confirm small { display: block; color: var(--p-muted); }
+.other-college-grid, .petition-grid { grid-template-columns: 1fr 1fr 1fr auto; }
+.petition-grid { grid-template-columns: minmax(0, 1fr) auto; }
 .evidence-list article.evidence-focus {
   scroll-margin-top: 80px;
   border-left: 1px solid var(--p-ink);

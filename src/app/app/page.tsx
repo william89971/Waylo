@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { EvidenceStatus } from "@/components/evidence-status";
+import { CalGetcPanel } from "@/components/cal-getc-panel";
+import { CounselorConfirmationList } from "@/components/counselor-confirmation-list";
+import type { CourseEvidencePayload } from "@/components/evidence-drawer";
+import { HomeSemesterList, type HomeSemesterCourse } from "@/components/home-semester-list";
 import { evidenceById } from "@/lib/academic-data";
 import { buildAdmissionsStrategy } from "@/lib/admissions-strategy";
+import { evaluateCalGetc } from "@/lib/articulation/cal-getc";
+import { buildCounselorConfirmationItems } from "@/lib/articulation/counselor-confirmation";
 import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
+import { buildEvidenceByCourseCode } from "@/lib/articulation/matrix-view";
 import { pickRuleForCourse } from "@/lib/articulation/rules";
-import { unmatchedCompletedCourses } from "@/lib/articulation/student-history";
+import { graphCodeForStudentCourse, unmatchedCompletedCourses } from "@/lib/articulation/student-history";
 import type { ArticulationGraph, VerificationTier } from "@/lib/articulation/types";
 import type { SavedPlan, SelectableTarget } from "@/lib/production-types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
@@ -77,6 +83,32 @@ function courseEvidenceState(
   return course.evidenceIds.some((id) => evidenceById.get(id)?.status !== "verified") ? "review" : "verified";
 }
 
+function legacyEvidenceByCourse(
+  course: SavedPlan["route"]["terms"][number]["courses"][number],
+  primaryLabel: string,
+): CourseEvidencePayload {
+  const first = course.evidenceIds.map((id) => evidenceById.get(id)).find(Boolean);
+  return {
+    courseCode: course.code,
+    courseTitle: course.title,
+    semesterUnits: course.units,
+    campuses: [
+      {
+        targetMajorId: "primary",
+        campusLabel: primaryLabel,
+        isPrimary: true,
+        required: true,
+        destinationRequirement: first?.title ?? course.title,
+        verificationTier: first?.status === "verified" ? "VERIFIED_ASSIST" : "NEEDS_COUNSELOR_CONFIRMATION",
+        sourceType: first?.provenance === "assist" ? "assist_public" : "institutional_guide",
+        sourceUrl: first?.url,
+        agreementYear: first?.effectiveYear,
+        notes: first?.note,
+      },
+    ],
+  };
+}
+
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
   const clerkUserId = await getAuthenticatedUserId();
   if (!clerkUserId) redirect("/sign-in");
@@ -88,7 +120,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const nextTerm = route.terms[0];
   const [targets, graph] = await Promise.all([
     listSelectableTargets(),
-    plan.multiTargetPlan ? loadActiveArticulationGraph() : Promise.resolve(null),
+    loadActiveArticulationGraph(),
   ]);
   const primaryId = plan.primaryTargetId ?? workspace.primaryTargetId;
   const secondaryIds = plan.secondaryTargetIds ?? workspace.secondaryTargetIds ?? [];
@@ -112,7 +144,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     reviewItemCount: reviewCount,
   });
   const saved = (await searchParams).saved === "1";
-  const askCounselor = strategy?.counselor.items[0];
   const alreadyDone = (plan.multiTargetPlan?.auditSummary ?? [])
     .map((audit) => {
       const labels = audit.requirementStates
@@ -133,9 +164,43 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         return `${requirement.label} at ${school} is still open.`;
       }),
   );
-  const unmatched = graph ? unmatchedCompletedCourses(workspace.courses, graph) : [];
+  const unmatched = unmatchedCompletedCourses(workspace.courses, graph);
   const inProgressCount = workspace.courses.filter((course) => course.status === "in_progress").length;
   const juniorStandingMet = plan.multiTargetPlan?.auditSummary.some((audit) => audit.juniorStandingMet) ?? false;
+  const selectedTargets = targets.filter((target) => target.id === primaryId || secondaryIds.includes(target.id));
+  const counselorItems = buildCounselorConfirmationItems({
+    courses: workspace.courses,
+    graph,
+    plan: plan.multiTargetPlan,
+    targets: selectedTargets,
+  });
+  const completedCodes = new Set(
+    workspace.courses.flatMap((course) => {
+      if (course.status !== "completed") return [];
+      const code = graphCodeForStudentCourse(course, graph);
+      return code ? [code] : [];
+    }),
+  );
+  const calGetc = evaluateCalGetc(completedCodes);
+  const evidenceByCourseCode = plan.multiTargetPlan
+    ? buildEvidenceByCourseCode(plan.multiTargetPlan, graph)
+    : Object.fromEntries((nextTerm?.courses ?? []).map((course) => [course.code, legacyEvidenceByCourse(course, primaryLabel)]));
+  const nextCourses: HomeSemesterCourse[] = (nextTerm?.courses ?? []).map((course) => {
+    const scheduled = scheduledFor(course, plan);
+    const payload = evidenceByCourseCode[scheduled?.code ?? course.code];
+    const sourceCampus = payload?.campuses.find((campus) => campus.required && campus.sourceUrl);
+    return {
+      courseId: course.courseId,
+      code: course.code,
+      title: course.title,
+      units: course.units,
+      why: whyThisClass(course, plan, targets, graph, primaryLabel),
+      state: courseEvidenceState(course, plan, graph, primaryId),
+      tier: primaryEvidenceTier(course, plan, graph, primaryId),
+      sourceUrl: sourceCampus?.sourceUrl,
+      sourceLabel: sourceCampus?.agreementYear ? `Official source · ${sourceCampus.agreementYear}` : "Official source",
+    };
+  });
 
   return (
     <div className="production-page dashboard-page">
@@ -159,33 +224,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <p>The next classes that move every selected school forward, inside your unit limit.</p>
             </div>
           </div>
-          <div className="course-table" role="table" aria-label="Recommended semester courses">
-            {nextTerm?.courses.map((course) => {
-              const state = courseEvidenceState(course, plan, graph, primaryId);
-              const scheduled = scheduledFor(course, plan);
-              const tier = primaryEvidenceTier(course, plan, graph, primaryId);
-              const whyLink = scheduled
-                ? `/app/plan?course=${encodeURIComponent(scheduled.code)}`
-                : `/app/evidence?course=${encodeURIComponent(course.courseId)}`;
-              return (
-                <div className="course-row" role="row" key={course.courseId}>
-                  <div className="course-identity">
-                    <strong>{course.code}</strong>
-                    <small>
-                      {course.title} · {course.units} units
-                    </small>
-                    <p className="course-why">{whyThisClass(course, plan, targets, graph, primaryLabel)}</p>
-                  </div>
-                  <EvidenceStatus state={state} tier={tier} />
-                  <Link href={whyLink}>Why this class</Link>
-                </div>
-              );
-            })}
-            <div className="course-total">
-              <span>Total</span>
-              <strong>{nextTerm?.totalUnits ?? 0} planned units</strong>
-            </div>
-          </div>
+          <HomeSemesterList
+            courses={nextCourses}
+            totalUnits={nextTerm?.totalUnits ?? 0}
+            evidenceByCourseCode={evidenceByCourseCode}
+          />
           <div className="already-counted">
             <h2>Already finished</h2>
             {alreadyDone.length ? (
@@ -219,24 +262,26 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               </ul>
             </div>
           ) : null}
+          <CalGetcPanel areas={calGetc} />
+          <CounselorConfirmationList items={counselorItems} />
           <div className="dashboard-actions">
-            <Link href="/app/plan" className="production-button primary">
-              Review semester plan
-            </Link>
-            <Link href="/app/plan#counselor-packet" className="production-button">
+            <Link href="/app/plan#counselor-packet" className="production-button primary">
               Take this to your counselor
+            </Link>
+            <Link href="/app/plan" className="production-button">
+              See all terms
             </Link>
           </div>
         </section>
         <aside className="dashboard-rail">
-          {reviewCount > 0 ? (
+          {counselorItems.length ? (
             <section className="rail-review">
-              <strong>{reviewCount}</strong>
+              <strong>{counselorItems.length}</strong>
               <span>
-                {reviewCount === 1 ? "item Waylo cannot verify" : "items Waylo cannot verify"} — ask a counselor
+                {counselorItems.length === 1 ? "item needs counselor confirmation" : "items need counselor confirmation"}
               </span>
-              <p>{askCounselor ?? "Ask a counselor to confirm anything Waylo could not verify."}</p>
-              <Link href="/app/plan#counselor-packet">What to ask</Link>
+              <p>Unverified information is never treated as fact.</p>
+              <a href="#counselor-confirm-title">See the list</a>
             </section>
           ) : (
             <section>
@@ -247,7 +292,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <section>
             <strong>{completedCount}</strong>
             <span>
-              {completedCount === 1 ? "finished College of the Canyons class" : "finished College of the Canyons classes"}
+              {completedCount === 1 ? "finished class on your record" : "finished classes on your record"}
               {inProgressCount ? ` · ${inProgressCount} in progress` : ""}
             </span>
             <Link href="/app/courses">Update your classes</Link>

@@ -43,7 +43,7 @@ export function generateProductionPlan(workspace: StudentWorkspaceRecord) {
     includeSummer: workspace.preferences.summerEnrollment,
     summerCourseLimit: workspace.preferences.summerEnrollment ? 1 : 0,
     maxUnits: workspace.preferences.maxUnits,
-    weeklyWorkHours: workspace.preferences.weeklyWorkHours,
+    weeklyWorkHours: 0,
     transferTarget: workspace.preferences.targetTerm ?? undefined,
     targetPolicy: workspace.preferences.targetTerm ? "preferred" : undefined,
   });

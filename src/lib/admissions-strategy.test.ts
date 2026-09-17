@@ -49,6 +49,7 @@ function workspace(overrides: Partial<StudentWorkspaceRecord> = {}): StudentWork
         term: "Fall 2025",
         status: "completed",
         matchStatus: "verified",
+        source: "manual",
       },
     ],
     pathwayId: "ucsd-data",
@@ -77,7 +78,7 @@ describe("admissions strategy", () => {
     ).toBeNull();
   });
 
-  it("frames coursework first and activities as guidance, not an admissions formula", () => {
+  it("frames coursework first and does not present activities as an admissions formula", () => {
     const strategy = buildAdmissionsStrategy(workspace(), targets, {
       hasValidPlan: true,
       plannedCourseCodes: ["MATH-211", "COMP SCI 111"],
@@ -86,7 +87,6 @@ describe("admissions strategy", () => {
     expect(strategy).not.toBeNull();
     const text = [
       strategy!.grades.body,
-      strategy!.activities.body,
       strategy!.counselor.items.join(" "),
       strategy!.teaser,
       strategy!.disclaimer,
@@ -94,19 +94,18 @@ describe("admissions strategy", () => {
     expect(text).toMatch(/Economics at UC Berkeley/);
     expect(text).toMatch(/MATH-211/);
     expect(text).toMatch(/missing a grade/);
-    expect(text).toMatch(/initiative/);
-    expect(text).toMatch(/coherent personal story/);
-    expect(text).toMatch(/officer titles/);
-    expect(text).toMatch(/does not predict or guarantee admission/i);
+    expect(text).not.toMatch(/initiative/);
+    expect(text).not.toMatch(/officer titles/);
+    expect(text).toMatch(/does not estimate how an office will decide/i);
     expect(text).not.toMatch(/stronger story than/i);
     expect(text).not.toMatch(/become president/i);
-    expect(text).not.toMatch(/read the transcript first/i);
     expect(strategy!.counselor.items.some((item) => item.includes("Confirm this note"))).toBe(true);
     expect(strategy!.disclaimer).toMatch(/not verified articulation/i);
     expect(strategy!.disclaimer).toMatch(/not an admission prediction/i);
-    for (const chunk of [strategy!.grades.body, strategy!.activities.body, strategy!.teaser]) {
+    for (const chunk of [strategy!.grades.body, strategy!.teaser]) {
       expect(chunk.toLowerCase()).not.toMatch(/\b(likely|competitive|guaranteed|odds)\b/);
     }
+    expect(strategy).not.toHaveProperty("activities");
   });
 
   it("asks about planning-estimate campuses and IGETC as questions", () => {

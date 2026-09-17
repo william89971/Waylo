@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { Check, Trash2 } from "lucide-react";
 import { isPreferredTransferTerm } from "@/lib/admissions-strategy";
 import { targetCoverageNote } from "@/lib/student-facing-copy";
-import type { CourseDefinition } from "@/lib/domain";
+import { TranscriptImport } from "@/components/transcript-import";
+import type { StudentCatalogCourse } from "@/lib/articulation/student-catalog";
 import type { ProductionCourse, SelectableTarget, StudentWorkspaceRecord } from "@/lib/production-types";
 
 const STEP_LABELS = ["Schools and majors", "Your COC classes", "Schedule"];
@@ -40,7 +41,7 @@ export function OnboardingFlow({
   editing = false,
 }: {
   initial: StudentWorkspaceRecord;
-  catalog: CourseDefinition[];
+  catalog: StudentCatalogCourse[];
   targets?: SelectableTarget[];
   startStep?: number;
   editing?: boolean;
@@ -64,9 +65,12 @@ export function OnboardingFlow({
   const [status, setStatus] = useState<"completed" | "in_progress">("completed");
   const [maxUnits, setMaxUnits] = useState(initial.preferences.maxUnits);
   const [summerEnrollment, setSummerEnrollment] = useState(initial.preferences.summerEnrollment);
-  const [weeklyWorkHours, setWeeklyWorkHours] = useState(initial.preferences.weeklyWorkHours);
   const [targetTerm, setTargetTerm] = useState(initial.preferences.targetTerm ?? "");
   const [includeSecondaryDivergence, setIncludeSecondaryDivergence] = useState(initial.includeSecondaryDivergence ?? true);
+  const [otherCode, setOtherCode] = useState("");
+  const [otherTitle, setOtherTitle] = useState("");
+  const [otherCollege, setOtherCollege] = useState("");
+  const [petitionTitle, setPetitionTitle] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     headingRef.current?.focus();
@@ -196,9 +200,16 @@ export function OnboardingFlow({
     setWorking(true);
     setError("");
     try {
+      const selected = catalog.find((course) => course.id === selectedCourseId);
       const body = await jsonRequest("/api/me/courses", {
         method: "POST",
-        body: JSON.stringify({ catalogCourseId: selectedCourseId, grade: grade || null, term, status }),
+        body: JSON.stringify({
+          catalogCourseId: selectedCourseId,
+          grade: grade || null,
+          term,
+          status,
+          source: selected?.group === "ap" ? "ap" : "manual",
+        }),
       });
       const course = body.course as ProductionCourse;
       setWorkspace((current) => ({
@@ -208,6 +219,76 @@ export function OnboardingFlow({
       setGrade("");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Waylo could not add that course.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const addOtherCollege = async () => {
+    if (!otherCode.trim() || !otherTitle.trim()) {
+      setError("Other-college coursework needs a course code and title.");
+      return;
+    }
+    setWorking(true);
+    setError("");
+    try {
+      const body = await jsonRequest("/api/me/courses", {
+        method: "POST",
+        body: JSON.stringify({
+          catalogCourseId: `ext:${otherCollege.trim() || "other"}:${otherCode.trim()}`,
+          code: otherCode.trim(),
+          title: `${otherTitle.trim()}${otherCollege.trim() ? ` (${otherCollege.trim()})` : ""}`,
+          units: 0,
+          grade: grade || null,
+          term,
+          status: "completed",
+          source: "other_college",
+        }),
+      });
+      const course = body.course as ProductionCourse;
+      setWorkspace((current) => ({
+        ...current,
+        courses: [...current.courses.filter((item) => item.catalogCourseId !== course.catalogCourseId), course],
+      }));
+      setOtherCode("");
+      setOtherTitle("");
+      setOtherCollege("");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Waylo could not add that coursework.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const addPetition = async () => {
+    if (!petitionTitle.trim()) {
+      setError("Describe the petition or substitution before saving it as pending.");
+      return;
+    }
+    setWorking(true);
+    setError("");
+    try {
+      const body = await jsonRequest("/api/me/courses", {
+        method: "POST",
+        body: JSON.stringify({
+          catalogCourseId: `petition:${petitionTitle.trim()}`,
+          code: "Petition",
+          title: petitionTitle.trim(),
+          units: 0,
+          grade: null,
+          term,
+          status: "completed",
+          source: "petition",
+        }),
+      });
+      const course = body.course as ProductionCourse;
+      setWorkspace((current) => ({
+        ...current,
+        courses: [...current.courses.filter((item) => item.catalogCourseId !== course.catalogCourseId), course],
+      }));
+      setPetitionTitle("");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Waylo could not record that petition.");
     } finally {
       setWorking(false);
     }
@@ -242,7 +323,7 @@ export function OnboardingFlow({
           preferences: {
             maxUnits,
             summerEnrollment,
-            weeklyWorkHours,
+            weeklyWorkHours: 0,
             targetTerm: trimmedTerm || null,
           },
         }),
@@ -254,7 +335,15 @@ export function OnboardingFlow({
           profile: { ...workspace.profile, onboardingStep: 4, onboardingCompleted: true },
         }),
       });
-      router.push("/app/plan?new=1");
+      try {
+        await jsonRequest("/api/me/plan", {
+          method: "POST",
+          body: JSON.stringify({ action: "save", strategy: "overlap" }),
+        });
+        router.push("/app?saved=1");
+      } catch {
+        router.push("/app/plan?new=1");
+      }
       router.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Waylo could not finish onboarding.");
@@ -428,9 +517,23 @@ export function OnboardingFlow({
             </h1>
             <p>
               {editing
-                ? "Update College of the Canyons classes you have finished or are taking now. You can add more later."
-                : "Add College of the Canyons classes you have finished or are taking now. If you are just starting, continue with none."}
+                ? "Update classes you have finished or are taking now. You can add more later."
+                : "Add College of the Canyons classes, AP credit, or coursework from another college. Nothing from a transcript is saved until you confirm it."}
             </p>
+            <TranscriptImport
+              existingCourseIds={workspace.courses.map((course) => course.catalogCourseId)}
+              onConfirmed={(courses) => {
+                setWorkspace((current) => {
+                  const next = [...current.courses];
+                  for (const course of courses) {
+                    const index = next.findIndex((item) => item.catalogCourseId === course.catalogCourseId);
+                    if (index >= 0) next[index] = course;
+                    else next.push(course);
+                  }
+                  return { ...current, courses: next };
+                });
+              }}
+            />
             <form
               className="course-entry-grid"
               onSubmit={(event) => {
@@ -441,11 +544,24 @@ export function OnboardingFlow({
               <label>
                 Course
                 <select value={selectedCourseId} onChange={(event) => setSelectedCourseId(event.target.value)}>
-                  {catalog.map((course) => (
-                    <option value={course.id} key={course.id}>
-                      {course.code} · {course.title}
-                    </option>
-                  ))}
+                  <optgroup label="College of the Canyons">
+                    {catalog
+                      .filter((course) => course.group === "coc")
+                      .map((course) => (
+                        <option value={course.id} key={course.id}>
+                          {course.code} · {course.title}
+                        </option>
+                      ))}
+                  </optgroup>
+                  <optgroup label="AP credit — pending until confirmed">
+                    {catalog
+                      .filter((course) => course.group === "ap")
+                      .map((course) => (
+                        <option value={course.id} key={course.id}>
+                          {course.code}
+                        </option>
+                      ))}
+                  </optgroup>
                 </select>
               </label>
               <label>
@@ -480,6 +596,9 @@ export function OnboardingFlow({
                       <small>
                         {course.title} · {course.term} ·{" "}
                         {course.status === "completed" ? course.grade || "Grade not entered" : "In progress"}
+                        {course.source === "ap" || course.source === "other_college" || course.source === "petition" || course.matchStatus === "uncertain"
+                          ? " · counselor confirmation required"
+                          : ""}
                       </small>
                     </span>
                     <button aria-label={`Remove ${course.code}`} onClick={() => void removeCourse(course.id)}>
@@ -489,11 +608,53 @@ export function OnboardingFlow({
                 ))
               ) : (
                 <div className="empty-state">
-                  <strong>No COC classes yet</strong>
+                  <strong>No classes yet</strong>
                   <p>That is okay. Continue and Waylo will plan from the start. You can add classes later.</p>
                 </div>
               )}
             </div>
+            <form
+              className="course-entry-grid other-college-grid"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void addOtherCollege();
+              }}
+            >
+              <label>
+                Other college
+                <input value={otherCollege} onChange={(event) => setOtherCollege(event.target.value)} placeholder="Pierce College" />
+              </label>
+              <label>
+                Course code
+                <input value={otherCode} onChange={(event) => setOtherCode(event.target.value)} placeholder="ENGL 101" />
+              </label>
+              <label>
+                Title
+                <input value={otherTitle} onChange={(event) => setOtherTitle(event.target.value)} placeholder="College Reading and Composition" />
+              </label>
+              <button type="submit" className="production-button" disabled={working}>
+                Save unmatched
+              </button>
+            </form>
+            <form
+              className="course-entry-grid petition-grid"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void addPetition();
+              }}
+            >
+              <label>
+                Petition or substitution
+                <input
+                  value={petitionTitle}
+                  onChange={(event) => setPetitionTitle(event.target.value)}
+                  placeholder="Substitute MATH 140 for STAT C1000"
+                />
+              </label>
+              <button type="submit" className="production-button" disabled={working}>
+                Record as pending
+              </button>
+            </form>
             <div className="onboarding-actions">
               <button className="production-button" onClick={() => setStep(2)}>
                 Back
@@ -525,16 +686,6 @@ export function OnboardingFlow({
                 />
               </label>
               <label>
-                Weekly work hours
-                <input
-                  type="number"
-                  min="0"
-                  max="80"
-                  value={weeklyWorkHours}
-                  onChange={(event) => setWeeklyWorkHours(Number(event.target.value))}
-                />
-              </label>
-              <label>
                 Preferred transfer term
                 <input
                   value={targetTerm}
@@ -543,7 +694,7 @@ export function OnboardingFlow({
                   aria-invalid={Boolean(targetTerm.trim()) && !isPreferredTransferTerm(targetTerm)}
                   onChange={(event) => setTargetTerm(event.target.value)}
                 />
-                <small id="target-term-hint">Use Fall, Spring, or Summer plus a year, or leave blank.</small>
+                <small id="target-term-hint">Use Fall, Spring, or Summer plus a year, or leave blank. This is a preference, not a transfer date.</small>
               </label>
               <label className="checkbox-row">
                 <input
@@ -555,8 +706,8 @@ export function OnboardingFlow({
               </label>
             </div>
             <div className="privacy-note">
-              <strong>Your confirmed courses are saved to your account.</strong>
-              <small>Waylo does not store a transcript file in this manual-entry flow.</small>
+              <strong>Confirmed classes are saved to your account.</strong>
+              <small>Transcript files are not stored. Unmatched, AP, and petition rows stay pending until a counselor confirms them.</small>
             </div>
             <div className="onboarding-actions">
               <button className="production-button" onClick={() => setStep(3)}>
@@ -568,7 +719,7 @@ export function OnboardingFlow({
                 disabled={working || (Boolean(targetTerm.trim()) && !isPreferredTransferTerm(targetTerm))}
                 onClick={() => void finish()}
               >
-                {working ? "Saving…" : "View proposed schedule"}
+                {working ? "Saving…" : "See next semester"}
               </button>
             </div>
           </div>

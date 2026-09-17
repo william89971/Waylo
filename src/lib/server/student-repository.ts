@@ -2,12 +2,113 @@ import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { neon } from "@neondatabase/serverless";
 import { courseById } from "@/lib/academic-data";
+import { AP_EXAMS } from "@/lib/articulation/external-credit";
+import { getSeedArticulationGraph } from "@/lib/articulation/graph";
+import { courseClosesListedPrep } from "@/lib/articulation/student-history";
+import { externalCatalogId } from "@/lib/articulation/transcript-match";
 import type { MultiTargetPlanResult } from "@/lib/articulation/types";
 import type { RouteCandidate } from "@/lib/domain";
 import type { OnboardingProfile, PlanningPreferencesInput, ProductionCourse, ProductionCourseInput, SavedPlan, StudentWorkspaceRecord } from "@/lib/production-types";
 import { ApiError } from "@/lib/server/api-errors";
 import { getDatabase } from "@/lib/server/db/client";
 import { planCourses, plans, planTerms, planningPreferences, studentCourses, studentProfiles, transferGoals, users } from "@/lib/server/db/schema";
+
+type CourseSource = ProductionCourse["source"];
+
+function asSource(value: string | undefined): CourseSource {
+  if (value === "transcript" || value === "ap" || value === "other_college" || value === "petition") return value;
+  return "manual";
+}
+
+function resolveCourseRecord(input: ProductionCourseInput): Omit<ProductionCourse, "id"> {
+  const graph = getSeedArticulationGraph();
+  const source = asSource(input.source);
+  if (input.catalogCourseId.startsWith("ap:")) {
+    const exam = AP_EXAMS.find((item) => item.id === input.catalogCourseId);
+    if (!exam) throw new ApiError("unknown_course", "Choose a listed AP exam.", 400);
+    return {
+      catalogCourseId: exam.id,
+      code: exam.code,
+      title: exam.title,
+      units: 0,
+      grade: input.grade,
+      term: input.term,
+      status: input.status,
+      matchStatus: "uncertain",
+      source: "ap",
+    };
+  }
+  if (input.catalogCourseId.startsWith("ext:") || input.catalogCourseId.startsWith("petition:")) {
+    const code = input.code?.trim();
+    const title = input.title?.trim();
+    if (!code || !title) throw new ApiError("unknown_course", "Unmatched coursework needs a course code and title.", 400);
+    return {
+      catalogCourseId: input.catalogCourseId,
+      code,
+      title,
+      units: input.units ?? 0,
+      grade: input.grade,
+      term: input.term,
+      status: input.status,
+      matchStatus: "uncertain",
+      source: input.catalogCourseId.startsWith("petition:") ? "petition" : "other_college",
+    };
+  }
+  const academic = courseById.get(input.catalogCourseId);
+  if (academic && academic.institutionId === "coc") {
+    const matchStatus = courseClosesListedPrep(
+      { catalogCourseId: academic.id, code: academic.code, status: "completed" },
+      graph,
+    )
+      ? "verified"
+      : "uncertain";
+    return {
+      catalogCourseId: academic.id,
+      code: academic.code,
+      title: academic.title,
+      units: academic.units,
+      grade: input.grade,
+      term: input.term,
+      status: input.status,
+      matchStatus,
+      source,
+    };
+  }
+  const graphCourse = graph.courseById.get(input.catalogCourseId);
+  if (graphCourse) {
+    const matchStatus = courseClosesListedPrep(
+      { catalogCourseId: graphCourse.id, code: graphCourse.code, status: "completed" },
+      graph,
+    )
+      ? "verified"
+      : "uncertain";
+    return {
+      catalogCourseId: graphCourse.id,
+      code: graphCourse.code.replace(/-/g, " "),
+      title: graphCourse.title,
+      units: graphCourse.semesterUnits,
+      grade: input.grade,
+      term: input.term,
+      status: input.status,
+      matchStatus,
+      source,
+    };
+  }
+  const fallbackCode = input.code?.trim() || input.catalogCourseId;
+  const fallbackTitle = input.title?.trim();
+  if (!fallbackTitle) throw new ApiError("unknown_course", "Choose a reviewed College of the Canyons course.", 400);
+  return {
+    catalogCourseId: input.catalogCourseId.startsWith("ext:") ? input.catalogCourseId : externalCatalogId(fallbackCode, fallbackTitle),
+    code: fallbackCode,
+    title: fallbackTitle,
+    units: input.units ?? 0,
+    grade: input.grade,
+    term: input.term,
+    status: input.status,
+    matchStatus: "uncertain",
+    source: "other_college",
+  };
+}
 
 const DEFAULT_PROFILE: OnboardingProfile = {
   preferredName: "Student",
@@ -142,6 +243,7 @@ export const studentRepository = {
         term: course.term,
         status: course.status as "completed" | "in_progress",
         matchStatus: course.matchStatus as ProductionCourse["matchStatus"],
+        source: asSource(course.source),
       })),
       pathwayId: (goal?.pathwayId ?? "ucsd-data") as "ucsd-data",
       primaryTargetId: goal?.primaryTargetId ?? "uc_san_diego:data_science",
@@ -191,13 +293,12 @@ export const studentRepository = {
   },
 
   async saveCourse(clerkUserId: string, input: ProductionCourseInput) {
-    const definition = courseById.get(input.catalogCourseId);
-    if (!definition || definition.institutionId !== "coc") throw new ApiError("unknown_course", "Choose a reviewed College of the Canyons course.", 400);
+    const record = resolveCourseRecord(input);
     const db = getDatabase();
     if (!db) {
       const current = localWorkspace(clerkUserId);
-      const course: ProductionCourse = { id: randomUUID(), ...input, code: definition.code, title: definition.title, units: definition.units, matchStatus: "verified" };
-      const index = current.courses.findIndex((item) => item.catalogCourseId === input.catalogCourseId);
+      const course: ProductionCourse = { id: randomUUID(), ...record };
+      const index = current.courses.findIndex((item) => item.catalogCourseId === record.catalogCourseId);
       if (index >= 0) current.courses[index] = course; else current.courses.push(course);
       return structuredClone(course);
     }
@@ -205,20 +306,39 @@ export const studentRepository = {
     if (!user) throw new ApiError("database_unavailable", "Student storage is unavailable.", 503, true);
     await db.insert(studentCourses).values({
       userId: user.id,
-      catalogCourseId: definition.id,
-      code: definition.code,
-      title: definition.title,
-      units: definition.units,
-      grade: input.grade,
-      term: input.term,
-      status: input.status,
-      matchStatus: "verified",
-      source: "manual",
+      catalogCourseId: record.catalogCourseId,
+      code: record.code,
+      title: record.title,
+      units: record.units,
+      grade: record.grade,
+      term: record.term,
+      status: record.status,
+      matchStatus: record.matchStatus,
+      source: record.source,
     }).onConflictDoUpdate({
       target: [studentCourses.userId, studentCourses.catalogCourseId],
-      set: { grade: input.grade, term: input.term, status: input.status, updatedAt: new Date() },
+      set: {
+        code: record.code,
+        title: record.title,
+        units: record.units,
+        grade: record.grade,
+        term: record.term,
+        status: record.status,
+        matchStatus: record.matchStatus,
+        source: record.source,
+        updatedAt: new Date(),
+      },
     });
-    return (await this.load(clerkUserId)).courses.find((course) => course.catalogCourseId === definition.id);
+    return (await this.load(clerkUserId)).courses.find((course) => course.catalogCourseId === record.catalogCourseId);
+  },
+
+  async confirmCourses(clerkUserId: string, inputs: ProductionCourseInput[]) {
+    const saved: ProductionCourse[] = [];
+    for (const input of inputs) {
+      const course = await this.saveCourse(clerkUserId, input);
+      if (course) saved.push(course);
+    }
+    return saved;
   },
 
   async deleteCourse(clerkUserId: string, courseId: string) {

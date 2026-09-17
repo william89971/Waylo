@@ -26,18 +26,9 @@ async function onboardMultiTargetPlan(page: Page, testUser: string) {
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
-  await page.getByRole("button", { name: "View proposed schedule", exact: true }).click();
+  await page.getByRole("button", { name: "See next semester", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: /Review this plan|Your plan/ })).toBeVisible();
-  await expect(page.getByTestId("articulation-matrix")).toBeVisible();
-  const overflow = await page.evaluate(() => ({
-    scrollWidth: document.documentElement.scrollWidth,
-    clientWidth: document.documentElement.clientWidth,
-  }));
-  expect(
-    overflow.scrollWidth,
-    "plan page should not widen the document; the matrix scrolls internally",
-  ).toBeLessThanOrEqual(overflow.clientWidth + 1);
+  await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
 }
 
 test.describe("multi-target articulation matrix and evidence drawer", () => {
@@ -52,6 +43,17 @@ test.describe("multi-target articulation matrix and evidence drawer", () => {
     const page = await context.newPage();
 
     await onboardMultiTargetPlan(page, testUser);
+    await page.getByRole("link", { name: "See all terms" }).click();
+    await expect(page.getByRole("heading", { name: /All terms|Proposed sequence/ })).toBeVisible();
+    await expect(page.getByTestId("articulation-matrix")).toBeVisible();
+    const overflow = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+    }));
+    expect(
+      overflow.scrollWidth,
+      "plan page should not widen the document; the matrix scrolls internally",
+    ).toBeLessThanOrEqual(overflow.clientWidth + 1);
 
     const courseCode = page
       .locator('[data-testid="articulation-matrix"] th[scope="row"] .font-mono.tabular-nums')
@@ -100,12 +102,10 @@ test("multi-target Save this plan reaches the dashboard and shows strategy", asy
   const page = await context.newPage();
 
   await onboardMultiTargetPlan(page, testUser);
-  await expect(page.getByRole("button", { name: "Save this plan" })).toBeVisible();
-  await page.getByRole("button", { name: "Save this plan" }).click();
-
-  await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.getByText("Plan saved.")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Review semester plan" })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: "See all terms" })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Why this class?" }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Counselor confirmation required" })).toBeVisible();
   await expect(page.getByText(/UC Berkeley Economics/).first()).toBeVisible();
   await expect(page.locator(".course-why").first()).toBeVisible();
   await expect(page.locator(".course-why").first()).toHaveText(/This is |This covers |Counts toward |Needed for /);
