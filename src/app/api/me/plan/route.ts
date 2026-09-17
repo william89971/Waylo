@@ -2,6 +2,7 @@ import { PlanActionSchema } from "@/lib/production-types";
 import { ApiError, apiFailure } from "@/lib/server/api-errors";
 import { parseJson } from "@/lib/server/api-request";
 import { requireAuthenticatedUserId } from "@/lib/server/auth";
+import { normalizePlanCourseCode } from "@/lib/next-term-blocks";
 import {
   generateMultiTargetProductionPlan,
   generateProductionPlan,
@@ -49,6 +50,28 @@ export async function POST(request: Request) {
         });
         workspace = await studentRepository.load(clerkUserId);
       }
+      if (input.action === "block_next_term" || input.action === "unblock_next_term") {
+        const code = normalizePlanCourseCode(input.code);
+        if (input.action === "block_next_term") {
+          const current = await generateMultiTargetProductionPlan(workspace);
+          const firstCodes = (current.schedule.terms[0]?.courses ?? []).map((course) =>
+            normalizePlanCourseCode(course.code),
+          );
+          if (!workspace.blockedNextTermCodes.includes(code) && !firstCodes.includes(code)) {
+            throw new ApiError("not_next_term", "That class is not on next semester.", 409);
+          }
+          await studentRepository.updateBlockedNextTermCodes(clerkUserId, [
+            ...workspace.blockedNextTermCodes,
+            code,
+          ]);
+        } else {
+          await studentRepository.updateBlockedNextTermCodes(
+            clerkUserId,
+            workspace.blockedNextTermCodes.filter((item) => item !== code),
+          );
+        }
+        workspace = await studentRepository.load(clerkUserId);
+      }
       const multi = await generateMultiTargetProductionPlan(workspace);
       if (input.action === "generate") {
         return Response.json(
@@ -86,7 +109,11 @@ export async function POST(request: Request) {
         { headers: { "Cache-Control": "no-store" } },
       );
     }
-    if (input.action === "choose_route") {
+    if (
+      input.action === "choose_route" ||
+      input.action === "block_next_term" ||
+      input.action === "unblock_next_term"
+    ) {
       throw new ApiError("strategy_unavailable", "Route choices are not available on this planner.", 409);
     }
     const route = result.routes.find((candidate) => candidate.strategy === input.strategy);

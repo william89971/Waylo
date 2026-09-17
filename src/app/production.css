@@ -694,12 +694,25 @@ a:hover { color: var(--p-ink-deep); }
   min-width: 0;
   min-height: 56px;
   display: grid;
-  grid-template-columns: 8.4rem minmax(0, 1fr) 3.6rem auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px 16px;
-  align-items: baseline;
+  align-items: center;
   padding: 14px 0;
   border: 0;
   border-bottom: 1px solid var(--p-border);
+  background: transparent;
+  width: 100%;
+}
+.home-appointment .course-row:last-child { border-bottom: 0; }
+.home-appointment .course-why {
+  min-width: 0;
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 8.4rem minmax(0, 1fr) 3.6rem auto;
+  gap: 12px 16px;
+  align-items: baseline;
+  padding: 0;
+  border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -708,11 +721,58 @@ a:hover { color: var(--p-ink-deep); }
   text-align: left;
   cursor: pointer;
 }
-.home-appointment .course-row:last-child { border-bottom: 0; }
-.home-appointment .course-row:hover,
-.home-appointment .course-row:focus-visible {
+.home-appointment .course-why:hover,
+.home-appointment .course-why:focus-visible {
   background: transparent;
   box-shadow: inset 3px 0 0 var(--p-ink);
+}
+.home-appointment .course-block,
+.home-appointment .next-term-block-undo {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--p-muted);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.home-appointment .course-block:hover,
+.home-appointment .course-block:focus-visible,
+.home-appointment .next-term-block-undo:hover,
+.home-appointment .next-term-block-undo:focus-visible {
+  color: var(--p-ink);
+  text-decoration: underline;
+}
+.home-appointment .course-block:disabled,
+.home-appointment .next-term-block-undo:disabled {
+  cursor: wait;
+  text-decoration: none;
+}
+.home-appointment .next-term-blocks {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: grid;
+  gap: 0;
+  border-bottom: 1px solid var(--p-border);
+}
+.home-appointment .next-term-blocks li {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px 16px;
+  align-items: center;
+}
+.home-appointment .next-term-blocks span {
+  font-size: 16px;
+}
+.home-appointment .next-term-empty {
+  margin: 0;
+  padding: 14px 0;
+  color: var(--p-muted);
+  font-size: 17px;
 }
 .home-appointment .course-row strong {
   font-family: var(--p-mono);
@@ -958,10 +1018,13 @@ a:hover { color: var(--p-ink-deep); }
   .next-term-hero-meta { align-items: stretch; flex-direction: column; }
   .next-term-hero-meta .production-button { width: 100%; }
   .home-appointment .course-row {
-    grid-template-columns: minmax(0, 1fr) 3rem;
+    grid-template-columns: 1fr;
     padding: 14px 0;
   }
-  .home-appointment .course-row strong {
+  .home-appointment .course-why {
+    grid-template-columns: minmax(0, 1fr) 3rem;
+  }
+  .home-appointment .course-why strong {
     grid-column: 1;
   }
   .home-appointment .course-units {
@@ -974,6 +1037,14 @@ a:hover { color: var(--p-ink-deep); }
   .home-appointment .course-row .evidence-state {
     grid-column: 1 / -1;
     justify-self: start;
+  }
+  .home-appointment .course-block,
+  .home-appointment .next-term-block-undo {
+    justify-self: start;
+  }
+  .home-appointment .next-term-blocks li {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
   .status-scan li {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -1097,6 +1168,11 @@ a:hover { color: var(--p-ink-deep); }
   display: grid;
   gap: 6px;
   margin-bottom: 18px;
+}
+.counselor-next-term-block {
+  margin: 0 0 18px;
+  font-size: 16px;
+  line-height: 1.45;
 }
 .counselor-packet-header .waylo-wordmark {
   font-size: 22px;

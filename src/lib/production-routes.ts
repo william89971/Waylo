@@ -147,6 +147,7 @@ export function buildProductionRouteOptions(
       maxUnitsPerTerm: knobs.maxUnits,
       includeSecondaryDivergence: knobs.includeSecondaryDivergence,
       includeSummer: knobs.summerEnrollment,
+      unavailableNextTermCodes: workspace.blockedNextTermCodes ?? [],
       graph,
     });
     return {

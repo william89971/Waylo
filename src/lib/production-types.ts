@@ -46,6 +46,14 @@ export const PlanActionSchema = z.discriminatedUnion("action", [
     summerEnrollment: z.boolean(),
     includeSecondaryDivergence: z.boolean(),
   }),
+  z.object({
+    action: z.literal("block_next_term"),
+    code: z.string().trim().min(1).max(32),
+  }),
+  z.object({
+    action: z.literal("unblock_next_term"),
+    code: z.string().trim().min(1).max(32),
+  }),
 ]);
 
 export const SavedPlanSchema = z.object({
@@ -87,6 +95,7 @@ export interface StudentWorkspaceRecord {
   includeSecondaryDivergence: boolean;
   coverageTier: "reviewed";
   preferences: PlanningPreferencesInput;
+  blockedNextTermCodes: string[];
   activePlan?: SavedPlan;
 }
 

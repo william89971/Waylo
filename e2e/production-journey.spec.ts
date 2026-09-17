@@ -77,6 +77,47 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await returnContext.close();
 });
 
+test("blocking a next-semester class moves it later and undo restores it", async ({ browser }, testInfo) => {
+  test.setTimeout(180_000);
+  const testUser = `test-block-${testInfo.project.name}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await page.goto(`/sign-up?testUser=${testUser}`);
+  await page.getByRole("button", { name: "Create test account" }).click();
+  await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
+  await page.getByLabel("College of the Canyons class").selectOption({ index: 0 });
+  await page.getByRole("button", { name: "Add course" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
+  await page.getByRole("button", { name: "See next semester", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Why this class?" }).first()).toBeVisible();
+
+  const firstRow = page.locator(".home-appointment .course-row").first();
+  const blockedCode = (await firstRow.locator("strong").innerText()).trim();
+  expect(blockedCode).toMatch(/[A-Z]/);
+  const exactCode = new RegExp(`^${blockedCode.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
+  await firstRow.getByRole("button", { name: `Can't take this: ${blockedCode}` }).click();
+  await expect(page.getByText(`${blockedCode} · not this term`)).toBeVisible();
+  await expect(page.locator(".home-appointment .course-row strong").filter({ hasText: exactCode })).toHaveCount(0);
+
+  await page.getByRole("link", { name: "See all terms" }).click();
+  await expect(page.getByRole("heading", { name: /All terms|Proposed sequence/ })).toBeVisible();
+  await expect(page.getByText(blockedCode, { exact: true }).first()).toBeVisible();
+  await expect(page.locator("#counselor-packet")).toContainText(`Not this term (student): ${blockedCode}`);
+
+  await page.goto("/app");
+  await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
+  await page.getByRole("button", { name: `Take it after all: ${blockedCode}` }).click();
+  await expect(page.locator(".home-appointment .course-row strong").filter({ hasText: exactCode })).toBeVisible();
+  await expect(page.getByText(`${blockedCode} · not this term`)).toHaveCount(0);
+
+  await context.close();
+});
+
 test("production journey is accessible and has no mobile overflow", async ({ page }, testInfo) => {
   await page.goto("/sign-up");
   const dimensions = await page.evaluate(() => ({

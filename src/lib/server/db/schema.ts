@@ -58,6 +58,7 @@ export const planningPreferences = pgTable("planning_preferences", {
   maxUnits: integer("max_units").notNull().default(15),
   summerEnrollment: boolean("summer_enrollment").notNull().default(false),
   weeklyWorkHours: integer("weekly_work_hours").notNull().default(0),
+  blockedNextTermCodes: jsonb("blocked_next_term_codes").$type<string[]>().notNull().default([]),
   ...timestamps,
 }, (table) => [uniqueIndex("planning_preferences_user_id_idx").on(table.userId)]);
 
