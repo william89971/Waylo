@@ -124,7 +124,7 @@ test("blocking a next-semester class moves it later and undo restores it", async
 
   await page.goto("/app");
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
-  await page.getByRole("button", { name: `Take it after all: ${blockedCode}` }).click();
+  await page.getByRole("button", { name: `Take it after all: ${blockedCode}`, exact: true }).click();
   await expect(page.locator(".home-appointment .course-row strong").filter({ hasText: exactCode })).toBeVisible();
   await expect(page.getByText(`${blockedCode} · not this term`)).toHaveCount(0);
 
