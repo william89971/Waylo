@@ -158,16 +158,22 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <strong>{nextTerm?.totalUnits ?? 0} planned units</strong>
             </div>
           </div>
-          {alreadyDone.length ? (
-            <div className="already-counted">
-              <h2>Already counted</h2>
+          <div className="already-counted">
+            <h2>Already counted</h2>
+            {alreadyDone.length ? (
               <ul>
                 {alreadyDone.map((line) => (
                   <li key={line}>{line}</li>
                 ))}
               </ul>
-            </div>
-          ) : null}
+            ) : (
+              <p>
+                {completedCount
+                  ? "The classes you added are saved, but they do not yet close a listed major-prep requirement."
+                  : "No finished classes yet. Add them under Your classes if you have already taken College of the Canyons courses."}
+              </p>
+            )}
+          </div>
           <div className="dashboard-actions">
             <Link href="/app/plan" className="production-button primary">
               Review semester plan
