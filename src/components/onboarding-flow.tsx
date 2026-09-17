@@ -511,8 +511,8 @@ export function OnboardingFlow({
 
         {step === 4 ? (
           <div className="onboarding-question ">
-            <h1 ref={headingRef} tabIndex={-1}>Schedule preferences</h1>
-            <p>How many units you can handle. This never skips a required class.</p>
+            <h1 ref={headingRef} tabIndex={-1}>How heavy can next semester be?</h1>
+            <p>Set a unit cap. Waylo will never skip a required class to stay under it.</p>
             <div className="preference-form">
               <label>
                 Maximum units per semester

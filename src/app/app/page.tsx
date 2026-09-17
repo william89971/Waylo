@@ -3,12 +3,14 @@ import { redirect } from "next/navigation";
 import { EvidenceStatus } from "@/components/evidence-status";
 import { evidenceById } from "@/lib/academic-data";
 import { buildAdmissionsStrategy } from "@/lib/admissions-strategy";
-import type { VerificationTier } from "@/lib/articulation/types";
+import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
+import { pickRuleForCourse } from "@/lib/articulation/rules";
+import type { ArticulationGraph, VerificationTier } from "@/lib/articulation/types";
 import type { SavedPlan, SelectableTarget } from "@/lib/production-types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
 import { listSelectableTargets } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
-import { courseCountsLine, formatSelectableTargetLabel } from "@/lib/student-facing-copy";
+import { alreadyDoneLine, courseCountsLine, courseWhySentence, formatSelectableTargetLabel } from "@/lib/student-facing-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,25 @@ function scheduledFor(
   return plan.multiTargetPlan?.schedule.terms
     .flatMap((term) => term.courses)
     .find((item) => item.courseId === course.courseId || item.code === course.code);
+}
+
+function whyThisClass(
+  course: SavedPlan["route"]["terms"][number]["courses"][number],
+  plan: SavedPlan,
+  targets: SelectableTarget[],
+  graph: ArticulationGraph | null,
+  primaryLabel: string,
+) {
+  const scheduled = scheduledFor(course, plan);
+  if (scheduled && graph) {
+    const parts = scheduled.fulfillsTargetIds.map((id) => {
+      const rule = pickRuleForCourse(graph.rulesByTargetMajorId.get(id) ?? [], scheduled.code);
+      return { school: formatSelectableTargetLabel(targets, id), requirement: rule?.label };
+    });
+    return courseWhySentence(parts);
+  }
+  const schoolLabels = scheduled ? scheduled.fulfillsTargetIds.map((id) => formatSelectableTargetLabel(targets, id)) : [primaryLabel];
+  return courseCountsLine(schoolLabels);
 }
 
 function courseEvidenceState(
@@ -49,7 +70,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   if (!plan) redirect("/app/plan?new=1");
   const route = plan.route;
   const nextTerm = route.terms[0];
-  const targets = await listSelectableTargets();
+  const [targets, graph] = await Promise.all([
+    listSelectableTargets(),
+    plan.multiTargetPlan ? loadActiveArticulationGraph() : Promise.resolve(null),
+  ]);
   const primaryId = plan.primaryTargetId ?? workspace.primaryTargetId;
   const secondaryIds = plan.secondaryTargetIds ?? workspace.secondaryTargetIds ?? [];
   const primaryLabel = labelFor(targets, primaryId);
@@ -75,6 +99,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const saved = (await searchParams).saved === "1";
   const whyHref = plan.multiTargetPlan ? "/app/plan" : "/app/evidence";
   const askCounselor = strategy?.counselor.items[0];
+  const alreadyDone = (plan.multiTargetPlan?.auditSummary ?? [])
+    .map((audit) => {
+      const labels = audit.requirementStates
+        .filter((requirement) => requirement.satisfied)
+        .map((requirement) => requirement.label)
+        .slice(0, 3);
+      return alreadyDoneLine(labelFor(targets, audit.targetMajorId), labels);
+    })
+    .filter(Boolean);
+  const inProgressCount = workspace.courses.filter((course) => course.status === "in_progress").length;
 
   return (
     <div className="production-page dashboard-page">
@@ -95,16 +129,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <div className="section-heading">
             <div>
               <h2>Recommended semester</h2>
-              <p>The next classes that move your transfer plan forward without going over your unit limit.</p>
+              <p>The next classes that move every selected school forward, inside your unit limit.</p>
             </div>
           </div>
           <div className="course-table" role="table" aria-label="Recommended semester courses">
             {nextTerm?.courses.map((course) => {
               const state = courseEvidenceState(course, plan);
               const scheduled = scheduledFor(course, plan);
-              const schoolLabels = scheduled
-                ? scheduled.fulfillsTargetIds.map((id) => labelFor(targets, id))
-                : [primaryLabel];
               const whyLink = scheduled
                 ? `/app/plan?course=${encodeURIComponent(scheduled.code)}`
                 : `/app/evidence?course=${encodeURIComponent(course.courseId)}`;
@@ -115,7 +146,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     <small>
                       {course.title} · {course.units} units
                     </small>
-                    <small>{courseCountsLine(schoolLabels)}</small>
+                    <p className="course-why">{whyThisClass(course, plan, targets, graph, primaryLabel)}</p>
                   </div>
                   <EvidenceStatus state={state} tier={scheduled?.verificationTier} />
                   <Link href={whyLink}>Why this class</Link>
@@ -127,6 +158,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <strong>{nextTerm?.totalUnits ?? 0} planned units</strong>
             </div>
           </div>
+          {alreadyDone.length ? (
+            <div className="already-counted">
+              <h2>Already counted</h2>
+              <ul>
+                {alreadyDone.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <div className="dashboard-actions">
             <Link href="/app/plan" className="production-button primary">
               Review semester plan
@@ -144,7 +185,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               {secondaryLabels.length ? `, while keeping ${secondaryLabels.join(" and ")} in view` : ""}. They stay
               inside your unit limit.
             </p>
-            <Link href={whyHref}>See how we decided</Link>
+            <Link href={whyHref}>See why each class is here</Link>
           </section>
           {reviewCount > 0 ? (
             <section className="rail-review">
@@ -164,7 +205,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           )}
           {strategy ? (
             <section className="strategy-teaser">
-              <h2>Admissions strategy</h2>
+              <h2>What to ask your counselor</h2>
               <p>{strategy.teaser}</p>
               <Link href="/app/plan#admissions-strategy">Read the strategy note</Link>
             </section>
@@ -172,17 +213,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <section>
             <strong>{completedCount}</strong>
             <span>
-              confirmed College of the Canyons {completedCount === 1 ? "class" : "classes"}
+              {completedCount === 1 ? "finished College of the Canyons class" : "finished College of the Canyons classes"}
+              {inProgressCount ? ` · ${inProgressCount} in progress` : ""}
             </span>
           </section>
           <section>
             <strong>{route.estimatedTransferTerm}</strong>
-            <span>estimated transfer</span>
+            <span>estimated transfer term — confirm with a counselor</span>
           </section>
         </aside>
       </div>
       <p className="saved-meta">
-        Saved plan version {plan.version} · academic data {plan.academicDataVersion}
+        Saved plan version {plan.version}
       </p>
     </div>
   );

@@ -1,5 +1,6 @@
 import { BookOpenCheck, CheckCircle2, Compass, ShieldAlert } from "lucide-react";
 import type { CourseBucket, VerificationTier } from "@/lib/articulation/types";
+import { planBucketLabel } from "@/lib/student-facing-copy";
 
 type LegacyState = "verified" | "suggestion" | "review";
 
@@ -26,7 +27,7 @@ export function EvidenceStatus({
     return <span className="evidence-state verified" title="Listed in the university’s transfer guide"><BookOpenCheck />University guide</span>;
   }
   if (resolved === "HISTORICAL_PRECEDENT") {
-    return <span className="evidence-state suggestion" title="Documented syllabus or departmental precedent"><Compass />Historical precedent</span>;
+    return <span className="evidence-state suggestion" title="Based on past departmental practice. Confirm with a counselor."><Compass />Past practice — confirm</span>;
   }
   if (resolved === "PLANNING_SUGGESTION") {
     return <span className="evidence-state suggestion" title="Recommended pathway sequence"><Compass />Planning suggestion</span>;
@@ -41,14 +42,10 @@ export function CourseBucketBadge({
   bucket: CourseBucket;
   fulfills: string[];
 }) {
-  const label =
-    bucket === "core_overlap" ? "Core Overlap"
-      : bucket === "primary_mandate" ? "Primary Mandate"
-        : "Secondary Divergence";
   return (
     <span className={`course-bucket ${bucket}`}>
-      <strong>{label}</strong>
-      {fulfills.length ? <small>Fulfills: {fulfills.join(", ")}</small> : null}
+      <strong>{planBucketLabel(bucket)}</strong>
+      {fulfills.length ? <small>Counts toward {fulfills.join(", ")}</small> : null}
     </span>
   );
 }

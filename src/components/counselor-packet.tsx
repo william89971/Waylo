@@ -1,6 +1,6 @@
 import type { AdmissionsStrategy } from "@/lib/admissions-strategy";
-import type { VerificationTier } from "@/lib/articulation/types";
-import { planBucketLabel, VERIFICATION_SHORT } from "@/lib/student-facing-copy";
+import type { ArticulationSourceType, VerificationTier } from "@/lib/articulation/types";
+import { planBucketLabel, SOURCE_TYPE_LABEL, VERIFICATION_SHORT } from "@/lib/student-facing-copy";
 
 export interface CounselorCitation {
   targetLabel: string;
@@ -118,7 +118,10 @@ export function CounselorPacket({
                 {VERIFICATION_SHORT[citation.verificationTier]}
               </td>
               <td>{citation.effectiveYear}</td>
-              <td>{citation.sourceType.replaceAll("_", " ")}</td>
+              <td>
+                {SOURCE_TYPE_LABEL[citation.sourceType as ArticulationSourceType] ??
+                  citation.sourceType.replaceAll("_", " ")}
+              </td>
             </tr>
           ))}
         </tbody>

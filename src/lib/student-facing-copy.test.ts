@@ -8,7 +8,9 @@ import {
   formatSelectableTargetLabel,
   planBucketLabel,
   requirementProgressLabel,
+  alreadyDoneLine,
   courseCountsLine,
+  courseWhySentence,
   targetCoverageNote,
 } from "@/lib/student-facing-copy";
 import type { SelectableTarget } from "@/lib/production-types";
@@ -53,14 +55,21 @@ describe("student-facing copy", () => {
         missingCourseCodes: ["NEEDS-COUNSELOR"],
         verificationTier: "NEEDS_COUNSELOR_CONFIRMATION",
       }),
-    ).toBe("needs counselor confirmation");
+    ).toBe("ask a counselor");
     expect(
       requirementProgressLabel({
         satisfied: true,
         missingCourseCodes: [],
         verificationTier: "VERIFIED_ASSIST",
       }),
-    ).toBe("satisfied");
+    ).toBe("already done");
+    expect(
+      requirementProgressLabel({
+        satisfied: false,
+        missingCourseCodes: ["MATH-211"],
+        verificationTier: "VERIFIED_ASSIST",
+      }),
+    ).toBe("still need MATH-211");
   });
 
   it("explains overlap the way a counselor would say it", () => {
@@ -69,5 +78,14 @@ describe("student-facing copy", () => {
     );
     expect(planBucketLabel("secondary_divergence")).toBe("Needed only for a second school");
     expect(targetCoverageNote("reviewed")).toMatch(/Official UC\/CSU/);
+    expect(
+      courseWhySentence([
+        { school: "UC Berkeley Economics", requirement: "Calculus I" },
+        { school: "USC Business Administration (Marshall)", requirement: "Business Calculus" },
+      ]),
+    ).toBe("This covers Calculus I at UC Berkeley Economics and Business Calculus at USC Business Administration (Marshall).");
+    expect(alreadyDoneLine("UC Berkeley Economics", ["Writing", "Statistics"])).toBe(
+      "Writing and Statistics at UC Berkeley Economics are already done.",
+    );
   });
 });

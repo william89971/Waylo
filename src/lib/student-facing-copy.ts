@@ -1,4 +1,4 @@
-import type { ArticulationGraph, VerificationTier } from "@/lib/articulation/types";
+import type { ArticulationGraph, ArticulationSourceType, VerificationTier } from "@/lib/articulation/types";
 import type { SelectableTarget } from "@/lib/production-types";
 
 const PLACEHOLDER_COURSE_CODES = new Set(["NEEDS-COUNSELOR"]);
@@ -45,6 +45,28 @@ export function courseCountsLine(schoolLabels: string[]): string {
   return "Not required by your first-choice school";
 }
 
+export function courseWhySentence(parts: Array<{ school: string; requirement?: string }>): string {
+  if (!parts.length) return "Not required by your first-choice school.";
+  const named = parts.filter((part) => part.requirement);
+  if (named.length === parts.length) {
+    if (parts.length === 1) return `This is ${parts[0].requirement} for ${parts[0].school}.`;
+    return `This covers ${formatList(parts.map((part) => `${part.requirement} at ${part.school}`))}.`;
+  }
+  return `${courseCountsLine(parts.map((part) => part.school))}.`;
+}
+
+export function alreadyDoneLine(school: string, requirementLabels: string[]): string {
+  if (!requirementLabels.length) return "";
+  if (requirementLabels.length === 1) return `${requirementLabels[0]} at ${school} is already done.`;
+  return `${formatList(requirementLabels)} at ${school} are already done.`;
+}
+
+export const SOURCE_TYPE_LABEL: Record<ArticulationSourceType, string> = {
+  assist_public: "Official ASSIST agreement",
+  institutional_guide: "University transfer guide",
+  departmental_precedent: "Department practice — confirm",
+};
+
 export function formatSelectableTargetLabel(
   targets: SelectableTarget[],
   targetId: string,
@@ -80,12 +102,12 @@ export function requirementProgressLabel(requirement: {
   missingCourseCodes: string[];
   verificationTier: VerificationTier;
 }): string {
-  if (requirement.satisfied) return "satisfied";
+  if (requirement.satisfied) return "already done";
   const missing = requirement.missingCourseCodes.filter((code) => !PLACEHOLDER_COURSE_CODES.has(code));
   if (!missing.length) {
     return requirement.verificationTier === "NEEDS_COUNSELOR_CONFIRMATION"
-      ? "needs counselor confirmation"
+      ? "ask a counselor"
       : "not yet scheduled";
   }
-  return `missing ${missing.join(", ")}`;
+  return `still need ${missing.join(", ")}`;
 }

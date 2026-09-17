@@ -125,6 +125,10 @@ a { color: var(--p-blue); }
 .course-row { min-height: 78px; display: grid; grid-template-columns: minmax(190px, 1fr) minmax(190px, .7fr) auto; gap: 13px; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--p-border); }
 .course-identity { display: grid; gap: 5px; }
 .course-identity small { color: var(--p-muted); }
+.course-identity .course-why { margin: 0; color: var(--p-ink); font-size: 13px; line-height: 1.4; }
+.already-counted { margin-top: 22px; }
+.already-counted h2 { margin: 0 0 8px; font-size: 15px; }
+.already-counted ul { margin: 0; padding-left: 1.1em; color: #3d4b5f; font-size: 13px; line-height: 1.5; display: grid; gap: 4px; }
 .course-row > a { font-size: 12px; font-weight: 650; text-decoration: none; }
 .evidence-state { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; }
 .evidence-state svg { width: 17px; height: 17px; }

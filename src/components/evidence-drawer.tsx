@@ -4,7 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { ExternalLink, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ArticulationSourceType, VerificationTier } from "@/lib/articulation/types";
-import { VERIFICATION_EXPLAIN, VERIFICATION_SHORT } from "@/lib/student-facing-copy";
+import { SOURCE_TYPE_LABEL, VERIFICATION_EXPLAIN, VERIFICATION_SHORT } from "@/lib/student-facing-copy";
 
 export type EvidenceCampusEntry = {
   targetMajorId: string;
@@ -30,12 +30,6 @@ export type EvidenceDrawerProps = {
   open: boolean;
   evidence: CourseEvidencePayload | null;
   onClose: () => void;
-};
-
-const SOURCE_LABELS: Record<ArticulationSourceType, string> = {
-  assist_public: "ASSIST public articulation",
-  institutional_guide: "Institutional transfer guide",
-  departmental_precedent: "Departmental precedent",
 };
 
 function LedgerRow({ label, value }: { label: string; value: ReactNode }) {
@@ -114,7 +108,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
         <header className="flex items-start justify-between gap-3 border-b border-border/40 px-5 py-4">
           <div className="min-w-0">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-slate-500">
-              Articulation evidence
+              Why this class
             </p>
             {evidence ? (
               <>
@@ -172,7 +166,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                   </div>
 
                   {!campus.required ? (
-                    <p className="py-3 text-[13px] text-slate-500">Not required for this target.</p>
+                    <p className="py-3 text-[13px] text-slate-500">This school does not need this class.</p>
                   ) : (
                     <dl>
                       <LedgerRow
@@ -209,19 +203,9 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                       />
                       <LedgerRow
                         label="Source"
-                        value={campus.sourceType ? SOURCE_LABELS[campus.sourceType] : "—"}
+                        value={campus.sourceType ? SOURCE_TYPE_LABEL[campus.sourceType] : "—"}
                       />
                       {campus.notes ? <LedgerRow label="Notes" value={campus.notes} /> : null}
-                      {campus.verificationTier ? (
-                        <LedgerRow
-                          label="Internal code"
-                          value={
-                            <span className="font-mono text-[11px] tracking-tight text-slate-500">
-                              {campus.verificationTier}
-                            </span>
-                          }
-                        />
-                      ) : null}
                     </dl>
                   )}
 
@@ -240,7 +224,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">Select a course row in the matrix to inspect evidence.</p>
+            <p className="text-sm text-slate-500">Select a class to see why it is on the plan.</p>
           )}
         </div>
       </aside>

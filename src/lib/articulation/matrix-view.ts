@@ -1,4 +1,4 @@
-import { collectCourseCodes } from "@/lib/articulation/expression";
+import { pickRuleForCourse } from "@/lib/articulation/rules";
 import type {
   ArticulationGraph,
   ArticulationRule,
@@ -36,17 +36,6 @@ function compactEquivalency(rule: ArticulationRule | undefined): string | undefi
     return label.toUpperCase();
   }
   return rule.requirementKey.replace(/_/g, " ").toUpperCase();
-}
-
-function pickRuleForCourse(
-  rules: ArticulationRule[],
-  courseCode: string,
-): ArticulationRule | undefined {
-  const matching = rules.filter((rule) =>
-    collectCourseCodes(rule.expression).includes(courseCode),
-  );
-  if (matching.length === 0) return undefined;
-  return matching.find((rule) => rule.verificationTier === "VERIFIED_ASSIST") ?? matching[0];
 }
 
 export function buildMatrixCampuses(

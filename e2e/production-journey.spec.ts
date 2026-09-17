@@ -20,7 +20,7 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await expect(page.locator(".confirmed-course-list")).toContainText("A");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: "Schedule preferences" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
   await page.getByLabel("Maximum units per semester").fill("15");
   await page.getByRole("button", { name: "View proposed schedule", exact: true }).click();
 
@@ -113,11 +113,11 @@ test("UCB Economics primary with USC Business secondary shows divergence badges"
   await page.getByRole("button", { name: "Add course" }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: "Schedule preferences" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
   await page.getByRole("button", { name: "View proposed schedule", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: /multi-target plan/i })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Articulation matrix" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Review this plan|Your plan/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "How each class counts" })).toBeVisible();
   await expect(page.getByTestId("articulation-matrix")).toBeVisible();
   const mathCode = page.locator('[data-testid="articulation-matrix"] .font-mono.tabular-nums', {
     hasText: "MATH-211",
@@ -125,7 +125,7 @@ test("UCB Economics primary with USC Business secondary shows divergence badges"
   await expect(mathCode.first()).toBeVisible();
   await expect(mathCode.first()).toHaveClass(/font-mono/);
   await expect(mathCode.first()).toHaveClass(/tabular-nums/);
-  await expect(page.getByRole("heading", { name: "Destination audits" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What's left at each school" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Take this to your counselor" })).toBeVisible();
   await context.close();
 });

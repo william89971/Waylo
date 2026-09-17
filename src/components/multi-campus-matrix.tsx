@@ -82,7 +82,7 @@ export function MultiCampusMatrix({
       <div className="overflow-x-auto overflow-y-hidden overscroll-x-contain border border-border/40 bg-background" data-testid="articulation-matrix">
       <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
         <caption className="sr-only whitespace-normal">
-          Articulation matrix. Select a course row to open evidence.
+          How each class counts. Select a course row to see why it is on the plan.
         </caption>
         <thead>
           <tr className="border-b border-border/40">

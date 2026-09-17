@@ -25,10 +25,10 @@ async function onboardMultiTargetPlan(page: Page, testUser: string) {
   await page.getByRole("button", { name: "Add course" }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: "Schedule preferences" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
   await page.getByRole("button", { name: "View proposed schedule", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: /multi-target plan/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Review this plan|Your plan/ })).toBeVisible();
   await expect(page.getByTestId("articulation-matrix")).toBeVisible();
   const overflow = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
