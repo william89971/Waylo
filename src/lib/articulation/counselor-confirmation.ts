@@ -36,8 +36,8 @@ export function buildCounselorConfirmationItems(input: {
       items.push({
         id: `ap-${course.id}`,
         kind: "ap_credit",
-        title: `${course.code} — counselor confirmation required`,
-        detail: "AP credit is recorded as pending. It does not satisfy a requirement until a counselor or the university confirms it.",
+        title: `${course.code} — AP credit`,
+        detail: "Ask a counselor whether this AP credit counts. Waylo does not treat it as done.",
       });
       continue;
     }
@@ -45,8 +45,8 @@ export function buildCounselorConfirmationItems(input: {
       items.push({
         id: `petition-${course.id}`,
         kind: "petition",
-        title: `${course.code} — petition pending`,
-        detail: "This petition or substitution is saved as pending. It does not change the plan until a counselor or the university confirms it.",
+        title: `${course.code} — petition`,
+        detail: "Ask a counselor whether this substitution counts.",
       });
       continue;
     }
@@ -54,8 +54,8 @@ export function buildCounselorConfirmationItems(input: {
       items.push({
         id: `ext-${course.id}`,
         kind: course.catalogCourseId.startsWith("ext:") ? "other_college" : "unmatched_course",
-        title: `${course.code} ${course.title} — unmatched`,
-        detail: "This class is saved, but Waylo cannot match it to a listed College of the Canyons transfer requirement. A counselor has to confirm whether it counts.",
+        title: `${course.code} ${course.title}`,
+        detail: "Saved, but not matched to a listed requirement. Ask a counselor whether it counts.",
       });
       continue;
     }
@@ -64,7 +64,7 @@ export function buildCounselorConfirmationItems(input: {
         id: `recorded-${course.id}`,
         kind: "unmatched_course",
         title: `${course.code} is on your record`,
-        detail: "This College of the Canyons class is saved. It does not close a listed major-prep requirement in Waylo. Ask a counselor whether it counts for Cal-GETC or another requirement.",
+        detail: "Saved, but it does not close a listed major-prep requirement. Ask whether it counts for Cal-GETC or something else.",
       });
     }
   }
@@ -75,8 +75,8 @@ export function buildCounselorConfirmationItems(input: {
         items.push({
           id: `req-${audit.targetMajorId}-${requirement.requirementKey}`,
           kind: "unverified_articulation",
-          title: `${requirement.label} — counselor confirmation required`,
-          detail: "Waylo does not have an official agreement for this requirement. It is not treated as fact.",
+          title: `${requirement.label}`,
+          detail: "No official agreement in Waylo yet. Ask a counselor before you treat this as done.",
         });
       }
     }
@@ -88,8 +88,8 @@ export function buildCounselorConfirmationItems(input: {
       items.push({
         id: `note-${target.id}-${note.slice(0, 24)}`,
         kind: "petition",
-        title: `${target.institutionName} ${target.displayName} — institution-specific`,
-        detail: `${note} Confirm with a counselor. Waylo does not treat this as satisfied.`,
+        title: `${target.institutionName} ${target.displayName}`,
+        detail: note,
       });
     }
   }
@@ -101,8 +101,8 @@ export function buildCounselorConfirmationItems(input: {
     kind: "cal_getc",
     title: "Cal-GETC is not certified",
     detail: possible.length
-      ? `${possible.map((area) => area.label).join("; ")}. Those classes are typical placements only. Confirm current Cal-GETC with a counselor.`
-      : "No listed course on your record is a typical Cal-GETC placement. Ask a counselor which GE classes still apply. Waylo does not certify GE completion.",
+      ? `Typical placements only: ${possible.map((area) => area.label).join("; ")}. Confirm current Cal-GETC with a counselor.`
+      : "Ask a counselor which GE classes still apply.",
   });
 
   return items;

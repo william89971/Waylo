@@ -51,7 +51,7 @@ function StatusGlyph({ cell }: { cell: MatrixCampusCell }) {
         <AlertCircle className="size-4 shrink-0" aria-hidden />
         <span className="sr-only">Needs counselor review</span>
         {cell.equivalency ? (
-          <span className="font-mono text-[11px] tabular-nums tracking-tight">{cell.equivalency}</span>
+          <span className="font-mono text-[13px] tabular-nums tracking-tight">{cell.equivalency}</span>
         ) : null}
       </span>
     );
@@ -65,7 +65,7 @@ function StatusGlyph({ cell }: { cell: MatrixCampusCell }) {
       <Check className="size-4 shrink-0" strokeWidth={2.5} aria-hidden />
       <span className="sr-only">Verified</span>
       {cell.equivalency ? (
-        <span className="font-mono text-[11px] tabular-nums tracking-tight">{cell.equivalency}</span>
+          <span className="font-mono text-[13px] tabular-nums tracking-tight">{cell.equivalency}</span>
       ) : null}
     </span>
   );
@@ -80,7 +80,7 @@ export function MultiCampusMatrix({
   return (
     <div className="max-w-full overflow-hidden [contain:paint]">
       <div className="overflow-x-auto overflow-y-hidden overscroll-x-contain border border-border/40 bg-background" data-testid="articulation-matrix">
-      <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+      <table className="w-full min-w-[40rem] border-collapse text-left text-[15px]">
         <caption className="sr-only whitespace-normal">
           How each class counts. Select a course row to see why it is on the plan.
         </caption>
@@ -149,16 +149,16 @@ export function MultiCampusMatrix({
                   )}
                 >
                   <div className="flex min-w-[10rem] flex-col gap-0.5">
-                    <span className="font-mono text-[12px] font-medium tabular-nums tracking-tight text-foreground">
+                    <span className="font-mono text-[16px] font-medium tabular-nums tracking-tight text-foreground">
                       {row.courseCode}
                     </span>
-                    <span className="max-w-[14rem] truncate text-[11px] text-muted-foreground">{row.title}</span>
+                    <span className="max-w-[16rem] truncate text-[14px] text-muted-foreground">{row.title}</span>
                   </div>
                 </th>
-                <td className="px-2 py-3.5 text-right font-mono text-[12px] tabular-nums text-foreground">
+                <td className="px-2 py-3.5 text-right font-mono text-[15px] tabular-nums text-foreground">
                   {row.semesterUnits.toFixed(1)}
                 </td>
-                <td className="px-2 py-3.5 font-mono text-[11px] tabular-nums text-muted-foreground">
+                <td className="px-2 py-3.5 font-mono text-[14px] tabular-nums text-muted-foreground">
                   {row.termLabel}
                 </td>
                 {campuses.map((campus) => {

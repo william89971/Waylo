@@ -16,7 +16,7 @@ import {
   buildMatrixCampuses,
   buildMatrixRows,
 } from "@/lib/articulation/matrix-view";
-import type { VerificationTier } from "@/lib/articulation/types";
+import type { DivergencePoint, VerificationTier } from "@/lib/articulation/types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
 import {
   generateMultiTargetProductionPlan,
@@ -28,12 +28,45 @@ import {
   UCSD_DATA_RELEASE,
 } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
-import { formatCourseCode, formatSelectableTargetLabel, requirementProgressLabel, studentFacingDataRelease } from "@/lib/student-facing-copy";
+import {
+  divergenceDisplay,
+  formatCourseCode,
+  formatSelectableTargetLabel,
+  requirementProgressLabel,
+  studentFacingDataRelease,
+} from "@/lib/student-facing-copy";
 
 export const dynamic = "force-dynamic";
 
 function legacyTier(status?: string): VerificationTier {
   return status === "verified" ? "VERIFIED_ASSIST" : "NEEDS_COUNSELOR_CONFIRMATION";
+}
+
+function DivergenceList({
+  points,
+  labelFor,
+}: {
+  points: DivergencePoint[];
+  labelFor: (id: string) => string;
+}) {
+  if (!points.length) return null;
+  return (
+    <section className="divergence-section no-print">
+      <h2>Schools want different classes</h2>
+      <p>They stay on this plan because you selected more than one school.</p>
+      <ul className="divergence-list">
+        {points.map((point) => {
+          const { code, line } = divergenceDisplay(point, labelFor);
+          return (
+            <li key={point.id}>
+              <strong className="font-mono tabular-nums">{code}</strong>
+              <span>{line}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
 }
 
 export default async function PlanPage({ searchParams }: { searchParams: Promise<{ new?: string; course?: string }> }) {
@@ -112,10 +145,11 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           <div>
             <h1>{showProposal ? "Proposed sequence" : "All terms"}</h1>
             <p>
-              Detailed view of every term. Next semester is on Home. First choice: {labelFor(multi.primaryTargetId)}
+              For {labelFor(multi.primaryTargetId)}
               {multi.secondaryTargetIds.length
-                ? ` · Also planning: ${multi.secondaryTargetIds.map(labelFor).join(", ")}`
+                ? ` · also ${multi.secondaryTargetIds.map(labelFor).join(", ")}`
                 : ""}
+              .
             </p>
           </div>
           <ExportCounselorPacketButton />
@@ -123,45 +157,56 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         {showProposal ? (
           <div className="proposal-banner no-print">
             <strong>Proposed — not saved</strong>
-            <span>Check next semester on Home after you save. This page is the full sequence.</span>
+            <span>Save it so next semester stays on Home.</span>
           </div>
         ) : (
           <p className="plan-secondary-note no-print">
-            This is the detailed sequence. <Link href="/app">Next semester is on Home.</Link>
+            Next semester is also on <Link href="/app">Home</Link>.
           </p>
         )}
+        {nextTerm ? (
+          <section className="next-term-hero no-print" aria-label="Next semester recap">
+            <h2>Next semester · {nextTerm.label}</h2>
+            {nextTerm.courses.length ? (
+              <ol className="next-term-codes">
+                {nextTerm.courses.map((course) => (
+                  <li key={course.code}>
+                    <strong className="font-mono tabular-nums">{course.code}</strong>
+                    <span>
+                      {course.title} · {course.semesterUnits} units
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p>No classes scheduled.</p>
+            )}
+            <div className="next-term-hero-meta">
+              <p>{nextTerm.totalSemesterUnits} COC units</p>
+              {showProposal ? (
+                <SavePlanButton strategy="overlap" />
+              ) : (
+                <Link href="/app" className="production-text-link">
+                  Open on Home
+                </Link>
+              )}
+            </div>
+          </section>
+        ) : null}
         {!workspace.includeSecondaryDivergence ? (
           <div className="review-banner no-print">
             <strong>Classes that only the second school needs are left off this schedule.</strong>
             <span>Turn that option back on if you want one plan that covers every selected school.</span>
           </div>
         ) : null}
-        {multi.divergencePoints.length ? (
-          <div className="review-banner no-print">
-            <strong>Where the schools disagree</strong>
-            <ul>
-              {multi.divergencePoints.map((point) => (
-                <li key={point.id}>{point.message}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-        {nextTerm ? (
-          <section className="already-counted no-print" aria-label="Next semester recap">
-            <h2>Next semester · {nextTerm.label}</h2>
-            <p>
-              {nextTerm.courses.map((course) => course.code).join(" · ") || "No classes scheduled"} · {nextTerm.totalSemesterUnits} COC units.{" "}
-              <Link href="/app">Open on Home</Link>
-            </p>
-          </section>
-        ) : null}
         <CounselorConfirmationList items={counselorItems} />
+        <DivergenceList points={multi.divergencePoints} labelFor={labelFor} />
         <section className="no-print matrix-section" aria-label="Multi-campus articulation matrix">
           <div className="matrix-heading">
             <div>
               <h2>How each class counts</h2>
               <p>
-                Each row is a College of the Canyons class. Tap a row to see why it is on the plan, and which school still needs a counselor.
+                Tap a class to see why it counts, and which school still needs a counselor.
               </p>
             </div>
             <p className="matrix-totals">
@@ -304,17 +349,38 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       <header className="production-page-header plan-header-actions">
         <div>
           <h1>{showProposal ? "Proposed sequence" : "All terms"}</h1>
-          <p>
-            {labelFor(workspace.primaryTargetId)} · detailed view. Next semester is on Home.
-          </p>
+          <p>For {labelFor(workspace.primaryTargetId)}.</p>
         </div>
         <ExportCounselorPacketButton />
       </header>
       {showProposal ? (
         <div className="proposal-banner no-print">
           <strong>Proposed — not saved</strong>
-          <span>Review the semester sequence and evidence before saving this plan.</span>
+          <span>Save it so next semester stays on Home.</span>
         </div>
+      ) : null}
+      {route.terms[0] ? (
+        <section className="next-term-hero no-print" aria-label="Next semester recap">
+          <h2>Next semester · {route.terms[0].label}</h2>
+          <ol className="next-term-codes">
+            {route.terms[0].courses.map((course) => (
+              <li key={course.courseId}>
+                <strong className="font-mono tabular-nums">{course.code}</strong>
+                <span>
+                  {course.title} · {course.units} units
+                </span>
+              </li>
+            ))}
+          </ol>
+          <div className="next-term-hero-meta">
+            <p>{route.terms[0].totalUnits} COC units</p>
+            {showProposal ? <SavePlanButton strategy={route.strategy} /> : (
+              <Link href="/app" className="production-text-link">
+                Open on Home
+              </Link>
+            )}
+          </div>
+        </section>
       ) : null}
       {productionEvidenceState() === "needs_review" ? (
         <div className="review-banner no-print">
