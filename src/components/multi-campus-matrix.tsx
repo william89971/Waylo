@@ -138,8 +138,8 @@ export function MultiCampusMatrix({
                 }}
                 className={cn(
                   "group cursor-pointer border-b border-border/40 outline-none",
-                  "hover:bg-transparent focus-visible:shadow-[inset_3px_0_0_0_#c25a2c]",
-                  selected && "shadow-[inset_3px_0_0_0_#c25a2c]",
+                  "hover:bg-transparent focus-visible:shadow-[inset_3px_0_0_0_#111111]",
+                  selected && "shadow-[inset_3px_0_0_0_#111111]",
                 )}
               >
                 <th

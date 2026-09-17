@@ -32,47 +32,57 @@ export default function LandingPage() {
           <Link href="/sign-up" className="production-button primary">
             Sign up
           </Link>
-          <Link href="/sign-in" className="production-button">
-            Sign in
-          </Link>
         </div>
-        <ol className="waylo-path" aria-label="How Waylo works">
-          <li>Your classes</li>
-          <li>What they count for</li>
-          <li>What to take next</li>
-        </ol>
-        <figure className="waylo-specimen">
-          <figcaption>
-            <span className="waylo-specimen-kicker">Next semester</span>
-            <strong>Fall 2026</strong>
-            <span className="waylo-specimen-units">13.0 COC units</span>
-          </figcaption>
-          <ol>
-            <li>
-              <strong className="font-mono tabular-nums">CHEM-201</strong>
-              <span>General Chemistry I</span>
-              <span className="tabular-nums">5.0</span>
-              <em className="verified">Official agreement</em>
-            </li>
-            <li>
-              <strong className="font-mono tabular-nums">MATH-211</strong>
-              <span>Calculus I</span>
-              <span className="tabular-nums">5.0</span>
-              <em className="verified">Official agreement</em>
-            </li>
-            <li>
-              <strong className="font-mono tabular-nums">ENGL-103</strong>
-              <span>Critical Reading, Writing and Thinking</span>
-              <span className="tabular-nums">3.0</span>
-              <em className="review">Ask a counselor</em>
-            </li>
-          </ol>
-        </figure>
-        <p className="production-disclaimer">
-          Waylo is a planning aid, not an official degree audit. Confirm anything marked for review in ASSIST or with
-          a counselor before you enroll.
-        </p>
       </section>
+      <div className="waylo-well-band">
+        <section className="waylo-well" aria-label="Sample next semester">
+          <figure className="waylo-specimen">
+            <figcaption>
+              <span className="waylo-specimen-kicker">Next semester</span>
+              <strong>Fall 2026</strong>
+              <span className="waylo-specimen-units">13.0 COC units</span>
+            </figcaption>
+            <ol>
+              <li>
+                <strong className="font-mono tabular-nums">CHEM-201</strong>
+                <span>General Chemistry I</span>
+                <span className="tabular-nums">5.0</span>
+                <em className="verified">Official agreement</em>
+              </li>
+              <li>
+                <strong className="font-mono tabular-nums">MATH-211</strong>
+                <span>Calculus I</span>
+                <span className="tabular-nums">5.0</span>
+                <em className="verified">Official agreement</em>
+              </li>
+              <li>
+                <strong className="font-mono tabular-nums">ENGL-103</strong>
+                <span>Critical Reading, Writing and Thinking</span>
+                <span className="tabular-nums">3.0</span>
+                <em className="review">Ask a counselor</em>
+              </li>
+            </ol>
+          </figure>
+        </section>
+      </div>
+      <ol className="waylo-path" aria-label="How Waylo works">
+        <li>
+          <strong>1</strong>
+          Your classes
+        </li>
+        <li>
+          <strong>2</strong>
+          What they count for
+        </li>
+        <li>
+          <strong>3</strong>
+          What to take next
+        </li>
+      </ol>
+      <p className="production-disclaimer">
+        Waylo is a planning aid, not an official degree audit. Confirm anything marked for review in ASSIST or with
+        a counselor before you enroll.
+      </p>
     </main>
   );
 }

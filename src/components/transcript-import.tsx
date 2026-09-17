@@ -19,20 +19,16 @@ export function TranscriptImport({
   existingCourseIds: string[];
   onConfirmed: (courses: ProductionCourse[]) => void;
 }) {
+  const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
-  const [file, setFile] = useState<File | undefined>();
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const [extraction, setExtraction] = useState<TranscriptExtraction | null>(null);
   const [excluded, setExcluded] = useState<Set<number>>(new Set());
 
   const extract = async () => {
-    if (!text.trim() && !file) {
-      setError("Paste transcript text or choose a PDF or image first.");
-      return;
-    }
-    if (file && !text.trim()) {
-      setError("Waylo cannot treat a PDF or image as your transcript here. Paste the course lines so you can confirm every row.");
+    if (!text.trim()) {
+      setError("Paste the course lines from your transcript first.");
       return;
     }
     setWorking(true);
@@ -86,7 +82,7 @@ export function TranscriptImport({
       onConfirmed(body.courses as ProductionCourse[]);
       setExtraction(null);
       setText("");
-      setFile(undefined);
+      setOpen(false);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Waylo could not save those classes.");
     } finally {
@@ -94,35 +90,25 @@ export function TranscriptImport({
     }
   };
 
+  if (!open && !extraction) {
+    return (
+      <button type="button" className="production-text-link" onClick={() => setOpen(true)}>
+        Paste a transcript
+      </button>
+    );
+  }
+
   return (
     <div className="transcript-import" data-testid="transcript-import">
-      <h2 className="onboarding-subheading">Import a transcript</h2>
-      <p className="onboarding-hint">
-        Nothing is added to your plan until you confirm the rows below. Unmatched classes stay unmatched.
-      </p>
+      <p className="onboarding-hint">Nothing is added to your plan until you confirm the rows below.</p>
       <label>
         Paste transcript text
         <textarea
           value={text}
-          onChange={(event) => {
-            setText(event.target.value);
-            setFile(undefined);
-          }}
-          rows={4}
+          onChange={(event) => setText(event.target.value)}
+          rows={3}
           placeholder="ENGL C1000 Academic Reading and Writing A Fall 2025"
         />
-      </label>
-      <label className="transcript-file">
-        PDF or image upload
-        <input
-          type="file"
-          accept="application/pdf,image/png,image/jpeg,image/webp"
-          onChange={(event) => {
-            setFile(event.target.files?.[0]);
-            setText("");
-          }}
-        />
-        <small>Paste the course lines from the file. Waylo will not guess a sample transcript from an unread PDF.</small>
       </label>
       <button type="button" className="production-button" disabled={working} onClick={() => void extract()}>
         {working && !extraction ? "Reading…" : "Read transcript"}

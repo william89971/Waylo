@@ -61,9 +61,6 @@ export function OnboardingFlow({
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState(catalog[0]?.id ?? "");
-  const [term, setTerm] = useState("Fall 2026");
-  const [grade, setGrade] = useState("");
-  const [status, setStatus] = useState<"completed" | "in_progress">("completed");
   const [maxUnits, setMaxUnits] = useState(initial.preferences.maxUnits);
   const [summerEnrollment, setSummerEnrollment] = useState(initial.preferences.summerEnrollment);
   const [targetTerm, setTargetTerm] = useState(initial.preferences.targetTerm ?? "");
@@ -72,6 +69,7 @@ export function OnboardingFlow({
   const [otherTitle, setOtherTitle] = useState("");
   const [otherCollege, setOtherCollege] = useState("");
   const [petitionTitle, setPetitionTitle] = useState("");
+  const [showMoreCredit, setShowMoreCredit] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     headingRef.current?.focus();
@@ -186,9 +184,9 @@ export function OnboardingFlow({
         method: "POST",
         body: JSON.stringify({
           catalogCourseId: selectedCourseId,
-          grade: grade || null,
-          term,
-          status,
+          grade: null,
+          term: "Fall 2026",
+          status: "completed",
           source: selected?.group === "ap" ? "ap" : "manual",
         }),
       });
@@ -197,7 +195,6 @@ export function OnboardingFlow({
         ...current,
         courses: [...current.courses.filter((item) => item.catalogCourseId !== course.catalogCourseId), course],
       }));
-      setGrade("");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Waylo could not add that course.");
     } finally {
@@ -220,8 +217,8 @@ export function OnboardingFlow({
           code: otherCode.trim(),
           title: `${otherTitle.trim()}${otherCollege.trim() ? ` (${otherCollege.trim()})` : ""}`,
           units: 0,
-          grade: grade || null,
-          term,
+          grade: null,
+          term: "Fall 2026",
           status: "completed",
           source: "other_college",
         }),
@@ -257,7 +254,7 @@ export function OnboardingFlow({
           title: petitionTitle.trim(),
           units: 0,
           grade: null,
-          term,
+          term: "Fall 2026",
           status: "completed",
           source: "petition",
         }),
@@ -341,7 +338,7 @@ export function OnboardingFlow({
         </Link>
       </header>
       <section className="onboarding-panel">
-        {step < 4 ? (
+        {!editing && step < 4 ? (
           <div className="onboarding-progress" aria-label="Onboarding progress">
             <div>
               <strong>
@@ -352,14 +349,6 @@ export function OnboardingFlow({
             <div className="progress-track" aria-hidden="true">
               <span style={{ width: progress }} />
             </div>
-            <ol>
-              {STEP_LABELS.map((label, index) => (
-                <li key={label} className={index + 1 <= visibleStep ? "active" : ""}>
-                  {index + 1 < visibleStep ? <Check size={13} /> : index + 1}
-                  <span>{label}</span>
-                </li>
-              ))}
-            </ol>
           </div>
         ) : null}
         {error ? (
@@ -496,27 +485,13 @@ export function OnboardingFlow({
         {step === 3 ? (
           <div className="onboarding-question course-question">
             <h1 ref={headingRef} tabIndex={-1}>
-              {editing ? "Edit your completed courses" : "What have you completed?"}
+              {editing ? "Your classes" : "What have you completed?"}
             </h1>
             <p>
               {editing
-                ? "Update classes you have finished or are taking now. You can add more later."
-                : "Add College of the Canyons classes, AP credit, or coursework from another college. Nothing from a transcript is saved until you confirm it."}
+                ? "Add or remove College of the Canyons classes. You can paste a transcript if that is faster."
+                : "Add the College of the Canyons classes you already finished. You can paste a transcript if that is faster."}
             </p>
-            <TranscriptImport
-              existingCourseIds={workspace.courses.map((course) => course.catalogCourseId)}
-              onConfirmed={(courses) => {
-                setWorkspace((current) => {
-                  const next = [...current.courses];
-                  for (const course of courses) {
-                    const index = next.findIndex((item) => item.catalogCourseId === course.catalogCourseId);
-                    if (index >= 0) next[index] = course;
-                    else next.push(course);
-                  }
-                  return { ...current, courses: next };
-                });
-              }}
-            />
             <form
               className="course-entry-grid"
               onSubmit={(event) => {
@@ -551,21 +526,6 @@ export function OnboardingFlow({
                   </optgroup>
                 </select>
               </label>
-              <label>
-                Term
-                <input value={term} onChange={(event) => setTerm(event.target.value)} />
-              </label>
-              <label>
-                Status
-                <select value={status} onChange={(event) => setStatus(event.target.value as typeof status)}>
-                  <option value="completed">Completed</option>
-                  <option value="in_progress">In progress</option>
-                </select>
-              </label>
-              <label>
-                Grade
-                <input value={grade} onChange={(event) => setGrade(event.target.value)} placeholder="Optional" />
-              </label>
               <button
                 type="submit"
                 className="production-button primary"
@@ -579,10 +539,10 @@ export function OnboardingFlow({
                 workspace.courses.map((course) => (
                   <div key={course.id}>
                     <span>
-                      <strong>{course.code}</strong>
+                      <strong className="font-mono tabular-nums">{course.code}</strong>
                       <small>
-                        {course.title} · {course.term} ·{" "}
-                        {course.status === "completed" ? course.grade || "Grade not entered" : "In progress"}
+                        {course.title}
+                        {course.status === "in_progress" ? " · In progress" : ""}
                         {course.source === "ap" || course.source === "other_college" || course.source === "petition" || course.matchStatus === "uncertain"
                           ? " · counselor confirmation required"
                           : ""}
@@ -596,54 +556,79 @@ export function OnboardingFlow({
               ) : (
                 <div className="empty-state">
                   <strong>No classes yet</strong>
-                  <p>That is okay. Continue and Waylo will plan from the start. You can add classes later.</p>
+                  <p>That is okay. Waylo will plan from the start. You can add classes later.</p>
                 </div>
               )}
             </div>
-            <form
-              className="course-entry-grid other-college-grid"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void addOtherCollege();
-              }}
-            >
-              <label>
-                Other college
-                <input value={otherCollege} onChange={(event) => setOtherCollege(event.target.value)} placeholder="Pierce College" />
-              </label>
-              <label>
-                Course code
-                <input value={otherCode} onChange={(event) => setOtherCode(event.target.value)} placeholder="ENGL 101" />
-              </label>
-              <label>
-                Title
-                <input value={otherTitle} onChange={(event) => setOtherTitle(event.target.value)} placeholder="College Reading and Composition" />
-              </label>
-              <button type="submit" className="production-button" disabled={working}>
-                Save unmatched
-              </button>
-            </form>
-            <form
-              className="course-entry-grid petition-grid"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void addPetition();
-              }}
-            >
-              <label>
-                Petition or substitution
-                <input
-                  value={petitionTitle}
-                  onChange={(event) => setPetitionTitle(event.target.value)}
-                  placeholder="Substitute MATH 140 for STAT C1000"
-                />
-              </label>
-              <button type="submit" className="production-button" disabled={working}>
-                Record as pending
-              </button>
-            </form>
+            <div className="course-extras">
+              <TranscriptImport
+                existingCourseIds={workspace.courses.map((course) => course.catalogCourseId)}
+                onConfirmed={(courses) => {
+                  setWorkspace((current) => {
+                    const next = [...current.courses];
+                    for (const course of courses) {
+                      const index = next.findIndex((item) => item.catalogCourseId === course.catalogCourseId);
+                      if (index >= 0) next[index] = course;
+                      else next.push(course);
+                    }
+                    return { ...current, courses: next };
+                  });
+                }}
+              />
+              {showMoreCredit ? null : (
+                <button type="button" className="production-text-link" onClick={() => setShowMoreCredit(true)}>
+                  Another college or a petition
+                </button>
+              )}
+            </div>
+            {showMoreCredit ? (
+              <>
+                <form
+                  className="course-entry-grid other-college-grid"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void addOtherCollege();
+                  }}
+                >
+                  <label>
+                    Other college
+                    <input value={otherCollege} onChange={(event) => setOtherCollege(event.target.value)} placeholder="Pierce College" />
+                  </label>
+                  <label>
+                    Course code
+                    <input value={otherCode} onChange={(event) => setOtherCode(event.target.value)} placeholder="ENGL 101" />
+                  </label>
+                  <label>
+                    Title
+                    <input value={otherTitle} onChange={(event) => setOtherTitle(event.target.value)} placeholder="College Reading and Composition" />
+                  </label>
+                  <button type="submit" className="production-button" disabled={working}>
+                    Save unmatched
+                  </button>
+                </form>
+                <form
+                  className="course-entry-grid petition-grid"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void addPetition();
+                  }}
+                >
+                  <label>
+                    Petition or substitution
+                    <input
+                      value={petitionTitle}
+                      onChange={(event) => setPetitionTitle(event.target.value)}
+                      placeholder="Substitute MATH 140 for STAT C1000"
+                    />
+                  </label>
+                  <button type="submit" className="production-button" disabled={working}>
+                    Record as pending
+                  </button>
+                </form>
+              </>
+            ) : null}
             <div className="onboarding-actions">
-              <button className="production-button" onClick={() => setStep(2)}>
+              <button className="production-button" onClick={() => (editing ? router.push("/app") : setStep(2))}>
                 Back
               </button>
               <button

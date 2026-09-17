@@ -15,9 +15,8 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
 
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
   await page.getByLabel("College of the Canyons class").selectOption({ index: 0 });
-  await page.getByLabel("Grade").fill("A");
   await page.getByRole("button", { name: "Add course" }).click();
-  await expect(page.locator(".confirmed-course-list")).toContainText("A");
+  await expect(page.locator(".confirmed-course-list")).not.toContainText("No classes yet");
   await page.getByRole("button", { name: "See next semester", exact: true }).click();
   await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toHaveCount(0);
 
@@ -98,6 +97,7 @@ test("transcript rows stay off the plan until the student confirms them", async 
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
 
+  await page.getByRole("button", { name: "Paste a transcript" }).click();
   await page.getByLabel("Paste transcript text").fill("ENGL C1000 Academic Reading and Writing A Fall 2025");
   await page.getByRole("button", { name: "Read transcript" }).click();
   await expect(page.getByTestId("transcript-confirm")).toBeVisible();
@@ -106,16 +106,6 @@ test("transcript rows stay off the plan until the student confirms them", async 
   await expect(page.getByTestId("transcript-confirm")).not.toContainText("MATH 211");
   await expect(page.getByTestId("transcript-confirm")).not.toContainText("COMP SCI 111");
   await page.getByRole("button", { name: "Discard" }).click();
-  await expect(page.getByTestId("transcript-confirm")).toHaveCount(0);
-  await expect(page.locator(".confirmed-course-list")).toContainText("No classes yet");
-
-  await page.getByLabel("PDF or image upload").setInputFiles({
-    name: "transcript.pdf",
-    mimeType: "application/pdf",
-    buffer: Buffer.from("%PDF-1.4\n"),
-  });
-  await page.getByRole("button", { name: "Read transcript" }).click();
-  await expect(page.getByText("Waylo cannot treat a PDF or image as your transcript here.")).toBeVisible();
   await expect(page.getByTestId("transcript-confirm")).toHaveCount(0);
   await expect(page.locator(".confirmed-course-list")).toContainText("No classes yet");
 
@@ -154,7 +144,6 @@ test("UCB Economics primary with USC Business secondary shows divergence badges"
 
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
   await page.getByLabel("College of the Canyons class").selectOption({ index: 0 });
-  await page.getByLabel("Grade").fill("A");
   await page.getByRole("button", { name: "Add course" }).click();
   await page.getByRole("button", { name: "See next semester", exact: true }).click();
   await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toHaveCount(0);

@@ -1,22 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Newsreader, Source_Sans_3 } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { isClerkConfigured } from "@/lib/server/env";
 import "./globals.css";
 import "./production.css";
-
-const sourceSans = Source_Sans_3({
-  subsets: ["latin"],
-  variable: "--font-source-sans",
-  display: "swap",
-});
-
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  variable: "--font-newsreader",
-  display: "swap",
-});
 
 const geistSans = localFont({
   src: "./fonts/Geist-Variable.woff2",
@@ -34,16 +21,16 @@ const geistMono = localFont({
 
 const clerkAppearance = {
   variables: {
-    colorPrimary: "#1b1712",
-    colorBackground: "#f3eee4",
-    colorText: "#1b1712",
-    colorTextSecondary: "#6b6458",
-    colorNeutral: "#1b1712",
-    colorInputBackground: "#f8f4ec",
-    colorInputText: "#1b1712",
-    borderRadius: "2px",
-    fontFamily: "var(--font-source-sans), ui-sans-serif, system-ui, sans-serif",
-    fontFamilyButtons: "var(--font-source-sans), ui-sans-serif, system-ui, sans-serif",
+    colorPrimary: "#111111",
+    colorBackground: "#ffffff",
+    colorText: "#111111",
+    colorTextSecondary: "#6b6b6b",
+    colorNeutral: "#111111",
+    colorInputBackground: "#ffffff",
+    colorInputText: "#111111",
+    borderRadius: "24px",
+    fontFamily: "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif",
+    fontFamilyButtons: "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif",
   },
   elements: {
     cardBox: {
@@ -56,11 +43,12 @@ const clerkAppearance = {
       boxShadow: "none",
     },
     headerTitle: {
-      fontFamily: "var(--font-newsreader), Georgia, serif",
-      fontWeight: "500",
+      fontFamily: "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif",
+      fontWeight: "700",
     },
     formButtonPrimary: {
-      background: "#1b1712",
+      background: "#111111",
+      borderRadius: "999px",
       fontWeight: "650",
     },
     footer: {
@@ -90,7 +78,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body
-        className={`${sourceSans.variable} ${newsreader.variable} ${geistSans.variable} ${geistMono.variable} ${sourceSans.className}`}
+        className={`${geistSans.variable} ${geistMono.variable} ${geistSans.className}`}
       >
         {content}
       </body>

@@ -97,6 +97,7 @@ test("completed COC, C1000, unmatched, AP, other-college, and petition stay hone
   await signUp(page, testUser);
   await continueToCourses(page);
 
+  await page.getByRole("button", { name: "Paste a transcript" }).click();
   await page.getByLabel("Paste transcript text").fill("ENGL C1000 Academic Reading and Writing A Fall 2025");
   await page.getByRole("button", { name: "Read transcript" }).click();
   await expect(page.getByTestId("transcript-confirm")).toBeVisible();
@@ -107,12 +108,10 @@ test("completed COC, C1000, unmatched, AP, other-college, and petition stay hone
   await expect(page.locator(".confirmed-course-list")).toContainText("ENGL C1000");
 
   await page.getByTestId("coc-course-select").selectOption("coc-math-211");
-  await page.getByLabel("Grade").fill("A");
   await page.getByRole("button", { name: "Add course" }).click();
   await expect(page.locator(".confirmed-course-list")).toContainText("MATH 211");
 
   await page.getByTestId("coc-course-select").selectOption("coc-stat-c1000");
-  await page.getByLabel("Grade").fill("A");
   await page.getByRole("button", { name: "Add course" }).click();
   await expect(page.locator(".confirmed-course-list")).toContainText("STAT C1000");
 
@@ -125,6 +124,7 @@ test("completed COC, C1000, unmatched, AP, other-college, and petition stay hone
   await expect(page.locator(".confirmed-course-list")).toContainText("AP Calculus AB");
   await expect(page.locator(".confirmed-course-list")).toContainText("counselor confirmation required");
 
+  await page.getByRole("button", { name: "Another college or a petition" }).click();
   await page.getByLabel("Other college").fill("Pierce College");
   await page.getByLabel("Course code").fill("ENGL 101");
   await page.getByLabel("Title").fill("College Reading and Composition");
