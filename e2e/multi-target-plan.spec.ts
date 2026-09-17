@@ -109,8 +109,7 @@ test("multi-target Save this plan reaches the dashboard and shows strategy", asy
   await expect(page.getByText(/UC Berkeley Economics/).first()).toBeVisible();
   await expect(page.locator(".course-why").first()).toBeVisible();
   await expect(page.locator(".course-why").first()).toHaveText(/This is |This covers |Counts toward |Needed for /);
-  await expect(page.getByRole("heading", { name: "Already counted" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "See why each class is here" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Already finished" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Read the strategy note" })).toBeVisible();
   await page.getByRole("link", { name: "Read the strategy note" }).click();
   await expect(page.locator("#admissions-strategy")).toBeVisible();

@@ -4,6 +4,7 @@ export * from "@/lib/articulation/units";
 export * from "@/lib/articulation/graph";
 export * from "@/lib/articulation/multi-target-plan";
 export * from "@/lib/articulation/rules";
+export * from "@/lib/articulation/student-history";
 export {
   ARTICULATION_RULE_SEED,
   COC_CATALOG_SEED,

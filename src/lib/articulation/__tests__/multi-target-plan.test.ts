@@ -114,4 +114,24 @@ describe("multi-target planner", () => {
     expect(multi.divergencePoints.map((point) => point.message).join("\n")).not.toMatch(/usc:business_administration/);
     expect(multi.divergencePoints.some((point) => point.message.includes("University of Southern California"))).toBe(true);
   });
+
+  it("marks only history-completed requirements as already finished", () => {
+    const plan = computeMultiTargetPlan({
+      history: [{ courseId: "coc-math-211", code: "MATH-211", completed: true }],
+      primaryTargetId: ucbEcon,
+      secondaryTargetIds: [uscBus],
+      includeSecondaryDivergence: true,
+      maxUnitsPerTerm: 15,
+      graph,
+    });
+    const calc1 = plan.auditSummary
+      .find((audit) => audit.targetMajorId === ucbEcon)
+      ?.requirementStates.find((requirement) => requirement.label === "Calculus I");
+    const calc2 = plan.auditSummary
+      .find((audit) => audit.targetMajorId === ucbEcon)
+      ?.requirementStates.find((requirement) => requirement.label === "Calculus II");
+    expect(calc1?.historySatisfied).toBe(true);
+    expect(calc2?.historySatisfied).toBe(false);
+    expect(plan.schedule.terms.flatMap((term) => term.courses.map((course) => course.code))).not.toContain("MATH-211");
+  });
 });

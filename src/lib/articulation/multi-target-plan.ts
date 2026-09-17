@@ -308,11 +308,13 @@ function buildAuditSummaries(
     const unitSystem = institution?.unitSystem ?? "semester";
     const rules = graph.rulesByTargetMajorId.get(targetMajorId) ?? [];
     const requirementStates = rules.map((rule) => {
+      const fromHistory = evaluateExpression(rule.expression, completed);
       const result = evaluateExpression(rule.expression, available);
       return {
         requirementKey: rule.requirementKey,
         label: rule.label,
         satisfied: result.satisfied,
+        historySatisfied: fromHistory.satisfied,
         verificationTier: rule.verificationTier,
         missingCourseCodes: result.missingCourseCodes,
       };

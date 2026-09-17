@@ -62,7 +62,15 @@ describe("student-facing copy", () => {
         missingCourseCodes: [],
         verificationTier: "VERIFIED_ASSIST",
       }),
-    ).toBe("already done");
+    ).toBe("on this plan");
+    expect(
+      requirementProgressLabel({
+        satisfied: true,
+        historySatisfied: true,
+        missingCourseCodes: [],
+        verificationTier: "VERIFIED_ASSIST",
+      }),
+    ).toBe("you already finished this");
     expect(
       requirementProgressLabel({
         satisfied: false,

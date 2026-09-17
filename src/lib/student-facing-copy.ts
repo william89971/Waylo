@@ -99,10 +99,12 @@ export function formatCourseCode(graph: ArticulationGraph, courseIdOrCode: strin
 
 export function requirementProgressLabel(requirement: {
   satisfied: boolean;
+  historySatisfied?: boolean;
   missingCourseCodes: string[];
   verificationTier: VerificationTier;
 }): string {
-  if (requirement.satisfied) return "already done";
+  if (requirement.historySatisfied) return "you already finished this";
+  if (requirement.satisfied) return "on this plan";
   const missing = requirement.missingCourseCodes.filter((code) => !PLACEHOLDER_COURSE_CODES.has(code));
   if (!missing.length) {
     return requirement.verificationTier === "NEEDS_COUNSELOR_CONFIRMATION"

@@ -64,6 +64,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           effectiveYear: rule?.effectiveYear ?? "—",
           sourceType: rule?.sourceType ?? "—",
           satisfied: requirement.satisfied,
+          historySatisfied: requirement.historySatisfied,
         };
       }),
     );

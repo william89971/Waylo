@@ -5,6 +5,7 @@ import { evidenceById } from "@/lib/academic-data";
 import { buildAdmissionsStrategy } from "@/lib/admissions-strategy";
 import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
 import { pickRuleForCourse } from "@/lib/articulation/rules";
+import { unmatchedCompletedCourses } from "@/lib/articulation/student-history";
 import type { ArticulationGraph, VerificationTier } from "@/lib/articulation/types";
 import type { SavedPlan, SelectableTarget } from "@/lib/production-types";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
@@ -46,13 +47,28 @@ function whyThisClass(
   return courseCountsLine(schoolLabels);
 }
 
+function primaryEvidenceTier(
+  course: SavedPlan["route"]["terms"][number]["courses"][number],
+  plan: SavedPlan,
+  graph: ArticulationGraph | null,
+  primaryId: string,
+): VerificationTier | undefined {
+  const scheduled = scheduledFor(course, plan);
+  if (scheduled && graph) {
+    const rule = pickRuleForCourse(graph.rulesByTargetMajorId.get(primaryId) ?? [], scheduled.code);
+    return rule?.verificationTier ?? scheduled.verificationTier;
+  }
+  return scheduled?.verificationTier;
+}
+
 function courseEvidenceState(
   course: SavedPlan["route"]["terms"][number]["courses"][number],
   plan: SavedPlan,
+  graph: ArticulationGraph | null,
+  primaryId: string,
 ): "verified" | "suggestion" | "review" {
-  const scheduled = scheduledFor(course, plan);
-  if (scheduled) {
-    const tier: VerificationTier = scheduled.verificationTier;
+  const tier = primaryEvidenceTier(course, plan, graph, primaryId);
+  if (tier) {
     if (tier === "VERIFIED_ASSIST" || tier === "VERIFIED_INSTITUTIONAL_GUIDE") return "verified";
     if (tier === "NEEDS_COUNSELOR_CONFIRMATION") return "review";
     return "suggestion";
@@ -84,8 +100,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         (count, audit) =>
           count +
           audit.requirementStates.filter(
-            (requirement) =>
-              !requirement.satisfied || requirement.verificationTier === "NEEDS_COUNSELOR_CONFIRMATION",
+            (requirement) => requirement.verificationTier === "NEEDS_COUNSELOR_CONFIRMATION" && !requirement.historySatisfied,
           ).length,
         0,
       )
@@ -97,18 +112,30 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     reviewItemCount: reviewCount,
   });
   const saved = (await searchParams).saved === "1";
-  const whyHref = plan.multiTargetPlan ? "/app/plan" : "/app/evidence";
   const askCounselor = strategy?.counselor.items[0];
   const alreadyDone = (plan.multiTargetPlan?.auditSummary ?? [])
     .map((audit) => {
       const labels = audit.requirementStates
-        .filter((requirement) => requirement.satisfied)
+        .filter((requirement) => requirement.historySatisfied)
         .map((requirement) => requirement.label)
         .slice(0, 3);
       return alreadyDoneLine(labelFor(targets, audit.targetMajorId), labels);
     })
     .filter(Boolean);
+  const stillMissing = (plan.multiTargetPlan?.auditSummary ?? []).flatMap((audit) =>
+    audit.requirementStates
+      .filter((requirement) => !requirement.satisfied)
+      .map((requirement) => {
+        const school = labelFor(targets, audit.targetMajorId);
+        if (requirement.verificationTier === "NEEDS_COUNSELOR_CONFIRMATION") {
+          return `${requirement.label} at ${school} — ask a counselor. Waylo cannot verify this.`;
+        }
+        return `${requirement.label} at ${school} is still open.`;
+      }),
+  );
+  const unmatched = graph ? unmatchedCompletedCourses(workspace.courses, graph) : [];
   const inProgressCount = workspace.courses.filter((course) => course.status === "in_progress").length;
+  const juniorStandingMet = plan.multiTargetPlan?.auditSummary.some((audit) => audit.juniorStandingMet) ?? false;
 
   return (
     <div className="production-page dashboard-page">
@@ -134,8 +161,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </div>
           <div className="course-table" role="table" aria-label="Recommended semester courses">
             {nextTerm?.courses.map((course) => {
-              const state = courseEvidenceState(course, plan);
+              const state = courseEvidenceState(course, plan, graph, primaryId);
               const scheduled = scheduledFor(course, plan);
+              const tier = primaryEvidenceTier(course, plan, graph, primaryId);
               const whyLink = scheduled
                 ? `/app/plan?course=${encodeURIComponent(scheduled.code)}`
                 : `/app/evidence?course=${encodeURIComponent(course.courseId)}`;
@@ -148,7 +176,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     </small>
                     <p className="course-why">{whyThisClass(course, plan, targets, graph, primaryLabel)}</p>
                   </div>
-                  <EvidenceStatus state={state} tier={scheduled?.verificationTier} />
+                  <EvidenceStatus state={state} tier={tier} />
                   <Link href={whyLink}>Why this class</Link>
                 </div>
               );
@@ -159,7 +187,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             </div>
           </div>
           <div className="already-counted">
-            <h2>Already counted</h2>
+            <h2>Already finished</h2>
             {alreadyDone.length ? (
               <ul>
                 {alreadyDone.map((line) => (
@@ -169,11 +197,28 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             ) : (
               <p>
                 {completedCount
-                  ? "The classes you added are saved, but they do not yet close a listed major-prep requirement."
+                  ? "Your finished classes are saved. None of them close a listed major-prep requirement yet."
                   : "No finished classes yet. Add them under Your classes if you have already taken College of the Canyons courses."}
               </p>
             )}
+            {unmatched.length ? (
+              <p>
+                Saved but not matched to a listed requirement:{" "}
+                {unmatched.map((course) => `${course.code} ${course.title}`).join("; ")}. Ask a counselor whether
+                those count.
+              </p>
+            ) : null}
           </div>
+          {stillMissing.length ? (
+            <div className="already-counted">
+              <h2>Still missing after this plan</h2>
+              <ul>
+                {stillMissing.slice(0, 4).map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <div className="dashboard-actions">
             <Link href="/app/plan" className="production-button primary">
               Review semester plan
@@ -184,21 +229,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </div>
         </section>
         <aside className="dashboard-rail">
-          <section>
-            <h2>Why these courses</h2>
-            <p>
-              They are the next required prep for {primaryLabel}
-              {secondaryLabels.length ? `, while keeping ${secondaryLabels.join(" and ")} in view` : ""}. They stay
-              inside your unit limit.
-            </p>
-            <Link href={whyHref}>See why each class is here</Link>
-          </section>
           {reviewCount > 0 ? (
             <section className="rail-review">
               <strong>{reviewCount}</strong>
               <span>
-                {reviewCount === 1 ? "item still needs a counselor" : "items still need a counselor"} before you
-                enroll
+                {reviewCount === 1 ? "item Waylo cannot verify" : "items Waylo cannot verify"} — ask a counselor
               </span>
               <p>{askCounselor ?? "Ask a counselor to confirm anything Waylo could not verify."}</p>
               <Link href="/app/plan#counselor-packet">What to ask</Link>
@@ -209,24 +244,32 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <span>Bring this list to a counselor before you enroll. Waylo is not an official degree audit.</span>
             </section>
           )}
-          {strategy ? (
-            <section className="strategy-teaser">
-              <h2>What to ask your counselor</h2>
-              <p>{strategy.teaser}</p>
-              <Link href="/app/plan#admissions-strategy">Read the strategy note</Link>
-            </section>
-          ) : null}
           <section>
             <strong>{completedCount}</strong>
             <span>
               {completedCount === 1 ? "finished College of the Canyons class" : "finished College of the Canyons classes"}
               {inProgressCount ? ` · ${inProgressCount} in progress` : ""}
             </span>
+            <Link href="/app/courses">Update your classes</Link>
           </section>
-          <section>
-            <strong>{route.estimatedTransferTerm}</strong>
-            <span>estimated transfer term — confirm with a counselor</span>
-          </section>
+          {juniorStandingMet ? (
+            <section>
+              <strong>{route.estimatedTransferTerm}</strong>
+              <span>earliest term this plan finishes listed major prep — not an admission date</span>
+            </section>
+          ) : (
+            <section>
+              <strong>Junior standing not met</strong>
+              <span>
+                This plan tracks major prep. It does not estimate a transfer term until unit minimums are actually met.
+              </span>
+            </section>
+          )}
+          {strategy ? (
+            <section>
+              <Link href="/app/plan#admissions-strategy">Read the strategy note</Link>
+            </section>
+          ) : null}
         </aside>
       </div>
       <p className="saved-meta">

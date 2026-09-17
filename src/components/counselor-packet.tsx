@@ -10,6 +10,7 @@ export interface CounselorCitation {
   effectiveYear: string;
   sourceType: string;
   satisfied: boolean;
+  historySatisfied?: boolean;
 }
 
 export interface CounselorScheduleRow {
@@ -114,7 +115,7 @@ export function CounselorPacket({
               <td>{citation.targetLabel}</td>
               <td>{citation.label}</td>
               <td>
-                {citation.satisfied ? "On the plan · " : "Still open · "}
+                {citation.historySatisfied ? "Finished · " : citation.satisfied ? "On this plan · " : "Still open · "}
                 {VERIFICATION_SHORT[citation.verificationTier]}
               </td>
               <td>{citation.effectiveYear}</td>

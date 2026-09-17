@@ -185,6 +185,7 @@ export interface TargetAuditSummary {
     requirementKey: string;
     label: string;
     satisfied: boolean;
+    historySatisfied: boolean;
     verificationTier: VerificationTier;
     missingCourseCodes: string[];
   }>;

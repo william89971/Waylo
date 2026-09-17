@@ -1,6 +1,7 @@
 import { evidence } from "@/lib/academic-data";
 import { loadActiveArticulationGraph } from "@/lib/articulation/load-graph";
 import { computeMultiTargetPlan } from "@/lib/articulation/multi-target-plan";
+import { graphCodeForStudentCourse } from "@/lib/articulation/student-history";
 import { targetMajorId } from "@/lib/articulation/types";
 import { planningEngine } from "@/lib/planning-engine";
 import type { StudentProfile } from "@/lib/domain";
@@ -52,12 +53,15 @@ export async function generateMultiTargetProductionPlan(workspace: StudentWorksp
   const graph = await loadActiveArticulationGraph();
   const primaryTargetId = workspace.primaryTargetId || DEFAULT_PRIMARY_TARGET_ID;
   const secondaryTargetIds = workspace.secondaryTargetIds ?? [];
-  const history = workspace.courses.map((course) => ({
-    courseId: course.catalogCourseId,
-    code: graph.courseById.get(course.catalogCourseId)?.code
-      ?? course.code.replace(/\s+/g, "-").toUpperCase(),
-    completed: course.status === "completed",
-  }));
+  const history = workspace.courses.flatMap((course) => {
+    const code = graphCodeForStudentCourse(course, graph);
+    if (!code) return [];
+    return [{
+      courseId: graph.courseByCode.get(code)?.id ?? course.catalogCourseId,
+      code,
+      completed: course.status === "completed",
+    }];
+  });
 
   return computeMultiTargetPlan({
     history,
