@@ -21,6 +21,7 @@ import { getAuthenticatedUserId } from "@/lib/server/auth";
 import { generateMultiTargetProductionPlan, listSelectableTargets, MULTI_TARGET_DATA_RELEASE } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
 import { courseWhySentence, formatSelectableTargetLabel, isOfficialVerifiedSource, officialSourceLabel } from "@/lib/student-facing-copy";
+import { loadPhrase } from "@/lib/production-routes";
 
 export const dynamic = "force-dynamic";
 
@@ -152,16 +153,31 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   if (!workspace.profile.onboardingCompleted) redirect("/onboarding");
   const plan = workspace.activePlan;
   if (!plan) redirect("/app/plan?new=1");
-  const route = plan.route;
-  const nextTerm = route.terms[0];
-  const [targets, graph, generatedAudit] = await Promise.all([
+  const [targets, graph, live] = await Promise.all([
     listSelectableTargets(),
     loadActiveArticulationGraph(),
-    plan.multiTargetPlan ? Promise.resolve(undefined) : generateMultiTargetProductionPlan(workspace),
+    generateMultiTargetProductionPlan(workspace),
   ]);
-  const auditPlan = plan.multiTargetPlan ?? generatedAudit;
-  const primaryId = plan.primaryTargetId ?? workspace.primaryTargetId;
-  const secondaryIds = plan.secondaryTargetIds ?? workspace.secondaryTargetIds ?? [];
+  const auditPlan = live;
+  const liveNext = live.schedule.terms[0];
+  const nextTerm = liveNext
+    ? {
+        label: liveNext.label,
+        totalUnits: liveNext.totalSemesterUnits,
+        courses: liveNext.courses.map((course) => ({
+          courseId: course.courseId,
+          code: course.code,
+          title: course.title,
+          units: course.semesterUnits,
+          category: course.bucket,
+          status: "planned" as const,
+          evidenceIds: [] as string[],
+        })),
+      }
+    : undefined;
+  const route = { ...plan.route, terms: nextTerm ? [nextTerm, ...plan.route.terms.slice(1)] : plan.route.terms };
+  const primaryId = workspace.primaryTargetId;
+  const secondaryIds = workspace.secondaryTargetIds ?? [];
   const primaryLabel = labelFor(targets, primaryId);
   const secondaryLabels = secondaryIds.map((id) => labelFor(targets, id));
   const reviewCount = (auditPlan?.auditSummary ?? []).reduce(
@@ -175,7 +191,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const completedCount = workspace.courses.filter((course) => course.status === "completed").length;
   const strategy = buildAdmissionsStrategy(workspace, targets, {
     hasValidPlan: true,
-    plannedCourseCodes: route.terms.flatMap((term) => term.courses.map((course) => course.code)),
+    plannedCourseCodes: live.schedule.terms.flatMap((term) => term.courses.map((course) => course.code)),
     reviewItemCount: reviewCount,
   });
   const saved = (await searchParams).saved === "1";
@@ -287,6 +303,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <p>
           {primaryLabel}
           {secondaryLabels.length ? ` · also ${secondaryLabels.join(", ")}` : ""}
+          {` · ${loadPhrase(workspace.preferences.maxUnits)}`}
+          {workspace.preferences.summerEnrollment ? " · summer" : ""}
         </p>
       </header>
       <section className="recommended-semester">
@@ -318,6 +336,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {strategy ? (
             <Link href="/app/plan#admissions-strategy">Read the strategy note</Link>
           ) : null}
+          <Link href="/app/plan#routes">See other routes</Link>
           <Link href="/onboarding?units=1">Change class load</Link>
         </nav>
         <div className="already-counted">

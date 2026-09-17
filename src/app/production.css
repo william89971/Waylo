@@ -837,6 +837,10 @@ a:hover { color: var(--p-ink-deep); }
   text-decoration: none;
 }
 .home-followups a:hover { color: var(--p-ink); text-decoration: underline; }
+.route-picker { margin: 0 0 28px; scroll-margin-top: 80px; }
+.route-picker .section-heading { margin-bottom: 12px; }
+.route-picker .selection-row small { display: grid; gap: 4px; }
+.route-picker .production-error { margin-top: 12px; }
 .recommended-semester .counselor-handoff { margin-top: 22px; }
 .evidence-state { display: inline-flex; align-items: center; gap: 7px; font-size: 16px; font-weight: 650; }
 .evidence-state svg { width: 18px; height: 18px; }

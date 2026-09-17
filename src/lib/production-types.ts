@@ -40,6 +40,12 @@ export const TransferTargetsInputSchema = z.object({
 export const PlanActionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("generate") }),
   z.object({ action: z.literal("save"), strategy: z.enum(["fastest", "overlap", "balanced"]) }),
+  z.object({
+    action: z.literal("choose_route"),
+    maxUnits: z.number().int().min(6).max(20),
+    summerEnrollment: z.boolean(),
+    includeSecondaryDivergence: z.boolean(),
+  }),
 ]);
 
 export const SavedPlanSchema = z.object({
