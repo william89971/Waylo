@@ -1,6 +1,5 @@
 "use client";
 
-import { AlertCircle, Check, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VerificationTier } from "@/lib/articulation/types";
 import { VERIFICATION_SHORT } from "@/lib/student-facing-copy";
@@ -32,41 +31,21 @@ export type MultiCampusMatrixProps = {
   onSelectCourse: (courseCode: string) => void;
 };
 
-function StatusGlyph({ cell }: { cell: MatrixCampusCell }) {
+function MatrixPill({ cell }: { cell: MatrixCampusCell }) {
   if (cell.status === "unrequired") {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-muted-foreground" title="Not required for this target">
-        <Minus className="size-4 shrink-0" aria-hidden />
-        <span className="sr-only">Not required</span>
-      </span>
-    );
+    return <span className="matrix-pill unrequired">Not required</span>;
   }
-
+  const title = cell.verificationTier ? VERIFICATION_SHORT[cell.verificationTier] : undefined;
   if (cell.status === "review") {
     return (
-      <span
-        className="inline-flex items-center gap-1.5 text-amber-700"
-        title={cell.verificationTier ? VERIFICATION_SHORT[cell.verificationTier] : "Needs counselor review"}
-      >
-        <AlertCircle className="size-4 shrink-0" aria-hidden />
-        <span className="sr-only">Needs counselor review</span>
-        {cell.equivalency ? (
-          <span className="font-mono text-[15px] tabular-nums tracking-tight">{cell.equivalency}</span>
-        ) : null}
+      <span className="matrix-pill review" title={title}>
+        {cell.equivalency ?? "Ask a counselor"}
       </span>
     );
   }
-
   return (
-    <span
-      className="inline-flex items-center gap-1.5 text-emerald-700"
-      title={cell.verificationTier ? VERIFICATION_SHORT[cell.verificationTier] : "Verified"}
-    >
-      <Check className="size-4 shrink-0" strokeWidth={2.5} aria-hidden />
-      <span className="sr-only">Verified</span>
-      {cell.equivalency ? (
-        <span className="font-mono text-[15px] tabular-nums tracking-tight">{cell.equivalency}</span>
-      ) : null}
+    <span className="matrix-pill verified" title={title}>
+      {cell.equivalency ?? "Official"}
     </span>
   );
 }
@@ -165,7 +144,7 @@ export function MultiCampusMatrix({
                   const cell = row.cells[campus.targetMajorId] ?? { status: "unrequired" as const };
                   return (
                     <td key={campus.targetMajorId} className="px-3 py-3.5">
-                      <StatusGlyph cell={cell} />
+                      <MatrixPill cell={cell} />
                     </td>
                   );
                 })}

@@ -99,7 +99,8 @@ describe("admissions strategy", () => {
     expect(text).toMatch(/does not estimate how an office will decide/i);
     expect(text).not.toMatch(/stronger story than/i);
     expect(text).not.toMatch(/become president/i);
-    expect(strategy!.counselor.items.some((item) => item.includes("Confirm this note"))).toBe(true);
+    expect(strategy!.counselor.items.some((item) => item.includes("Confirm UC Berkeley"))).toBe(true);
+    expect(strategy!.missingGradeWarning).toMatch(/1 completed course missing a grade/);
     expect(strategy!.disclaimer).toMatch(/not verified articulation/i);
     expect(strategy!.disclaimer).toMatch(/not an admission prediction/i);
     for (const chunk of [strategy!.grades.body, strategy!.teaser]) {
@@ -119,7 +120,7 @@ describe("admissions strategy", () => {
     );
     expect(strategy?.counselor.items.join(" ")).toMatch(/planning estimate/i);
     expect(strategy?.counselor.items.join(" ")).toMatch(/does not recognize IGETC/);
-    expect(strategy?.counselor.items.join(" ")).toMatch(/No formal ASSIST agreement/);
+    expect(strategy?.counselor.items.join(" ")).toMatch(/Confirm Stanford University/);
   });
 
   it("accepts optional transfer terms in Fall|Spring|Summer YYYY form", () => {

@@ -7,6 +7,7 @@ export type StrategyBlock = {
 
 export type AdmissionsStrategy = {
   grades: StrategyBlock;
+  missingGradeWarning: string | null;
   counselor: { title: string; items: string[] };
   disclaimer: string;
   teaser: string;
@@ -93,7 +94,7 @@ export function buildAdmissionsStrategy(
     );
   }
   for (const { target, note } of constraintQuestions) {
-    counselorItems.push(`Confirm this note for ${target.institutionName} ${target.displayName}: ${note}`);
+    counselorItems.push(`Confirm ${target.institutionName}: ${note.replace(/\.$/, "")}.`);
   }
   if (hasArchetype) {
     counselorItems.push(
@@ -116,6 +117,9 @@ export function buildAdmissionsStrategy(
       title: "Coursework and grades come first",
       body: gradeBits.join(" "),
     },
+    missingGradeWarning: missingGrades
+      ? `${missingGrades} completed ${missingGrades === 1 ? "course missing a grade" : "courses missing grades"} — verify marks before finalizing.`
+      : null,
     counselor: {
       title: "What to take to a counselor",
       items: counselorItems.slice(0, 4),
