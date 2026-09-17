@@ -7,7 +7,6 @@ export type StrategyBlock = {
 
 export type AdmissionsStrategy = {
   grades: StrategyBlock;
-  activities: StrategyBlock;
   counselor: { title: string; items: string[] };
   disclaimer: string;
   teaser: string;
@@ -87,11 +86,6 @@ export function buildAdmissionsStrategy(
     );
   }
 
-  const activityBody = [
-    `Waylo does not store clubs, jobs, or activities. For planning around ${goal}, a useful way to think about activities is depth, initiative, responsibility, impact, and a coherent personal story — rather than a long list of memberships or officer titles.`,
-    "That is guidance for how to spend limited time, not a formula for how an admissions office will rank one activity against another. A title, leadership role, GPA, or any activity does not predict or guarantee admission.",
-  ].join(" ");
-
   const counselorItems: string[] = [];
   if (context.reviewItemCount > 0) {
     counselorItems.push(
@@ -122,16 +116,12 @@ export function buildAdmissionsStrategy(
       title: "Coursework and grades come first",
       body: gradeBits.join(" "),
     },
-    activities: {
-      title: "Activities: depth over a long list",
-      body: activityBody,
-    },
     counselor: {
       title: "What to take to a counselor",
       items: counselorItems.slice(0, 4),
     },
     disclaimer:
-      "Planning guidance — not verified articulation and not an admission prediction. Waylo does not estimate how an office will decide, and it does not replace a College of the Canyons counselor. A title, leadership role, GPA, or activity does not predict or guarantee admission.",
-    teaser: `For ${goal}, coursework and grades on this plan come first. Activities are worth thinking about as depth and a coherent story, not extra titles.`,
+      "Planning guidance — not verified articulation and not an admission prediction. Waylo does not estimate how an office will decide, and it does not replace a College of the Canyons counselor.",
+    teaser: `For ${goal}, coursework and grades on this plan come first.`,
   };
 }

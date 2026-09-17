@@ -14,29 +14,28 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
-  await page.getByLabel("Course").selectOption({ index: 0 });
+  await page.getByLabel("College of the Canyons class").selectOption({ index: 0 });
   await page.getByLabel("Grade").fill("A");
   await page.getByRole("button", { name: "Add course" }).click();
   await expect(page.locator(".confirmed-course-list")).toContainText("A");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
-  await page.getByLabel("Maximum units per semester").fill("15");
-  await page.getByRole("button", { name: "View proposed schedule", exact: true }).click();
-
-  await expect(page.getByRole("heading", { name: "Review your transfer plan" })).toBeVisible();
-  await expect(page.getByText("Proposed — not saved")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Review evidence" })).toBeVisible();
-  await page.getByRole("link", { name: "Review evidence" }).click();
-  await expect(page.getByRole("heading", { name: "Evidence behind your plan" })).toBeVisible();
-  await expect(page.getByText(/ASSIST or counselor confirmation needed/).first()).toBeVisible();
-  await page.goBack();
-  await page.getByRole("button", { name: "Save this plan" }).click();
+  await expect(page.getByLabel("Weekly work hours")).toHaveCount(0);
+  await page.getByRole("button", { name: "See next semester", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
   await expect(page.getByText("Plan saved."), "save confirmation should be visible").toBeVisible();
   await expect(page.locator(".saved-meta")).toContainText("version 1");
+  await expect(page.getByRole("button", { name: "Why this class?" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Take this to your counselor" })).toBeVisible();
+  await page.getByRole("link", { name: "See all terms" }).click();
+  await expect(page.getByRole("heading", { name: /All terms|Proposed sequence/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Review evidence" })).toBeVisible();
+  await page.getByRole("link", { name: "Review evidence" }).click();
+  await expect(page.getByRole("heading", { name: "Evidence behind your plan" })).toBeVisible();
+  await expect(page.getByText(/ASSIST or counselor confirmation needed/).first()).toBeVisible();
+  await page.goto("/app");
   await expect(page.getByRole("link", { name: "Read the strategy note" })).toBeVisible();
   await page.getByRole("link", { name: "Read the strategy note" }).click();
   await expect(page.locator("#admissions-strategy")).toBeVisible();
@@ -84,6 +83,49 @@ test("server ownership prevents one test user from reading another user workspac
   expect(secondBody.workspace.courses).toEqual([]);
 });
 
+test("transcript rows stay off the plan until the student confirms them", async ({ browser }, testInfo) => {
+  test.setTimeout(180_000);
+  const testUser = `test-tr-${testInfo.project.name}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await page.goto(`/sign-up?testUser=${testUser}`);
+  await page.getByRole("button", { name: "Create test account" }).click();
+  await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
+
+  await page.getByLabel("Paste transcript text").fill("ENGL C1000 Academic Reading and Writing A Fall 2025");
+  await page.getByRole("button", { name: "Read transcript" }).click();
+  await expect(page.getByTestId("transcript-confirm")).toBeVisible();
+  await expect(page.getByText(/Nothing is added to your plan until you confirm/)).toBeVisible();
+  await expect(page.getByTestId("transcript-confirm")).toContainText("ENGL C1000");
+  await expect(page.getByTestId("transcript-confirm")).not.toContainText("MATH 211");
+  await expect(page.getByTestId("transcript-confirm")).not.toContainText("COMP SCI 111");
+  await page.getByRole("button", { name: "Discard" }).click();
+  await expect(page.getByTestId("transcript-confirm")).toHaveCount(0);
+  await expect(page.locator(".confirmed-course-list")).toContainText("No classes yet");
+
+  await page.getByLabel("PDF or image upload").setInputFiles({
+    name: "transcript.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4\n"),
+  });
+  await page.getByRole("button", { name: "Read transcript" }).click();
+  await expect(page.getByText("Waylo cannot treat a PDF or image as your transcript here.")).toBeVisible();
+  await expect(page.getByTestId("transcript-confirm")).toHaveCount(0);
+  await expect(page.locator(".confirmed-course-list")).toContainText("No classes yet");
+
+  await page.getByLabel("Paste transcript text").fill("ENGL C1000 Academic Reading and Writing A Fall 2025");
+  await page.getByRole("button", { name: "Read transcript" }).click();
+  await expect(page.getByTestId("transcript-confirm")).toBeVisible();
+  await page.getByRole("button", { name: "Confirm and add to my record" }).click();
+  await expect(page.locator(".confirmed-course-list")).toContainText("ENGL");
+  await expect(page.locator(".confirmed-course-list")).not.toContainText("No classes yet");
+
+  await context.close();
+});
+
 test("UCB Economics primary with USC Business secondary shows divergence badges", async ({ browser }, testInfo) => {
   test.setTimeout(180_000);
   // test-auth only accepts ids matching /^test-[a-z0-9-]{1,64}$/
@@ -108,15 +150,17 @@ test("UCB Economics primary with USC Business secondary shows divergence badges"
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
-  await page.getByLabel("Course").selectOption({ index: 0 });
+  await page.getByLabel("College of the Canyons class").selectOption({ index: 0 });
   await page.getByLabel("Grade").fill("A");
   await page.getByRole("button", { name: "Add course" }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "How heavy can next semester be?" })).toBeVisible();
-  await page.getByRole("button", { name: "View proposed schedule", exact: true }).click();
+  await page.getByRole("button", { name: "See next semester", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: /Review this plan|Your plan/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
+  await page.getByRole("link", { name: "See all terms" }).click();
+  await expect(page.getByRole("heading", { name: /All terms|Proposed sequence/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "How each class counts" })).toBeVisible();
   await expect(page.getByTestId("articulation-matrix")).toBeVisible();
   const mathCode = page.locator('[data-testid="articulation-matrix"] .font-mono.tabular-nums', {

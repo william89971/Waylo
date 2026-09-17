@@ -9,10 +9,6 @@ export function AdmissionsStrategyPanel({ strategy }: { strategy: AdmissionsStra
         <p>{strategy.grades.body}</p>
       </article>
       <article className="strategy-block">
-        <h3>{strategy.activities.title}</h3>
-        <p>{strategy.activities.body}</p>
-      </article>
-      <article className="strategy-block">
         <h3>{strategy.counselor.title}</h3>
         <ol>
           {strategy.counselor.items.map((item) => (

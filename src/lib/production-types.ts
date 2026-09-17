@@ -14,6 +14,14 @@ export const ProductionCourseInputSchema = z.object({
   grade: z.string().trim().max(4).nullable().default(null),
   term: z.string().trim().min(1).max(40),
   status: z.enum(["completed", "in_progress"]),
+  code: z.string().trim().min(1).max(80).optional(),
+  title: z.string().trim().min(1).max(160).optional(),
+  units: z.number().min(0).max(20).optional(),
+  source: z.enum(["manual", "transcript", "ap", "other_college", "petition"]).optional(),
+});
+
+export const ConfirmCoursesSchema = z.object({
+  courses: z.array(ProductionCourseInputSchema).min(1).max(80),
 });
 
 export const PlanningPreferencesInputSchema = z.object({
@@ -49,6 +57,7 @@ export const SavedPlanSchema = z.object({
 
 export type OnboardingProfile = z.infer<typeof OnboardingProfileSchema>;
 export type ProductionCourseInput = z.infer<typeof ProductionCourseInputSchema>;
+export type ConfirmCoursesInput = z.infer<typeof ConfirmCoursesSchema>;
 export type PlanningPreferencesInput = z.infer<typeof PlanningPreferencesInputSchema>;
 export type TransferTargetsInput = z.infer<typeof TransferTargetsInputSchema>;
 export type SavedPlan = z.infer<typeof SavedPlanSchema>;
@@ -59,6 +68,7 @@ export interface ProductionCourse extends ProductionCourseInput {
   title: string;
   units: number;
   matchStatus: "verified" | "partial" | "uncertain" | "unavailable";
+  source: "manual" | "transcript" | "ap" | "other_college" | "petition";
 }
 
 export interface StudentWorkspaceRecord {

@@ -6,6 +6,7 @@ import { targetMajorId } from "@/lib/articulation/types";
 import { planningEngine } from "@/lib/planning-engine";
 import type { StudentProfile } from "@/lib/domain";
 import type { SelectableTarget, StudentWorkspaceRecord } from "@/lib/production-types";
+import { studentFacingConstraintNotes } from "@/lib/student-facing-copy";
 
 export const WAYLO_ALGORITHM_VERSION = "planning-engine-v1";
 export const UCSD_DATA_RELEASE = "ucsd-data-2026-review-needed";
@@ -43,7 +44,7 @@ export function generateProductionPlan(workspace: StudentWorkspaceRecord) {
     includeSummer: workspace.preferences.summerEnrollment,
     summerCourseLimit: workspace.preferences.summerEnrollment ? 1 : 0,
     maxUnits: workspace.preferences.maxUnits,
-    weeklyWorkHours: workspace.preferences.weeklyWorkHours,
+    weeklyWorkHours: 0,
     transferTarget: workspace.preferences.targetTerm ?? undefined,
     targetPolicy: workspace.preferences.targetTerm ? "preferred" : undefined,
   });
@@ -93,7 +94,7 @@ export async function listSelectableTargets(): Promise<SelectableTarget[]> {
       coverageTier: major.coverageTier,
       recognizesIgetc: institution?.recognizesIgetc ?? false,
       ingestionTier: institution?.ingestionTier ?? "2",
-      constraintNotes: major.constraintNotes,
+      constraintNotes: studentFacingConstraintNotes(major.constraintNotes),
     };
   });
 }

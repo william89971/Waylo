@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { OnboardingFlow } from "@/components/onboarding-flow";
-import { courses } from "@/lib/academic-data";
+import { productionStudentCatalog } from "@/lib/articulation/student-catalog";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
 import { listSelectableTargets } from "@/lib/server/production-planning";
 import { studentRepository } from "@/lib/server/student-repository";
@@ -16,7 +16,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   return (
     <OnboardingFlow
       initial={workspace}
-      catalog={courses}
+      catalog={productionStudentCatalog()}
       targets={await listSelectableTargets()}
       startStep={editing ? 3 : undefined}
       editing={editing}

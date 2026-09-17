@@ -11,6 +11,9 @@ import {
   alreadyDoneLine,
   courseCountsLine,
   courseWhySentence,
+  isOfficialVerifiedSource,
+  officialSourceLabel,
+  studentFacingConstraintNotes,
   targetCoverageNote,
 } from "@/lib/student-facing-copy";
 import type { SelectableTarget } from "@/lib/production-types";
@@ -95,5 +98,32 @@ describe("student-facing copy", () => {
     expect(alreadyDoneLine("UC Berkeley Economics", ["Writing", "Statistics"])).toBe(
       "Writing and Statistics at UC Berkeley Economics are already done.",
     );
+  });
+
+  it("only labels a source official when it is verified, linked, and dated", () => {
+    expect(
+      isOfficialVerifiedSource({
+        verificationTier: "VERIFIED_ASSIST",
+        sourceUrl: "https://assist.org/",
+        agreementYear: "2025-26",
+      }),
+    ).toBe(true);
+    expect(
+      isOfficialVerifiedSource({
+        verificationTier: "VERIFIED_ASSIST",
+        sourceUrl: "https://assist.org/",
+      }),
+    ).toBe(false);
+    expect(
+      isOfficialVerifiedSource({
+        verificationTier: "PLANNING_SUGGESTION",
+        sourceUrl: "https://waylo.local/archetypes/private",
+        agreementYear: "2025-26",
+      }),
+    ).toBe(false);
+    expect(officialSourceLabel("2025-26")).toBe("Official source · 2025-26");
+    expect(studentFacingConstraintNotes(["Production baseline pathway.", "Complete major prep by the spring before fall matriculation."])).toEqual([
+      "Complete major prep by the spring before fall matriculation.",
+    ]);
   });
 });
