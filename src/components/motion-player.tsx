@@ -44,18 +44,29 @@ export function MotionPlayer({
   }, []);
 
   useEffect(() => {
-    if (!mounted || reduced || !playWhenVisible) return;
-    const node = host.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) player.current?.play();
-      },
-      { threshold: 0.4 },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [mounted, playWhenVisible, reduced]);
+    if (!mounted || reduced) return;
+    const instance = player.current;
+    if (!instance) return;
+
+    if (playWhenVisible) {
+      const node = host.current;
+      if (!node) return;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0]?.isIntersecting) instance.play();
+        },
+        { threshold: 0.4 },
+      );
+      observer.observe(node);
+      return () => observer.disconnect();
+    }
+
+    instance.play();
+    const timer = window.setTimeout(() => {
+      if (instance.getCurrentFrame() < 2) instance.seekTo(Math.max(0, durationInFrames - 1));
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [durationInFrames, mounted, playWhenVisible, reduced]);
 
   if (reduced || !mounted) return <>{fallback}</>;
 
