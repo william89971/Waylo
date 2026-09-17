@@ -95,17 +95,16 @@ a:hover { color: var(--p-ink-deep); }
 .waylo-o circle,
 .kicker-o circle,
 .waylo-path-o circle {
-  animation: waylo-o-draw 3.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation: waylo-o-draw 4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
-.kicker-o circle { animation-duration: 3.8s; animation-delay: 0.35s; }
-.waylo-path li:nth-child(1) .waylo-path-o circle { animation-delay: 0.15s; }
-.waylo-path li:nth-child(2) .waylo-path-o circle { animation-delay: 0.4s; }
-.waylo-path li:nth-child(3) .waylo-path-o circle { animation-delay: 0.65s; }
+.kicker-o circle { animation-duration: 4.4s; animation-delay: 0.2s; }
+.waylo-path li:nth-child(1) .waylo-path-o circle { animation-delay: 0.1s; }
+.waylo-path li:nth-child(2) .waylo-path-o circle { animation-delay: 0.28s; }
+.waylo-path li:nth-child(3) .waylo-path-o circle { animation-delay: 0.46s; }
 @keyframes waylo-o-draw {
-  0%, 8% { stroke-dashoffset: 54.1; }
-  34% { stroke-dashoffset: 0; }
-  58% { stroke-dashoffset: 0; }
-  84%, 100% { stroke-dashoffset: 54.1; }
+  0%, 58% { stroke-dashoffset: 0; }
+  78%, 84% { stroke-dashoffset: 54.1; }
+  100% { stroke-dashoffset: 0; }
 }
 
 .production-button {
@@ -271,7 +270,11 @@ a:hover { color: var(--p-ink-deep); }
 }
 .waylo-well-band .yellow-field-motion {
   position: absolute;
-  inset: 0;
+  top: 50%;
+  right: 3%;
+  width: min(34vw, 340px);
+  height: min(34vw, 340px);
+  transform: translateY(-50%);
   pointer-events: none;
 }
 .waylo-well {
@@ -605,6 +608,7 @@ a:hover { color: var(--p-ink-deep); }
 @media (max-width: 1000px) {
   .production-hero { padding: 32px 32px 20px; }
   .waylo-specimen { width: 100%; }
+  .waylo-well-band .yellow-field-motion { width: 180px; height: 180px; right: -8px; }
   .dashboard-layout { grid-template-columns: 1fr; }
   .dashboard-rail { grid-template-columns: repeat(3, 1fr); }
   .dashboard-rail section:first-child { grid-column: 1 / -1; }
@@ -619,6 +623,7 @@ a:hover { color: var(--p-ink-deep); }
   .production-lede { font-size: 17px; }
   .waylo-well { padding: 0 20px; }
   .waylo-well-band { padding: 28px 0; }
+  .waylo-well-band .yellow-field-motion { width: 140px; height: 140px; right: -36px; }
   .waylo-specimen { padding: 20px; }
   .waylo-specimen li { grid-template-columns: 6.4rem minmax(0, 1fr) 2.6rem; }
   .waylo-specimen li em { grid-column: 1 / -1; justify-self: start; }
@@ -645,6 +650,7 @@ a:hover { color: var(--p-ink-deep); }
   .next-term-codes li { grid-template-columns: 1fr; gap: 2px; }
   .next-term-hero-meta { align-items: stretch; flex-direction: column; }
   .next-term-hero-meta .production-button { width: 100%; }
+  .next-term-hero .yellow-field-motion { width: 140px; height: 140px; right: -36px; }
   .course-row { grid-template-columns: minmax(0, 1fr) auto; padding: 16px 13px; }
   .course-row .evidence-state { grid-column: 1; }
   .course-row > a, .course-row-actions { grid-column: 2; grid-row: 2; }
@@ -1267,7 +1273,12 @@ a:hover { color: var(--p-ink-deep); }
 }
 .next-term-hero .yellow-field-motion {
   position: absolute;
-  inset: 0;
+  inset: auto;
+  top: 50%;
+  right: -18px;
+  width: 220px;
+  height: 220px;
+  transform: translateY(-50%);
   pointer-events: none;
 }
 .next-term-hero h2,
