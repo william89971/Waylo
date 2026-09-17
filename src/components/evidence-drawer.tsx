@@ -35,8 +35,8 @@ export type EvidenceDrawerProps = {
 function LedgerRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] gap-3 border-b border-border/40 py-2.5 last:border-b-0">
-      <dt className="font-mono text-[10px] uppercase tracking-[0.12em] text-slate-500">{label}</dt>
-      <dd className="text-right text-[13px] leading-snug text-slate-900">{value}</dd>
+      <dt className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{label}</dt>
+      <dd className="text-right text-[13px] leading-snug text-foreground">{value}</dd>
     </div>
   );
 }
@@ -87,7 +87,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
         type="button"
         aria-label="Dismiss evidence drawer"
         className={cn(
-          "absolute inset-0 bg-background/60 backdrop-blur-xs transition-opacity duration-200 ease-out",
+          "absolute inset-0 bg-[rgb(27_23_18_/_0.28)] transition-opacity duration-200 ease-[cubic-bezier(.2,.8,.2,1)]",
           open ? "opacity-100" : "opacity-0",
         )}
         onClick={onClose}
@@ -99,32 +99,32 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
         aria-label={evidence ? `Evidence for ${evidence.courseCode}` : "Course evidence"}
         data-testid="evidence-drawer" data-state={open ? "open" : "closed"}
         className={cn(
-          "absolute inset-y-0 right-0 flex w-[min(100%-0.75rem,28rem)] max-w-md flex-col border-l border-border/40 bg-white",
-          "transition-transform duration-200 ease-out",
+          "absolute inset-y-0 right-0 flex w-[min(100%-0.75rem,28rem)] max-w-md flex-col border-l border-border/40 bg-background",
+          "transition-transform duration-200 ease-[cubic-bezier(.2,.8,.2,1)]",
           open ? "translate-x-0" : "translate-x-full",
           !open && "hidden",
         )}
       >
         <header className="flex items-start justify-between gap-3 border-b border-border/40 px-5 py-4">
           <div className="min-w-0">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-slate-500">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
               Why this class
             </p>
             {evidence ? (
               <>
-                <h2 className="mt-1 font-mono text-lg font-medium tabular-nums tracking-tight text-slate-900">
+                <h2 className="mt-1 font-mono text-lg font-medium tabular-nums tracking-tight text-foreground">
                   {evidence.courseCode}
                 </h2>
-                <p className="mt-0.5 truncate text-sm text-slate-600">{evidence.courseTitle}</p>
+                <p className="mt-0.5 truncate text-sm text-muted-foreground">{evidence.courseTitle}</p>
               </>
             ) : (
-              <h2 className="mt-1 text-lg font-medium text-slate-900">No course selected</h2>
+              <h2 className="mt-1 text-lg font-medium text-foreground">No course selected</h2>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="grid size-11 shrink-0 place-items-center text-slate-500 hover:bg-muted/50 hover:text-slate-900"
+            className="grid size-11 shrink-0 place-items-center text-muted-foreground hover:text-foreground"
             aria-label="Close"
           >
             <X className="size-4" />
@@ -159,14 +159,14 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
               {evidence.campuses.map((campus) => (
                 <section key={campus.targetMajorId} className="space-y-1">
                   <div className="flex items-baseline justify-between gap-2 border-b border-border/40 pb-2">
-                    <h3 className="text-[13px] font-medium text-slate-900">{campus.campusLabel}</h3>
+                    <h3 className="text-[13px] font-medium text-foreground">{campus.campusLabel}</h3>
                     {campus.isPrimary ? (
-                      <span className="text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">First choice</span>
+                      <span className="text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground">First choice</span>
                     ) : null}
                   </div>
 
                   {!campus.required ? (
-                    <p className="py-3 text-[13px] text-slate-500">This school does not need this class.</p>
+                    <p className="py-3 text-[13px] text-muted-foreground">This school does not need this class.</p>
                   ) : (
                     <dl>
                       <LedgerRow
@@ -214,7 +214,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
                       href={campus.sourceUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-3 inline-flex min-h-11 items-center gap-1.5 border border-border/40 px-3 text-[12px] font-medium text-slate-800 hover:bg-muted/40"
+                      className="mt-3 inline-flex min-h-11 items-center gap-1.5 border border-border/40 px-3 text-[12px] font-medium text-foreground"
                     >
                       View official source · {campus.agreementYear}
                       <ExternalLink className="size-3.5" aria-hidden />
@@ -224,7 +224,7 @@ export function EvidenceDrawer({ open, evidence, onClose }: EvidenceDrawerProps)
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">Select a class to see why it is on the plan.</p>
+            <p className="text-sm text-muted-foreground">Select a class to see why it is on the plan.</p>
           )}
         </div>
       </aside>

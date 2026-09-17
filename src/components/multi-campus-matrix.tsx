@@ -35,7 +35,7 @@ export type MultiCampusMatrixProps = {
 function StatusGlyph({ cell }: { cell: MatrixCampusCell }) {
   if (cell.status === "unrequired") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-slate-400" title="Not required for this target">
+      <span className="inline-flex items-center gap-1.5 text-muted-foreground" title="Not required for this target">
         <Minus className="size-4 shrink-0" aria-hidden />
         <span className="sr-only">Not required</span>
       </span>
@@ -88,19 +88,19 @@ export function MultiCampusMatrix({
           <tr className="border-b border-border/40">
             <th
               scope="col"
-              className="sticky left-0 z-10 bg-background px-3 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500"
+              className="sticky left-0 z-10 bg-background px-3 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
             >
               Course
             </th>
             <th
               scope="col"
-              className="px-2 py-3 text-right text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500"
+              className="px-2 py-3 text-right text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
             >
               Units
             </th>
             <th
               scope="col"
-              className="px-2 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500"
+              className="px-2 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
             >
               Term
             </th>
@@ -108,12 +108,12 @@ export function MultiCampusMatrix({
               <th
                 key={campus.targetMajorId}
                 scope="col"
-                className="px-3 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500"
+                className="px-3 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
               >
                 <span className="inline-flex items-baseline gap-1.5">
-                  <span className={cn(campus.isPrimary && "text-slate-900")}>{campus.label}</span>
+                  <span className={cn(campus.isPrimary && "text-foreground")}>{campus.label}</span>
                   {campus.isPrimary ? (
-                    <span className="text-[9px] font-medium uppercase tracking-[0.12em] text-slate-400">First choice</span>
+                    <span className="text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground">First choice</span>
                   ) : null}
                 </span>
               </th>
@@ -138,8 +138,8 @@ export function MultiCampusMatrix({
                 }}
                 className={cn(
                   "group cursor-pointer border-b border-border/40 outline-none",
-                  "hover:bg-transparent focus-visible:shadow-[inset_3px_0_0_0_#111b2e]",
-                  selected && "shadow-[inset_3px_0_0_0_#111b2e]",
+                  "hover:bg-transparent focus-visible:shadow-[inset_3px_0_0_0_#c25a2c]",
+                  selected && "shadow-[inset_3px_0_0_0_#c25a2c]",
                 )}
               >
                 <th
@@ -149,16 +149,16 @@ export function MultiCampusMatrix({
                   )}
                 >
                   <div className="flex min-w-[10rem] flex-col gap-0.5">
-                    <span className="font-mono text-[12px] font-medium tabular-nums tracking-tight text-slate-900">
+                    <span className="font-mono text-[12px] font-medium tabular-nums tracking-tight text-foreground">
                       {row.courseCode}
                     </span>
-                    <span className="max-w-[14rem] truncate text-[11px] text-slate-500">{row.title}</span>
+                    <span className="max-w-[14rem] truncate text-[11px] text-muted-foreground">{row.title}</span>
                   </div>
                 </th>
-                <td className="px-2 py-3.5 text-right font-mono text-[12px] tabular-nums text-slate-700">
+                <td className="px-2 py-3.5 text-right font-mono text-[12px] tabular-nums text-foreground">
                   {row.semesterUnits.toFixed(1)}
                 </td>
-                <td className="px-2 py-3.5 font-mono text-[11px] tabular-nums text-slate-500">
+                <td className="px-2 py-3.5 font-mono text-[11px] tabular-nums text-muted-foreground">
                   {row.termLabel}
                 </td>
                 {campuses.map((campus) => {

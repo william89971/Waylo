@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, CalendarDays, Home, LogOut } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
+import { WayloWordmark } from "@/components/waylo-wordmark";
 
 const nav = [
   { href: "/app", label: "What to take", icon: Home },
@@ -40,27 +41,26 @@ export function ProductionAppShell({
         Skip to main content
       </a>
       <header className="production-mobile-header">
-        <Link href="/app" className="production-brand">
-          Waylo
-        </Link>
+        <WayloWordmark href="/app" />
         {clerkConfigured ? <UserButton /> : <LocalSignOut />}
       </header>
       <aside className="production-sidebar">
-        <Link href="/app" className="production-brand">
-          Waylo
-        </Link>
+        <WayloWordmark href="/app" />
         <nav aria-label="Student navigation">
-          {nav.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className={pathname === href || (href !== "/app" && pathname.startsWith(href)) ? "active" : ""}
-              aria-current={pathname === href ? "page" : undefined}
-            >
-              <Icon size={18} aria-hidden="true" />
-              {label}
-            </Link>
-          ))}
+          {nav.map(({ href, label }) => {
+            const active = pathname === href || (href !== "/app" && pathname.startsWith(href));
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={active ? "active" : ""}
+                aria-current={pathname === href ? "page" : undefined}
+              >
+                <span className="nav-waypoint" aria-hidden="true" />
+                {label}
+              </Link>
+            );
+          })}
         </nav>
         <div className="production-account">{clerkConfigured ? <UserButton /> : <LocalSignOut />}</div>
       </aside>

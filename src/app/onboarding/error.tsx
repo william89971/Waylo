@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { WayloWordmark } from "@/components/waylo-wordmark";
 
 export default function OnboardingError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
     <main className="onboarding-page">
       <header className="onboarding-top">
-        <Link href="/" className="production-brand">Waylo</Link>
+        <WayloWordmark href="/" />
       </header>
       <section className="onboarding-panel">
         <h1>This setup page could not load</h1>
@@ -14,7 +14,7 @@ export default function OnboardingError({ reset }: { error: Error & { digest?: s
         <div className="production-error" role="alert">Waylo hit an unexpected error while opening onboarding.</div>
         <div className="onboarding-actions">
           <button type="button" className="production-button primary" onClick={reset}>Try again</button>
-          <Link href="/app" className="production-button">Back to Waylo</Link>
+          <a href="/app" className="production-button">Back to Waylo</a>
         </div>
       </section>
     </main>

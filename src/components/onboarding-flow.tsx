@@ -7,6 +7,7 @@ import { Check, Trash2 } from "lucide-react";
 import { isPreferredTransferTerm } from "@/lib/admissions-strategy";
 import { targetCoverageNote } from "@/lib/student-facing-copy";
 import { TranscriptImport } from "@/components/transcript-import";
+import { WayloWordmark } from "@/components/waylo-wordmark";
 import type { StudentCatalogCourse } from "@/lib/articulation/student-catalog";
 import type { ProductionCourse, SelectableTarget, StudentWorkspaceRecord } from "@/lib/production-types";
 
@@ -354,11 +355,9 @@ export function OnboardingFlow({
   return (
     <main className="onboarding-page">
       <header className="onboarding-top">
-        <Link href="/" className="production-brand">
-          Waylo
-        </Link>
+        <WayloWordmark href="/" />
         <Link href={editing ? "/app" : "/"} className="production-text-link">
-          {editing ? "Back to dashboard" : "Exit"}
+          {editing ? "Back to your plan" : "Exit"}
         </Link>
       </header>
       <section className="onboarding-panel">

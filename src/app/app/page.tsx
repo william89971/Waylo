@@ -270,7 +270,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <div className="section-heading">
             <div>
               <h2>Recommended semester</h2>
-              <p>The next classes that move every selected school forward, inside your unit limit.</p>
+              <p>These classes move every selected school forward, inside your unit limit.</p>
             </div>
           </div>
           <HomeSemesterList
