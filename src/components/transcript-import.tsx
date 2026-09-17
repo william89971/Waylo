@@ -98,7 +98,7 @@ export function TranscriptImport({
         Nothing is added to your plan until you confirm the rows below. Unmatched classes stay unmatched.
       </p>
       <label>
-        Paste course lines
+        Paste transcript text
         <textarea
           value={text}
           onChange={(event) => {

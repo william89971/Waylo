@@ -542,8 +542,12 @@ export function OnboardingFlow({
               }}
             >
               <label>
-                Course
-                <select value={selectedCourseId} onChange={(event) => setSelectedCourseId(event.target.value)}>
+                College of the Canyons class
+                <select
+                  value={selectedCourseId}
+                  onChange={(event) => setSelectedCourseId(event.target.value)}
+                  data-testid="coc-course-select"
+                >
                   <optgroup label="College of the Canyons">
                     {catalog
                       .filter((course) => course.group === "coc")

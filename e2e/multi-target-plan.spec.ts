@@ -20,7 +20,7 @@ async function onboardMultiTargetPlan(page: Page, testUser: string) {
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
-  await page.getByLabel("Course").selectOption({ index: 0 });
+  await page.getByLabel("College of the Canyons class").selectOption({ index: 0 });
   await page.getByLabel("Grade").fill("A");
   await page.getByRole("button", { name: "Add course" }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
@@ -106,6 +106,13 @@ test("multi-target Save this plan reaches the dashboard and shows strategy", asy
   await expect(page.getByRole("link", { name: "See all terms" })).toHaveCount(1);
   await expect(page.getByRole("button", { name: "Why this class?" }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Counselor confirmation required" })).toBeVisible();
+  await page.getByRole("button", { name: "Why this class?" }).first().click();
+  const homeDrawer = page.getByTestId("evidence-drawer");
+  await expect(homeDrawer).toHaveAttribute("data-state", "open");
+  await expect(page.getByRole("heading", { name: "What to take next semester" })).toBeVisible();
+  await expect(homeDrawer.getByRole("link", { name: /Official source|View official source/ }).first()).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(homeDrawer).toHaveAttribute("data-state", "closed");
   await expect(page.getByText(/UC Berkeley Economics/).first()).toBeVisible();
   await expect(page.locator(".course-why").first()).toBeVisible();
   await expect(page.locator(".course-why").first()).toHaveText(/This is |This covers |Counts toward |Needed for /);

@@ -14,7 +14,7 @@ test("student completes onboarding, saves a plan, and recovers it after signing 
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
-  await page.getByLabel("Course").selectOption({ index: 0 });
+  await page.getByLabel("College of the Canyons class").selectOption({ index: 0 });
   await page.getByLabel("Grade").fill("A");
   await page.getByRole("button", { name: "Add course" }).click();
   await expect(page.locator(".confirmed-course-list")).toContainText("A");
@@ -83,6 +83,35 @@ test("server ownership prevents one test user from reading another user workspac
   expect(secondBody.workspace.courses).toEqual([]);
 });
 
+test("transcript rows stay off the plan until the student confirms them", async ({ browser }, testInfo) => {
+  test.setTimeout(180_000);
+  const testUser = `test-tr-${testInfo.project.name}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await page.goto(`/sign-up?testUser=${testUser}`);
+  await page.getByRole("button", { name: "Create test account" }).click();
+  await expect(page.getByRole("heading", { name: "Where do you want to transfer?" })).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
+
+  await page.getByLabel("Paste transcript text").fill("ENGL C1000 Academic Reading and Writing A Fall 2025");
+  await page.getByRole("button", { name: "Read transcript" }).click();
+  await expect(page.getByTestId("transcript-confirm")).toBeVisible();
+  await expect(page.getByText(/Nothing is added to your plan until you confirm/)).toBeVisible();
+  await page.getByRole("button", { name: "Discard" }).click();
+  await expect(page.getByTestId("transcript-confirm")).toHaveCount(0);
+  await expect(page.locator(".confirmed-course-list")).toContainText("No classes yet");
+
+  await page.getByRole("button", { name: "Read transcript" }).click();
+  await expect(page.getByTestId("transcript-confirm")).toBeVisible();
+  await page.getByRole("button", { name: "Confirm and add to my record" }).click();
+  await expect(page.locator(".confirmed-course-list")).toContainText("ENGL");
+  await expect(page.locator(".confirmed-course-list")).not.toContainText("No classes yet");
+
+  await context.close();
+});
+
 test("UCB Economics primary with USC Business secondary shows divergence badges", async ({ browser }, testInfo) => {
   test.setTimeout(180_000);
   // test-auth only accepts ids matching /^test-[a-z0-9-]{1,64}$/
@@ -107,7 +136,7 @@ test("UCB Economics primary with USC Business secondary shows divergence badges"
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "What have you completed?" })).toBeVisible();
-  await page.getByLabel("Course").selectOption({ index: 0 });
+  await page.getByLabel("College of the Canyons class").selectOption({ index: 0 });
   await page.getByLabel("Grade").fill("A");
   await page.getByRole("button", { name: "Add course" }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
